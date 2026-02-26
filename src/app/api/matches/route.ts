@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import path from "path";
 import { z } from "zod";
 import { listMatches } from "@/lib/list_matches";
 import { db, matches } from "@/db";
@@ -6,7 +7,7 @@ import { db, matches } from "@/db";
 const SortSchema = z.enum(["date", "title", "createdAt"]).optional();
 
 const CreateMatchBodySchema = z.object({
-  title: z.string().min(1),
+  title: z.string().min(1).optional(),
   videoPath: z.string().min(1),
   durationSeconds: z.number().int().nonnegative().optional(),
 });
@@ -35,9 +36,10 @@ export async function POST(request: NextRequest) {
     );
   }
   const { title, videoPath, durationSeconds } = parsed.data;
+  const titleToUse = title?.trim() || path.basename(videoPath) || "Untitled";
   const [created] = db
     .insert(matches)
-    .values({ title, videoPath, durationSeconds: durationSeconds ?? null })
+    .values({ title: titleToUse, videoPath, durationSeconds: durationSeconds ?? null })
     .returning()
     .all();
   if (!created) {
