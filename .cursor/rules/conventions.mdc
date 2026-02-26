@@ -1,0 +1,40 @@
+---
+description: File naming (snake_case), test co-location, Result pattern for business logic, commit message format
+globs: **/*
+alwaysApply: true
+---
+
+# Conventions
+
+## File naming
+
+- Use **snake_case** for all file and folder names: `match_card.tsx`, `get_match_by_id.ts`, `api/matches/route.ts`. Exception: Next.js special files keep their names (`page.tsx`, `layout.tsx`, `route.ts`, `error.tsx`, `loading.tsx`).
+- Match the primary export: `match_card.tsx` exports `MatchCard`; `get_match_by_id.ts` exports `getMatchById`.
+
+## Tests
+
+- **Co-locate tests** with source. Place test files next to the module they test and name them `*.test.ts` or `*.test.tsx` (e.g. `match_card.test.tsx`, `get_match_by_id.test.ts`). Do not use a single top-level `__tests__` or `tests/` directory for unit tests; reserve such directories only for integration/e2e if needed.
+
+## Error handling
+
+- Use the **Result pattern** for business logic (functions that can fail in a known way): return `{ ok: true, data }` or `{ ok: false, error: ErrorCode }` (or a typed union) instead of throwing. Callers branch on `ok`. Use **try/catch** only at boundaries (API route handler, server action) to turn thrown errors into HTTP responses or user-visible messages.
+- In API routes: validate input with Zod (throw or return 400 on parse error); use Result-returning functions for DB/business logic; map `ok: false` to 4xx/5xx and `ok: true` to 2xx with JSON body.
+
+```ts
+// ✅ Business logic returns Result
+function createMatch(input: CreateMatchInput): Result<Match, CreateMatchError> {
+  if (input.videoPath && !fileExists(input.videoPath)) return { ok: false, error: 'FILE_NOT_FOUND' };
+  const match = db.insert(matches).values(input).returning()[0];
+  return { ok: true, data: match };
+}
+
+// ✅ Route handler catches and maps to HTTP
+const result = createMatch(body);
+if (!result.ok) return Response.json({ error: result.error }, { status: 400 });
+return Response.json(result.data, { status: 201 });
+```
+
+## Commit messages
+
+- Format: **type(scope): short subject** in the first line. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`. Scope is optional (e.g. `library`, `api`, `db`). Subject is imperative, lowercase after the colon, no period. Optionally add a body after a blank line for details.
+- Examples: `feat(library): add filter by opponent`, `fix(api): validate video path before create`, `chore(deps): bump drizzle-orm`.

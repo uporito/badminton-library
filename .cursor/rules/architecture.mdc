@@ -1,0 +1,50 @@
+---
+description: Next.js App Router, server vs client components, Drizzle ORM, Zod validation
+globs: app/**/*.ts,app/**/*.tsx,src/**/*.ts,src/**/*.tsx,**/api/**/*.ts
+alwaysApply: false
+---
+
+# Architecture
+
+## Next.js App Router
+
+- Use the **App Router** only (`app/`). No `pages/` router for new code.
+- Routes live under `app/` with `page.tsx`, `layout.tsx`, `loading.tsx`, and `error.tsx` as needed. API routes live under `app/api/`.
+
+## Server vs client components
+
+- **Default to Server Components.** Do not add `"use client"` unless the file needs client-only features.
+- Use **Client Components** only when you need: event handlers (onClick, onChange), hooks (useState, useEffect, useContext), browser APIs, or third-party client-only libraries. Prefer passing data and callbacks from server components as props.
+- Keep the client boundary as low as possible: wrap only the interactive subtree in a small client component; keep layout and data fetching in server components.
+
+```tsx
+// ✅ Server component (no "use client") — fetches and passes data
+export default async function MatchPage({ params }: { params: { id: string } }) {
+  const match = await getMatch(params.id);
+  return (
+    <div>
+      <MatchMetadata match={match} />
+      <MatchStatsEditor matchId={match.id} initialStats={match.stats} />
+    </div>
+  );
+}
+
+// MatchStatsEditor.tsx — "use client" only here, for form state and mutations
+"use client";
+export function MatchStatsEditor({ matchId, initialStats }: Props) { ... }
+```
+
+## Data and validation
+
+- **Drizzle ORM** for all database access. Define schema in a dedicated module; run queries in server components or API route handlers. No raw SQL unless Drizzle cannot express the query.
+- **Zod** for validation: validate request bodies and query params in API routes, and validate env/config at startup. Use Zod schemas as the single source of truth for shapes used at boundaries (API in/out, forms).
+
+```ts
+// API route: validate body with Zod before DB
+const BodySchema = z.object({ title: z.string(), videoPath: z.string() });
+const body = BodySchema.parse(await request.json());
+```
+
+## API routes
+
+- Handlers live in `app/api/.../route.ts`. Use standard HTTP methods (GET, POST, PATCH, DELETE). Return `Response.json()` with appropriate status codes; validate input with Zod and perform DB operations with Drizzle.
