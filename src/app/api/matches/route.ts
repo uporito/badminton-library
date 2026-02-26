@@ -2,7 +2,9 @@ import { NextRequest } from "next/server";
 import path from "path";
 import { z } from "zod";
 import { listMatches } from "@/lib/list_matches";
-import { db, matches } from "@/db";
+import { getDb } from "@/db/client";
+import { matches } from "@/db/schema";
+import { NextResponse } from "next/server";
 
 const SortSchema = z.enum(["date", "title", "createdAt"]).optional();
 
@@ -10,6 +12,10 @@ const CreateMatchBodySchema = z.object({
   title: z.string().min(1).optional(),
   videoPath: z.string().min(1),
   durationSeconds: z.number().int().nonnegative().optional(),
+  date: z.string().optional(),
+  opponent: z.string().optional(),
+  result: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -26,24 +32,34 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
   const parsed = CreateMatchBodySchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json(
+    return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten() },
       { status: 400 }
     );
   }
-  const { title, videoPath, durationSeconds } = parsed.data;
-  const titleToUse = title?.trim() || path.basename(videoPath) || "Untitled";
-  const [created] = db
+  const { title, videoPath, durationSeconds, date, opponent, result, notes } =
+    parsed.data;
+  const titleToUse =
+    title?.trim() || path.basename(videoPath) || "Untitled";
+  const db = getDb();
+  const [created] = await db
     .insert(matches)
-    .values({ title: titleToUse, videoPath, durationSeconds: durationSeconds ?? null })
-    .returning()
-    .all();
+    .values({
+      title: titleToUse,
+      videoPath,
+      durationSeconds: durationSeconds ?? null,
+      date: date ?? null,
+      opponent: opponent ?? null,
+      result: result ?? null,
+      notes: notes ?? null,
+    })
+    .returning();
   if (!created) {
-    return Response.json({ error: "Insert failed" }, { status: 500 });
+    return NextResponse.json({ error: "Insert failed" }, { status: 500 });
   }
-  return Response.json(created, { status: 201 });
+  return NextResponse.json(created, { status: 201 });
 }
