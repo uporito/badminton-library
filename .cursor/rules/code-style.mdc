@@ -1,0 +1,45 @@
+---
+description: TypeScript and React code style — script mode, functional components, named exports, Tailwind, no default exports except pages
+globs: **/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# Code style
+
+## TypeScript
+
+- Use **script mode** only (no `import type`-only files that require `module`). Prefer `satisfies` and inline types where it keeps code clear.
+- Prefer `interface` for object shapes; use `type` for unions, mapped types, and aliases.
+- Use `const` by default; `let` only when reassignment is needed. No `var`.
+
+## React components
+
+- **Functional components only.** Define as `function ComponentName(props: Props)` or `const ComponentName = (props: Props) => { ... }`.
+- **Named exports only** for components, hooks, and utilities. Use named exports in the defining file and named imports at the call site.
+- **Exception:** Use **default export only for Next.js pages** (files in `app/**/page.tsx` or `pages/**/*.tsx`). All other modules use named exports.
+
+```tsx
+// ✅ Component file — named export
+export function MatchCard({ match }: MatchCardProps) {
+  return <article>...</article>;
+}
+
+// ✅ Page file — default export allowed
+export default function LibraryPage() {
+  return <div>...</div>;
+}
+
+// ❌ Non-page default export
+export default function MatchCard() { ... }
+```
+
+## Styling
+
+- Use **Tailwind CSS** for all styling. No CSS modules, styled-components, or inline style objects for layout/colors/spacing.
+- Use Tailwind utility classes only. For repeated combinations, use `@apply` in a single shared CSS file only when the same 4+ utilities repeat in many places; otherwise keep utilities in JSX.
+- Prefer Tailwind theme values (e.g. `text-primary`, `bg-background`) if the project defines them; otherwise use standard Tailwind tokens.
+
+## File layout
+
+- One primary component or hook per file. Co-locate small, single-use subcomponents in the same file if they are not reused elsewhere.
+- Put types/interfaces in the same file as the component or in a shared `types` file; avoid scattering one-off types across many files.
