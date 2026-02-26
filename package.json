@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
     "db:migrate": "node -e \"require('fs').mkdirSync('data',{recursive:true})\" && node node_modules/drizzle-kit/bin.cjs migrate",
     "db:seed": "tsx src/db/seed.ts"
   },
@@ -30,6 +31,7 @@
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.8"
   }
 }
