@@ -4,6 +4,15 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+export const matchCategoryEnum = [
+  "Uncategorized",
+  "Singles",
+  "Doubles",
+  "Mixed",
+] as const;
+
+export type MatchCategory = (typeof matchCategoryEnum)[number];
+
 export const matches = sqliteTable("matches", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
@@ -13,6 +22,9 @@ export const matches = sqliteTable("matches", {
   opponent: text("opponent"),
   result: text("result"),
   notes: text("notes"),
+  category: text("category", { enum: matchCategoryEnum }).default(
+    "Uncategorized"
+  ),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),

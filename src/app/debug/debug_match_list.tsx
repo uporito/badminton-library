@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { MatchForm } from "@/app/match_form";
+import type { MatchRow } from "@/lib/get_match_by_id";
+import type { MatchCategory } from "@/db/schema";
 
 type MatchStat = {
   id: number;
@@ -23,6 +27,7 @@ type Match = {
   opponent: string | null;
   result: string | null;
   notes: string | null;
+  category: MatchCategory | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -44,6 +49,7 @@ export function DebugMatchList({
 }: DebugMatchListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   async function handleDelete(id: number) {
     const res = await fetch(`/api/matches/${id}`, { method: "DELETE" });
@@ -55,33 +61,8 @@ export function DebugMatchList({
     startTransition(() => router.refresh());
   }
 
-  async function handleAddMatch(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const body = {
-      title: formData.get("title") as string,
-      videoPath: formData.get("videoPath") as string,
-      durationSeconds: formData.get("durationSeconds")
-        ? parseInt(formData.get("durationSeconds") as string, 10)
-        : undefined,
-      date: (formData.get("date") as string) || undefined,
-      opponent: (formData.get("opponent") as string) || undefined,
-      result: (formData.get("result") as string) || undefined,
-      notes: (formData.get("notes") as string) || undefined,
-    };
-    const res = await fetch("/api/matches", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      alert(data.error ?? "Create failed");
-      return;
-    }
-    form.reset();
-    startTransition(() => router.refresh());
+  function handleEditSuccess() {
+    setEditingId(null);
   }
 
   return (
@@ -90,79 +71,24 @@ export function DebugMatchList({
         <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
           Add match
         </h2>
-        <form
-          onSubmit={handleAddMatch}
-          className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          <div className="grid gap-2 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm">
-              Title (required)
-              <input
-                name="title"
-                required
-                className="rounded border border-zinc-300 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-800"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Video path (required)
-              <input
-                name="videoPath"
-                required
-                placeholder="e.g. videos/match.mp4"
-                className="rounded border border-zinc-300 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-800"
-              />
-            </label>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="flex flex-col gap-1 text-sm">
-              Duration (s)
-              <input
-                name="durationSeconds"
-                type="number"
-                min={0}
-                className="rounded border border-zinc-300 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-800"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Date
-              <input
-                name="date"
-                type="date"
-                className="rounded border border-zinc-300 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-800"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Opponent
-              <input
-                name="opponent"
-                className="rounded border border-zinc-300 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-800"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Result
-              <input
-                name="result"
-                placeholder="e.g. 21-19 21-17"
-                className="rounded border border-zinc-300 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-800"
-              />
-            </label>
-          </div>
-          <label className="flex flex-col gap-1 text-sm">
-            Notes
-            <input
-              name="notes"
-              className="rounded border border-zinc-300 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-800"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-fit rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-300"
-          >
-            {isPending ? "Adding…" : "Add match"}
-          </button>
-        </form>
+        <MatchForm mode="create" onSuccess={() => startTransition(() => router.refresh())} />
       </section>
+
+      {editingId !== null && (
+        <section>
+          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+            Edit match
+          </h2>
+          <MatchForm
+            mode="edit"
+            initialMatch={matches.find((m) => m.id === editingId) as MatchRow | undefined}
+            onSuccess={() => {
+              handleEditSuccess();
+              startTransition(() => router.refresh());
+            }}
+          />
+        </section>
+      )}
 
       <section>
         <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
@@ -179,6 +105,7 @@ export function DebugMatchList({
                 <th className="px-3 py-2 font-medium">Date</th>
                 <th className="px-3 py-2 font-medium">Opponent</th>
                 <th className="px-3 py-2 font-medium">Result</th>
+                <th className="px-3 py-2 font-medium">Category</th>
                 <th className="px-3 py-2 font-medium">Stats</th>
                 <th className="px-3 py-2 font-medium">Actions</th>
               </tr>
@@ -193,6 +120,7 @@ export function DebugMatchList({
                   <td className="px-3 py-2">{m.date ?? "—"}</td>
                   <td className="px-3 py-2">{m.opponent ?? "—"}</td>
                   <td className="px-3 py-2">{m.result ?? "—"}</td>
+                  <td className="px-3 py-2">{m.category ?? "—"}</td>
                   <td className="px-3 py-2">
                     {m.stats.length} point(s):{" "}
                     {m.stats
@@ -201,7 +129,15 @@ export function DebugMatchList({
                       .join(", ")}
                     {m.stats.length > 3 ? " …" : ""}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2 flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(m.id)}
+                      disabled={isPending}
+                      className="rounded bg-zinc-600 px-2 py-1 text-xs text-white hover:bg-zinc-500 disabled:opacity-50"
+                    >
+                      Edit
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(m.id)}

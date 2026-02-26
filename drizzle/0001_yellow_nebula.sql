@@ -1,0 +1,1 @@
+ALTER TABLE `matches` ADD `category` text DEFAULT 'Uncategorized';
