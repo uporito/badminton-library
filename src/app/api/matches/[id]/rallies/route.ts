@@ -64,3 +64,21 @@ export async function POST(
   }
   return NextResponse.json(rally, { status: 201 });
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const numId = Number(id);
+  if (Number.isNaN(numId) || numId < 1) {
+    return Response.json({ error: "Invalid id" }, { status: 400 });
+  }
+  const result = getMatchById(numId);
+  if (!result.ok) {
+    return Response.json({ error: result.error }, { status: 404 });
+  }
+  const db = getDb();
+  await db.delete(matchRally).where(eq(matchRally.matchId, numId));
+  return NextResponse.json({ deleted: true }, { status: 200 });
+}

@@ -112,6 +112,31 @@ export function InputShotsPanel({
     startTransition(() => router.refresh());
   }
 
+  async function handleReset() {
+    if (allShots.length === 0) return;
+    if (
+      !window.confirm(
+        "Clear all shots and rallies for this match? This cannot be undone."
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    const res = await fetch(`/api/matches/${matchId}/rallies`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Failed to clear shots and rallies");
+      return;
+    }
+    setCurrentRallyId(null);
+    setZoneFrom(null);
+    setZoneTo(null);
+    setZoneStep("from");
+    startTransition(() => router.refresh());
+  }
+
   function handleZoneClick(side: Side, zone: Zone) {
     if (zoneStep === "from") {
       setZoneFrom({ side, zone });
@@ -242,9 +267,21 @@ export function InputShotsPanel({
       </div>
 
       <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-        <h3 className="mb-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
-          Shots for this match ({allShots.length})
-        </h3>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+            Shots for this match ({allShots.length})
+          </h3>
+          {allShots.length > 0 && (
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={isPending}
+              className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 dark:border-red-800 dark:bg-red-950 dark:text-red-300 dark:hover:bg-red-900/50"
+            >
+              Reset (clear all)
+            </button>
+          )}
+        </div>
         <ul className="max-h-48 list-none space-y-1 overflow-y-auto text-sm">
           {allShots.length === 0 ? (
             <li className="text-zinc-500 dark:text-zinc-400">
