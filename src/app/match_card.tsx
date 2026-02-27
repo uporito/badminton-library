@@ -39,7 +39,7 @@ function VideoPlaceholder({ category }: { category: MatchCategory | null | undef
       aria-hidden
     >
       <svg
-        className={`h-12 w-12 ${iconClass}`}
+        className={`h-8 w-8 ${iconClass}`}
         fill="currentColor"
         viewBox="0 0 24 24"
         aria-hidden
@@ -63,11 +63,11 @@ export function MatchCard({ match }: MatchCardProps) {
       className={`block rounded-xl border p-0 shadow-sm transition-shadow hover:shadow-md ${cardClasses}`}
     >
       <VideoPlaceholder category={category} />
-      <div className="p-3">
-        <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
+      <div className="p-2">
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
           {match.title}
         </h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
           {formatDuration(match.durationSeconds)}
         </p>
       </div>

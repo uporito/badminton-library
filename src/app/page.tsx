@@ -2,7 +2,6 @@ import { listMatches } from "@/lib/list_matches";
 import { groupMatchesForLibrary } from "@/lib/group_matches_for_library";
 import type { ListMatchesCategoryFilter, ListMatchesSort } from "@/lib/list_matches";
 import { MatchCard } from "./match_card";
-import { AddMatchForm } from "./add_match_form";
 import Link from "next/link";
 
 const CATEGORY_OPTIONS: { value: ListMatchesCategoryFilter; label: string }[] = [
@@ -50,21 +49,10 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-            Match library
-          </h1>
-          <Link
-            href="/debug"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            Debug: DB &amp; videos
-          </Link>
-        </div>
-        <div className="mb-6">
-          <AddMatchForm />
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+          My Matches
+        </h1>
 
         <div className="mb-4 flex flex-wrap items-center gap-4">
           <div className="flex rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
@@ -108,7 +96,7 @@ export default async function Home({ searchParams }: HomeProps) {
         {matches.length === 0 ? (
           <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
             <p className="text-zinc-600 dark:text-zinc-400">
-              No matches yet. Add one above (title + path relative to VIDEO_ROOT).
+              No matches yet. Add matches from the Database page.
             </p>
           </div>
         ) : (
@@ -118,7 +106,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <h2 className="mb-3 border-b border-zinc-200 pb-2 text-sm font-semibold text-zinc-700 dark:border-zinc-700 dark:text-zinc-300">
                   {section.label}
                 </h2>
-                <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {section.matches.map((match) => (
                     <li key={match.id}>
                       <MatchCard match={match} />
@@ -129,7 +117,7 @@ export default async function Home({ searchParams }: HomeProps) {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
