@@ -38,19 +38,19 @@ export default async function MatchPage({ params }: MatchPageProps) {
           {match.title}
         </h1>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr,minmax(320px,400px)]">
-          <div className="min-w-0 space-y-6">
-            <div className="overflow-hidden rounded-lg bg-black shadow-lg">
+        {/* Top row: video (left 2/3) + analysis (right 1/3) */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[2fr_1fr]">
+          <div className="min-w-0 space-y-4">
+            <div className="flex max-h-[60vh] items-center justify-center overflow-hidden rounded-lg bg-black shadow-lg">
               <video
                 src={videoUrl}
                 controls
-                className="w-full"
+                className="max-h-[60vh] w-full object-contain"
                 preload="metadata"
               >
                 Your browser does not support the video tag.
               </video>
             </div>
-
             <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
               <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 Match metadata
@@ -89,8 +89,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
               </dl>
             </section>
           </div>
-
-          <div className="lg:min-w-0">
+          <div className="min-w-0">
             <InputShotsPanel matchId={match.id} initialRallies={rallies} />
           </div>
         </div>

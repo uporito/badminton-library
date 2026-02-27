@@ -16,6 +16,10 @@ interface CourtZoneGridProps {
   onZoneClick: (side: Side, zone: Zone) => void;
 }
 
+const COURT_GREEN = "bg-green-700";
+const COURT_GREEN_HOVER = "hover:bg-green-600";
+const COURT_LINE = "border border-green-800";
+
 function ZoneGrid({
   side,
   label,
@@ -32,7 +36,7 @@ function ZoneGrid({
   return (
     <div className="inline-block">
       <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">{label}</p>
-      <div className="grid grid-cols-3 gap-0.5">
+      <div className="grid grid-cols-3 gap-0">
         {[0, 1, 2].map((row) =>
           [0, 1, 2].map((col) => {
             const zone = zoneAt(row, col);
@@ -44,12 +48,12 @@ function ZoneGrid({
                 key={zone}
                 type="button"
                 onClick={() => onZoneClick(side, zone)}
-                className={`flex h-9 w-9 items-center justify-center rounded border text-xs sm:h-10 sm:w-10 ${
+                className={`flex h-9 w-9 items-center justify-center text-xs text-white sm:h-10 sm:w-10 ${COURT_LINE} ${
                   isFrom
-                    ? "border-green-600 bg-green-100 dark:border-green-500 dark:bg-green-900/40"
+                    ? "bg-green-600 ring-2 ring-inset ring-white hover:bg-green-500"
                     : isTo
-                      ? "border-blue-600 bg-blue-100 dark:border-blue-500 dark:bg-blue-900/40"
-                      : "border-zinc-300 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                      ? "bg-green-500 ring-2 ring-inset ring-blue-300 hover:bg-green-400"
+                      : `${COURT_GREEN} ${COURT_GREEN_HOVER}`
                 }`}
                 title={`${COL_LABELS[col]} ${ROW_LABELS[row].toLowerCase()}`}
               >

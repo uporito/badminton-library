@@ -109,6 +109,17 @@ export function InputShotsPanel({
     setZoneFrom(null);
     setZoneTo(null);
     setZoneStep("from");
+
+    if (outcome === "winner" || outcome === "error") {
+      const newRallyRes = await fetch(`/api/matches/${matchId}/rallies`, {
+        method: "POST",
+      });
+      if (newRallyRes.ok) {
+        const newRallyData = await newRallyRes.json();
+        setCurrentRallyId(newRallyData.id);
+      }
+    }
+
     startTransition(() => router.refresh());
   }
 
@@ -149,6 +160,14 @@ export function InputShotsPanel({
 
   const allShots = initialRallies.flatMap((r) => r.shots);
 
+  const rallyIdToNumber = new Map(
+    initialRallies.map((r, i) => [r.id, i + 1])
+  );
+  const currentRallyNumber =
+    currentRallyId !== null
+      ? rallyIdToNumber.get(currentRallyId) ?? initialRallies.length + 1
+      : null;
+
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
       <h2 className="mb-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
@@ -159,6 +178,15 @@ export function InputShotsPanel({
         <div>
           <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
             Current rally
+            {currentRallyNumber !== null ? (
+              <span className="ml-1.5 font-normal text-zinc-600 dark:text-zinc-300">
+                — Rally #{currentRallyNumber}
+              </span>
+            ) : (
+              <span className="ml-1.5 font-normal text-zinc-400 dark:text-zinc-500">
+                — None
+              </span>
+            )}
           </p>
           <button
             type="button"
@@ -168,18 +196,13 @@ export function InputShotsPanel({
           >
             Start new rally
           </button>
-          {currentRallyId !== null && (
-            <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
-              (Rally #{currentRallyId})
-            </span>
-          )}
         </div>
 
         <div>
           <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
             Shot type
           </p>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {shotTypeEnum.map((t) => (
               <button
                 key={t}
@@ -212,7 +235,7 @@ export function InputShotsPanel({
           <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
             Outcome
           </p>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {outcomeEnum.map((o) => (
               <button
                 key={o}
@@ -234,7 +257,7 @@ export function InputShotsPanel({
           <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
             Player
           </p>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {sideEnum.map((s) => (
               <button
                 key={s}
@@ -282,24 +305,35 @@ export function InputShotsPanel({
             </button>
           )}
         </div>
-        <ul className="max-h-48 list-none space-y-1 overflow-y-auto text-sm">
+        <ul className="max-h-96 list-none space-y-2 overflow-y-auto text-sm">
           {allShots.length === 0 ? (
-            <li className="text-zinc-500 dark:text-zinc-400">
+            <li className="rounded bg-zinc-100 px-3 py-2 text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
               No shots entered yet.
             </li>
           ) : (
-            initialRallies.map((rally) => (
-              <li key={rally.id} className="text-zinc-700 dark:text-zinc-300">
-                <span className="font-medium">Rally {rally.id}</span> (
-                {rally.rallyLength}):{" "}
-                {rally.shots
-                  .map(
-                    (s) =>
-                      `${SHOT_TYPE_LABELS[s.shotType as keyof typeof SHOT_TYPE_LABELS]} / ${OUTCOME_LABELS[s.outcome as keyof typeof OUTCOME_LABELS]} (${SIDE_LABELS[s.player as keyof typeof SIDE_LABELS]})`
-                  )
-                  .join(", ")}
-              </li>
-            ))
+            initialRallies.flatMap((rally, rallyIndex) =>
+              rally.shots.map((shot) => {
+                const outcomeBg =
+                  shot.outcome === "winner"
+                    ? "bg-green-100 text-zinc-700 dark:bg-green-900/30 dark:text-zinc-300"
+                    : shot.outcome === "error"
+                      ? "bg-red-100 text-zinc-700 dark:bg-red-900/30 dark:text-zinc-300"
+                      : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300";
+                const rallyNumber = rallyIndex + 1;
+                return (
+                  <li
+                    key={shot.id}
+                    className={`rounded px-3 py-2 ${outcomeBg}`}
+                  >
+                    <span className="font-medium">Rally {rallyNumber}</span>
+                    {" · "}
+                    {SHOT_TYPE_LABELS[shot.shotType as keyof typeof SHOT_TYPE_LABELS]} /{" "}
+                    {OUTCOME_LABELS[shot.outcome as keyof typeof OUTCOME_LABELS]} (
+                    {SIDE_LABELS[shot.player as keyof typeof SIDE_LABELS]})
+                  </li>
+                );
+              })
+            )
           )}
         </ul>
       </div>
