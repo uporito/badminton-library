@@ -1,7 +1,6 @@
 import fs from "fs/promises";
 import { getDb } from "@/db/client";
-import { matches, matchStats } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { matches, matchShots } from "@/db/schema";
 import { DebugMatchList } from "./debug_match_list";
 
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov"];
@@ -34,16 +33,16 @@ async function listVideoFilesUnder(root: string): Promise<string[]> {
 export default async function DebugPage() {
   const db = getDb();
   const allMatches = await db.select().from(matches);
-  const allStats = await db.select().from(matchStats);
-  const statsByMatchId = new Map<number, typeof allStats>();
-  for (const s of allStats) {
-    const list = statsByMatchId.get(s.matchId) ?? [];
+  const allShots = await db.select().from(matchShots);
+  const shotsByMatchId = new Map<number, typeof allShots>();
+  for (const s of allShots) {
+    const list = shotsByMatchId.get(s.matchId) ?? [];
     list.push(s);
-    statsByMatchId.set(s.matchId, list);
+    shotsByMatchId.set(s.matchId, list);
   }
-  const matchesWithStats = allMatches.map((m) => ({
+  const matchesWithShots = allMatches.map((m) => ({
     ...m,
-    stats: statsByMatchId.get(m.id) ?? [],
+    shots: shotsByMatchId.get(m.id) ?? [],
   }));
 
   const videoRoot = process.env.VIDEO_ROOT;
@@ -54,9 +53,9 @@ export default async function DebugPage() {
 
   const videoFilesSet = new Set(videoFiles);
   const dbPathsSet = new Set(
-    matchesWithStats.map((m) => normalizePath(m.videoPath))
+    matchesWithShots.map((m) => normalizePath(m.videoPath))
   );
-  const inDbButMissing = matchesWithStats
+  const inDbButMissing = matchesWithShots
     .filter((m) => !videoFilesSet.has(normalizePath(m.videoPath)))
     .map((m) => m.videoPath);
   const onDiskButNotInDb = videoFiles.filter((p) => !dbPathsSet.has(p));
@@ -73,7 +72,7 @@ export default async function DebugPage() {
           </p>
         )}
         <DebugMatchList
-          matches={matchesWithStats}
+          matches={matchesWithShots}
           videoFiles={videoFiles}
           inDbButMissing={inDbButMissing}
           onDiskButNotInDb={onDiskButNotInDb}

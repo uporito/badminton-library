@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
-import { matches, matchStats } from "./schema.js";
+import { matches, matchRally, matchShots } from "./schema.js";
 
 const sqlite = new Database("./data/sqlite.db");
 const db = drizzle(sqlite);
@@ -35,26 +35,95 @@ function seed() {
     .all();
 
   if (m1?.id) {
-    db.insert(matchStats)
+    const [r1, r2, r3] = db
+      .insert(matchRally)
       .values([
-        { matchId: m1.id, pointIndex: 1, winner: "you", isWinner: true, shotType: "smash" },
-        { matchId: m1.id, pointIndex: 2, winner: "opponent", isError: true, shotType: "clear" },
-        { matchId: m1.id, pointIndex: 3, winner: "you", isWinner: true, shotType: "drop" },
+        { matchId: m1.id, rallyLength: 1 },
+        { matchId: m1.id, rallyLength: 1 },
+        { matchId: m1.id, rallyLength: 1 },
       ])
-      .run();
+      .returning({ id: matchRally.id })
+      .all();
+    if (r1?.id)
+      db.insert(matchShots).values({
+        matchId: m1.id,
+        rallyId: r1.id,
+        shotType: "smash",
+        zoneFromSide: "me",
+        zoneFrom: "center_mid",
+        zoneToSide: "opponent",
+        zoneTo: "left_back",
+        outcome: "winner",
+        isLastShotOfRally: true,
+        player: "me",
+      }).run();
+    if (r2?.id)
+      db.insert(matchShots).values({
+        matchId: m1.id,
+        rallyId: r2.id,
+        shotType: "clear",
+        zoneFromSide: "opponent",
+        zoneFrom: "center_back",
+        zoneToSide: "me",
+        zoneTo: "center_back",
+        outcome: "error",
+        isLastShotOfRally: true,
+        player: "opponent",
+      }).run();
+    if (r3?.id)
+      db.insert(matchShots).values({
+        matchId: m1.id,
+        rallyId: r3.id,
+        shotType: "drop",
+        zoneFromSide: "me",
+        zoneFrom: "left_front",
+        zoneToSide: "opponent",
+        zoneTo: "right_front",
+        outcome: "winner",
+        isLastShotOfRally: true,
+        player: "me",
+      }).run();
   }
 
   if (m2?.id) {
-    db.insert(matchStats)
+    const [r1, r2] = db
+      .insert(matchRally)
       .values([
-        { matchId: m2.id, pointIndex: 1, winner: "opponent", isError: true, shotType: "serve" },
-        { matchId: m2.id, pointIndex: 2, winner: "you", isWinner: true, shotType: "drive" },
+        { matchId: m2.id, rallyLength: 1 },
+        { matchId: m2.id, rallyLength: 1 },
       ])
-      .run();
+      .returning({ id: matchRally.id })
+      .all();
+    if (r1?.id)
+      db.insert(matchShots).values({
+        matchId: m2.id,
+        rallyId: r1.id,
+        shotType: "serve",
+        zoneFromSide: "opponent",
+        zoneFrom: "center_back",
+        zoneToSide: "me",
+        zoneTo: "center_front",
+        outcome: "error",
+        isLastShotOfRally: true,
+        player: "opponent",
+      }).run();
+    if (r2?.id)
+      db.insert(matchShots).values({
+        matchId: m2.id,
+        rallyId: r2.id,
+        shotType: "drive",
+        zoneFromSide: "me",
+        zoneFrom: "center_mid",
+        zoneToSide: "opponent",
+        zoneTo: "right_mid",
+        outcome: "winner",
+        isLastShotOfRally: true,
+        player: "me",
+      }).run();
   }
 
   sqlite.close();
-  console.log("Seed completed: 2 matches, 5 stats rows.");
+  console.log("Seed completed: 2 matches, rallies and shots.");
 }
 
 seed();

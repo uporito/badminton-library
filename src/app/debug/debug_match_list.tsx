@@ -7,14 +7,18 @@ import { MatchForm } from "@/app/match_form";
 import type { MatchRow } from "@/lib/get_match_by_id";
 import type { MatchCategory } from "@/db/schema";
 
-type MatchStat = {
+type MatchShot = {
   id: number;
   matchId: number;
-  pointIndex: number | null;
-  winner: "you" | "opponent" | null;
-  isError: boolean | null;
-  isWinner: boolean | null;
-  shotType: string | null;
+  rallyId: number;
+  shotType: string;
+  zoneFromSide: string;
+  zoneFrom: string;
+  zoneToSide: string;
+  zoneTo: string;
+  outcome: string;
+  isLastShotOfRally: boolean;
+  player: string;
   createdAt: Date | null;
 };
 
@@ -32,10 +36,10 @@ type Match = {
   updatedAt: Date | null;
 };
 
-type MatchWithStats = Match & { stats: MatchStat[] };
+type MatchWithShots = Match & { shots: MatchShot[] };
 
 interface DebugMatchListProps {
-  matches: MatchWithStats[];
+  matches: MatchWithShots[];
   videoFiles: string[];
   inDbButMissing: string[];
   onDiskButNotInDb: string[];
@@ -106,7 +110,7 @@ export function DebugMatchList({
                 <th className="px-3 py-2 font-medium">Opponent</th>
                 <th className="px-3 py-2 font-medium">Result</th>
                 <th className="px-3 py-2 font-medium">Category</th>
-                <th className="px-3 py-2 font-medium">Stats</th>
+                <th className="px-3 py-2 font-medium">Shots</th>
                 <th className="px-3 py-2 font-medium">Actions</th>
               </tr>
             </thead>
@@ -122,12 +126,12 @@ export function DebugMatchList({
                   <td className="px-3 py-2">{m.result ?? "—"}</td>
                   <td className="px-3 py-2">{m.category ?? "—"}</td>
                   <td className="px-3 py-2">
-                    {m.stats.length} point(s):{" "}
-                    {m.stats
+                    {m.shots.length} shot(s):{" "}
+                    {m.shots
                       .slice(0, 3)
-                      .map((s) => `${s.winner}/${s.shotType ?? "?"}`)
+                      .map((s) => `${s.shotType}/${s.outcome}`)
                       .join(", ")}
-                    {m.stats.length > 3 ? " …" : ""}
+                    {m.shots.length > 3 ? " …" : ""}
                   </td>
                   <td className="px-3 py-2 flex gap-1">
                     <button

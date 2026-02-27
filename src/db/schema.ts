@@ -33,27 +33,70 @@ export const matches = sqliteTable("matches", {
     .$defaultFn(() => new Date()),
 });
 
-export const matchStats = sqliteTable("match_stats", {
+export const matchRally = sqliteTable("match_rallies", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   matchId: integer("match_id")
     .notNull()
     .references(() => matches.id, { onDelete: "cascade" }),
-  pointIndex: integer("point_index"),
-  winner: text("winner", { enum: ["you", "opponent"] }),
-  isError: integer("is_error", { mode: "boolean" }).default(false),
-  isWinner: integer("is_winner", { mode: "boolean" }).default(false),
-  shotType: text("shot_type", {
-    enum: [
-      "serve",
-      "clear",
-      "smash",
-      "drop",
-      "drive",
-      "lift",
-      "net",
-      "block",
-    ],
-  }),
+  rallyLength: integer("rally_length").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const zoneEnum = [
+  "left_front",
+  "left_mid",
+  "left_back",
+  "center_front",
+  "center_mid",
+  "center_back",
+  "right_front",
+  "right_mid",
+  "right_back",
+] as const;
+
+export type Zone = (typeof zoneEnum)[number];
+
+export const sideEnum = ["me", "opponent"] as const;
+
+export type Side = (typeof sideEnum)[number];
+
+export const shotTypeEnum = [
+  "serve",
+  "clear",
+  "smash",
+  "drop",
+  "drive",
+  "lift",
+  "net",
+  "block",
+] as const;
+
+export type ShotType = (typeof shotTypeEnum)[number];
+
+export const outcomeEnum = ["winner", "error", "neither"] as const;
+
+export type Outcome = (typeof outcomeEnum)[number];
+
+export const matchShots = sqliteTable("match_shots", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  matchId: integer("match_id")
+    .notNull()
+    .references(() => matches.id, { onDelete: "cascade" }),
+  rallyId: integer("rally_id")
+    .notNull()
+    .references(() => matchRally.id, { onDelete: "cascade" }),
+  shotType: text("shot_type", { enum: shotTypeEnum }).notNull(),
+  zoneFromSide: text("zone_from_side", { enum: sideEnum }).notNull(),
+  zoneFrom: text("zone_from", { enum: zoneEnum }).notNull(),
+  zoneToSide: text("zone_to_side", { enum: sideEnum }).notNull(),
+  zoneTo: text("zone_to", { enum: zoneEnum }).notNull(),
+  outcome: text("outcome", { enum: outcomeEnum }).notNull(),
+  isLastShotOfRally: integer("is_last_shot_of_rally", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  player: text("player", { enum: sideEnum }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
