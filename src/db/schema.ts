@@ -39,6 +39,7 @@ export const matchRally = sqliteTable("match_rallies", {
     .notNull()
     .references(() => matches.id, { onDelete: "cascade" }),
   rallyLength: integer("rally_length").notNull().default(0),
+  wonByMe: integer("won_by_me", { mode: "boolean" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -93,6 +94,7 @@ export const matchShots = sqliteTable("match_shots", {
   zoneToSide: text("zone_to_side", { enum: sideEnum }).notNull(),
   zoneTo: text("zone_to", { enum: zoneEnum }).notNull(),
   outcome: text("outcome", { enum: outcomeEnum }).notNull(),
+  wonByMe: integer("won_by_me", { mode: "boolean" }),
   isLastShotOfRally: integer("is_last_shot_of_rally", { mode: "boolean" })
     .notNull()
     .default(false),

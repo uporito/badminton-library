@@ -23,6 +23,15 @@ const CreateShotBodySchema = z.object({
   player: z.enum(sideEnum),
 });
 
+function computeWonByMe(
+  outcome: (typeof outcomeEnum)[number],
+  player: (typeof sideEnum)[number]
+): boolean | null {
+  if (outcome === "neither") return null;
+  if (outcome === "winner") return player === "me";
+  return player === "opponent"; // error: I win if opponent erred
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -81,6 +90,7 @@ export async function POST(
   const data = parsed.data;
   const isLastShotOfRally =
     data.outcome === "winner" || data.outcome === "error";
+  const wonByMe = computeWonByMe(data.outcome, data.player);
   const db = getDb();
   let rallyId = data.rallyId;
   let rallyCreated = false;
@@ -115,6 +125,7 @@ export async function POST(
       zoneToSide: data.zoneToSide,
       zoneTo: data.zoneTo,
       outcome: data.outcome,
+      wonByMe,
       isLastShotOfRally,
       player: data.player,
     })
@@ -128,9 +139,15 @@ export async function POST(
     .where(eq(matchRally.id, rallyId))
     .limit(1);
   const currentLength = updatedRally?.rallyLength ?? 0;
+  const rallyUpdate: { rallyLength: number; wonByMe?: boolean | null } = {
+    rallyLength: currentLength + 1,
+  };
+  if (isLastShotOfRally) {
+    rallyUpdate.wonByMe = wonByMe;
+  }
   await db
     .update(matchRally)
-    .set({ rallyLength: currentLength + 1 })
+    .set(rallyUpdate)
     .where(eq(matchRally.id, rallyId));
   return NextResponse.json(
     { shot, rallyCreated: rallyCreated ? { id: rallyId } : undefined },

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMatchById } from "@/lib/get_match_by_id";
 import { getDb } from "@/db/client";
 import { matchRally, matchShots } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 export async function DELETE(
   _request: NextRequest,
@@ -40,9 +40,25 @@ export async function DELETE(
     .where(eq(matchRally.id, rallyId))
     .limit(1);
   if (rally && rally.rallyLength > 0) {
+    const newLength = rally.rallyLength - 1;
+    const rallyUpdate: { rallyLength: number; wonByMe: boolean | null } = {
+      rallyLength: newLength,
+      wonByMe: null,
+    };
+    if (newLength > 0) {
+      const [newLastShot] = await db
+        .select({ wonByMe: matchShots.wonByMe })
+        .from(matchShots)
+        .where(eq(matchShots.rallyId, rallyId))
+        .orderBy(desc(matchShots.id))
+        .limit(1);
+      if (newLastShot) {
+        rallyUpdate.wonByMe = newLastShot.wonByMe;
+      }
+    }
     await db
       .update(matchRally)
-      .set({ rallyLength: rally.rallyLength - 1 })
+      .set(rallyUpdate)
       .where(eq(matchRally.id, rallyId));
   }
   return NextResponse.json({ deleted: shotIdNum }, { status: 200 });
