@@ -73,17 +73,17 @@ export function CourtZoneGrid({
   onZoneClick,
 }: CourtZoneGridProps) {
   return (
-    <div className="flex flex-wrap gap-6">
+    <div className="flex flex-col gap-0">
       <ZoneGrid
-        side="me"
-        label="My side"
+        side="opponent"
+        label="Opponent side"
         zoneFrom={zoneFrom}
         zoneTo={zoneTo}
         onZoneClick={onZoneClick}
       />
       <ZoneGrid
-        side="opponent"
-        label="Opponent side"
+        side="me"
+        label="My side"
         zoneFrom={zoneFrom}
         zoneTo={zoneTo}
         onZoneClick={onZoneClick}

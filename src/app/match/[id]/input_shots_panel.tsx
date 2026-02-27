@@ -198,37 +198,38 @@ export function InputShotsPanel({
           </button>
         </div>
 
-        <div>
-          <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Shot type
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {shotTypeEnum.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setShotType(t)}
-                className={`rounded px-2 py-1 text-sm ${
-                  shotType === t
-                    ? "bg-zinc-700 text-white dark:bg-zinc-500"
-                    : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
-                }`}
-              >
-                {SHOT_TYPE_LABELS[t]}
-              </button>
-            ))}
+        <div className="flex items-stretch gap-4">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              Shot type
+            </p>
+            <div className="flex flex-col gap-1">
+              {shotTypeEnum.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setShotType(t)}
+                  className={`w-full rounded px-2 py-1 text-center text-sm ${
+                    shotType === t
+                      ? "bg-zinc-700 text-white dark:bg-zinc-500"
+                      : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
+                  }`}
+                >
+                  {SHOT_TYPE_LABELS[t]}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            From / To zones — click &quot;from&quot; then &quot;to&quot;
-          </p>
-          <CourtZoneGrid
-            zoneFrom={zoneFrom}
-            zoneTo={zoneTo}
-            onZoneClick={handleZoneClick}
-          />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              Shot From/To
+            </p>
+            <CourtZoneGrid
+              zoneFrom={zoneFrom}
+              zoneTo={zoneTo}
+              onZoneClick={handleZoneClick}
+            />
+          </div>
         </div>
 
         <div>
