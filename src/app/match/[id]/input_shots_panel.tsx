@@ -314,17 +314,17 @@ export function InputShotsPanel({
           ) : (
             initialRallies.flatMap((rally, rallyIndex) =>
               rally.shots.map((shot) => {
-                const outcomeBg =
-                  shot.outcome === "winner"
+                const wonByMeBg =
+                  shot.wonByMe === true
                     ? "bg-green-100 text-zinc-700 dark:bg-green-900/30 dark:text-zinc-300"
-                    : shot.outcome === "error"
+                    : shot.wonByMe === false
                       ? "bg-red-100 text-zinc-700 dark:bg-red-900/30 dark:text-zinc-300"
                       : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300";
                 const rallyNumber = rallyIndex + 1;
                 return (
                   <li
                     key={shot.id}
-                    className={`rounded px-3 py-2 ${outcomeBg}`}
+                    className={`rounded px-3 py-2 ${wonByMeBg}`}
                   >
                     <span className="font-medium">Rally {rallyNumber}</span>
                     {" · "}
