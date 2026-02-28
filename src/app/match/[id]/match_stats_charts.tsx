@@ -33,7 +33,117 @@ const OUTCOME_HEX: Record<string, string> = {
   Neither: "#d4d4d8", /* zinc-300 */
 };
 
+const OUTCOME_ORDER_TOOLTIP = ["Winner", "Error", "Neither"] as const;
+
+type BarDataItem = {
+  label: string;
+  Winner: number;
+  Error: number;
+  Neither: number;
+  _total: number;
+};
+
+interface OutcomeBarTooltipProps {
+  active?: boolean;
+  payload?: unknown[];
+  label?: string;
+  data: BarDataItem[];
+}
+
+function OutcomeBarTooltip({
+  active,
+  payload,
+  label,
+  data,
+}: OutcomeBarTooltipProps) {
+  if (!active || !payload) return null;
+  const selectedItem = data.find((item) => item.label === label);
+  if (!selectedItem || selectedItem._total === 0) return null;
+
+  const items = OUTCOME_ORDER_TOOLTIP.map((outcome) => ({
+    outcome,
+    value: selectedItem[outcome],
+    percentage:
+      selectedItem._total > 0
+        ? Math.round((selectedItem[outcome] / selectedItem._total) * 100)
+        : 0,
+  }));
+
+  return (
+    <div className="w-60 -translate-y-5 rounded-tremor-default border border-zinc-200 bg-white px-4 py-3 text-tremor-default shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
+      <p className="flex items-center justify-between">
+        <span className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+          Shot type
+        </span>
+        <span className="text-tremor-content dark:text-dark-tremor-content">
+          {label}
+        </span>
+      </p>
+      <div className="my-3 border-b border-zinc-200 dark:border-zinc-700" />
+      <div className="space-y-1.5">
+        {items.map(({ outcome, value, percentage }) => (
+          <div key={outcome} className="flex items-center space-x-2.5">
+            <span
+              className="size-2.5 shrink-0 rounded-sm border-0"
+              style={{ backgroundColor: OUTCOME_HEX[outcome] }}
+              aria-hidden
+            />
+            <div className="flex w-full justify-between">
+              <span className="text-tremor-content-emphasis dark:text-dark-tremor-content-emphasis">
+                {outcome}
+              </span>
+              <div className="flex items-center space-x-1">
+                <span className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+                  {value}
+                </span>
+                <span className="text-tremor-content dark:text-dark-tremor-content">
+                  ({percentage}%)
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export type PlayerFilter = "me" | "opponent" | "both";
+
+interface DonutTooltipProps {
+  active?: boolean;
+  payload?: { name: string; value: number; color?: string }[];
+  label?: string;
+  valueFormatter?: (value: number) => string;
+}
+
+function DonutTooltip({
+  active,
+  payload,
+  label,
+  valueFormatter = (v) => String(v),
+}: DonutTooltipProps) {
+  if (!active || !payload?.length) return null;
+  const item = payload[0];
+  const colorKey = item.color ?? "slate";
+
+  return (
+    <div className="flex w-52 items-center justify-between space-x-4 rounded-tremor-default border border-zinc-200 bg-white px-2.5 py-2 text-tremor-default shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
+      <div className="flex items-center space-x-2 truncate">
+        <span
+          className={`size-2.5 shrink-0 rounded-sm border-0 ${LEGEND_BG[colorKey] ?? "bg-slate-500"}`}
+          aria-hidden
+        />
+        <p className="truncate text-tremor-content dark:text-dark-tremor-content">
+          {item.name ?? label}
+        </p>
+      </div>
+      <p className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+        {valueFormatter(item.value)}
+      </p>
+    </div>
+  );
+}
 
 const LEGEND_BG: Record<string, string> = {
   blue: "bg-blue-500",
@@ -171,6 +281,12 @@ export function MatchStatsCharts({
                   colors={donutColors}
                   valueFormatter={(v) => v.toString()}
                   showLabel
+                  customTooltip={(props) => (
+                    <DonutTooltip
+                      {...props}
+                      valueFormatter={(v) => v.toString()}
+                    />
+                  )}
                   className="h-full min-h-[12rem]"
                 />
               </div>
@@ -221,13 +337,9 @@ export function MatchStatsCharts({
                     tickFormatter={(v) => String(v)}
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--background)",
-                      border: "1px solid var(--foreground)/0.1",
-                      borderRadius: "6px",
-                    }}
-                    formatter={(value: number) => [value, ""]}
-                    labelFormatter={(label) => label}
+                    content={(props) => (
+                      <OutcomeBarTooltip {...props} data={barData} />
+                    )}
                   />
                   <Legend
                     wrapperStyle={{ fontSize: 12 }}
