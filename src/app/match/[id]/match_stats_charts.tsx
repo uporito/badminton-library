@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { DonutChart } from "@tremor/react";
 import {
-  DonutChart,
-  BarChart,
-} from "@tremor/react";
+  ResponsiveContainer,
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 import {
   aggregateShotDistribution,
   aggregateOutcomesByShotType,
@@ -18,6 +25,13 @@ import {
   type ShotForStats,
 } from "@/lib/shot_chart_utils";
 import { ZoneHeatmaps } from "./zone_heatmap_grid";
+
+/** Hex colors for outcome bars: winner=green, error=red, neither=zinc-300 (match UI) */
+const OUTCOME_HEX: Record<string, string> = {
+  Winner: "#22c55e",
+  Error: "#ef4444",
+  Neither: "#d4d4d8", /* zinc-300 */
+};
 
 export type PlayerFilter = "me" | "opponent" | "both";
 
@@ -111,14 +125,16 @@ export function MatchStatsCharts({
     (d) => SHOT_TYPE_COLORS[d.shotType as keyof typeof SHOT_TYPE_COLORS]
   );
 
-  const barData = outcomesByType.map((row) => ({
-    label: row.label,
-    Winner: row.winner,
-    Error: row.error,
-    Neither: row.neither,
-  }));
+  const barData = outcomesByType
+    .map((row) => ({
+      label: row.label,
+      Winner: row.winner,
+      Error: row.error,
+      Neither: row.neither,
+      _total: row.winner + row.error + row.neither,
+    }))
+    .sort((a, b) => b._total - a._total);
   const barCategories = ["Winner", "Error", "Neither"];
-  const barColors = OUTCOME_ORDER.map((o) => OUTCOME_COLORS[o]);
 
   return (
     <div className="space-y-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -142,8 +158,8 @@ export function MatchStatsCharts({
         </p>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-stretch">
-            <div className="flex min-h-0 flex-col">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-stretch">
+            <div className="flex min-h-0 flex-col sm:col-span-2">
               <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 Shot distribution
               </h3>
@@ -159,9 +175,9 @@ export function MatchStatsCharts({
                 />
               </div>
             </div>
-            <div className="flex min-h-0 flex-col">
+            <div className="flex min-h-0 flex-col sm:col-span-1">
               <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                Court zone heatmaps
+                Distribution of shots From/To
               </h3>
               <div className="min-h-[16rem] flex-1 flex items-center">
                 <ZoneHeatmaps
@@ -176,16 +192,59 @@ export function MatchStatsCharts({
             <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Outcomes by shot type (winner / error / neither)
             </h3>
-            <BarChart
-              data={barData}
-              index="label"
-              categories={barCategories}
-              colors={barColors}
-              stack
-              valueFormatter={(v) => v.toString()}
-              showLegend
-              className="h-48"
-            />
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart
+                  data={barData}
+                  margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
+                  barCategoryGap="70%"
+                  stackOffset="none"
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-zinc-200 dark:stroke-zinc-700"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 12, fill: "currentColor" }}
+                    className="text-zinc-600 dark:text-zinc-400"
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "currentColor" }}
+                    className="text-zinc-600 dark:text-zinc-400"
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                    tickFormatter={(v) => String(v)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--background)",
+                      border: "1px solid var(--foreground)/0.1",
+                      borderRadius: "6px",
+                    }}
+                    formatter={(value: number) => [value, ""]}
+                    labelFormatter={(label) => label}
+                  />
+                  <Legend
+                    wrapperStyle={{ fontSize: 12 }}
+                    formatter={(value) => value}
+                  />
+                  {barCategories.map((key) => (
+                    <Bar
+                      key={key}
+                      dataKey={key}
+                      stackId="a"
+                      fill={OUTCOME_HEX[key]}
+                      maxBarSize={8}
+                    />
+                  ))}
+                </RechartsBarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </>
       )}

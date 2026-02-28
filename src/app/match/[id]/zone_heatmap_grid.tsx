@@ -63,9 +63,6 @@ export function ZoneHeatmaps({ gridOpponentTo, gridMeFrom }: ZoneHeatmapsProps) 
     <div className="inline-flex flex-col gap-0">
       {/* Opponent court (top): shots TO each zone; display flipped and mirrored like court_zone_grid */}
       <div>
-        <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-          Opponent&apos;s court (shots to zone)
-        </p>
         <div className="inline-grid h-[6.75rem] w-[6.75rem] grid-cols-3 grid-rows-3 gap-0 border border-green-800 sm:h-[7.5rem] sm:w-[7.5rem]">
           {[0, 1, 2].map((displayRow) =>
             [0, 1, 2].map((displayCol) => {
@@ -92,9 +89,6 @@ export function ZoneHeatmaps({ gridOpponentTo, gridMeFrom }: ZoneHeatmapsProps) 
       </div>
       {/* My court (bottom): shots FROM each zone; display matches data coords */}
       <div>
-        <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-          My court (shots from zone)
-        </p>
         <div className="inline-grid h-[6.75rem] w-[6.75rem] grid-cols-3 grid-rows-3 gap-0 border border-green-800 sm:h-[7.5rem] sm:w-[7.5rem]">
           {[0, 1, 2].map((displayRow) =>
             [0, 1, 2].map((displayCol) => {

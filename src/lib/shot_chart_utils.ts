@@ -97,7 +97,7 @@ export function aggregateOutcomesByShotType(
       error: row.error,
       neither: row.neither,
     };
-  }).filter((row) => row.winner + row.error + row.neither > 0);
+  });
 }
 
 /** Zone index for 3x3 grid: row 0 = front, row 2 = back; col 0 = left, col 2 = right */
