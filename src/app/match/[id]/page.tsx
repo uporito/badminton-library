@@ -90,10 +90,11 @@ export default async function MatchPage({ params }: MatchPageProps) {
           </div>
           <div className="min-w-0">
             <InputShotsPanel matchId={match.id} initialRallies={rallies} />
-            <div className="mt-4">
-              <MatchStatsCharts shots={shotsForCharts} />
-            </div>
           </div>
+        </div>
+
+        <div className="mt-6 w-full">
+          <MatchStatsCharts shots={shotsForCharts} />
         </div>
       </main>
     </div>

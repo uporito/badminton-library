@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   DonutChart,
   BarChart,
@@ -16,6 +17,8 @@ import {
   type ShotForStats,
 } from "@/lib/shot_chart_utils";
 import { ZoneHeatmaps } from "./zone_heatmap_grid";
+
+export type PlayerFilter = "me" | "opponent" | "both";
 
 const LEGEND_BG: Record<string, string> = {
   blue: "bg-blue-500",
@@ -47,13 +50,56 @@ function ShotTypeLegend() {
 
 interface MatchStatsChartsProps {
   shots: ShotForStats[];
+  /** When provided, the selector is controlled by the parent (e.g. for placing it elsewhere). */
+  playerFilter?: PlayerFilter;
+  onPlayerFilterChange?: (value: PlayerFilter) => void;
+  /** When true and controlled, do not render the selector inside this component (parent renders it). */
+  hidePlayerFilter?: boolean;
 }
 
-export function MatchStatsCharts({ shots }: MatchStatsChartsProps) {
-  const distribution = aggregateShotDistribution(shots);
-  const outcomesByType = aggregateOutcomesByShotType(shots);
-  const gridMe = aggregateZoneCounts(shots, "me");
-  const gridOpponent = aggregateZoneCounts(shots, "opponent");
+function PlayerFilterSelect({
+  value,
+  onChange,
+  className,
+}: {
+  value: PlayerFilter;
+  onChange: (value: PlayerFilter) => void;
+  className?: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as PlayerFilter)}
+      className={`rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500 dark:focus:ring-zinc-500 ${className ?? ""}`}
+      aria-label="Filter by player"
+    >
+      <option value="both">Both</option>
+      <option value="me">Shots by me</option>
+      <option value="opponent">Shots by opponent</option>
+    </select>
+  );
+}
+
+export function MatchStatsCharts({
+  shots,
+  playerFilter: controlledFilter,
+  onPlayerFilterChange,
+  hidePlayerFilter = false,
+}: MatchStatsChartsProps) {
+  const [internalFilter, setInternalFilter] = useState<PlayerFilter>("me");
+  const playerFilter = controlledFilter ?? internalFilter;
+  const setPlayerFilter =
+    onPlayerFilterChange ?? setInternalFilter;
+  const showSelector = !hidePlayerFilter;
+  const filteredShots =
+    playerFilter === "both"
+      ? shots
+      : shots.filter((s) => s.player === playerFilter);
+
+  const distribution = aggregateShotDistribution(filteredShots);
+  const outcomesByType = aggregateOutcomesByShotType(filteredShots);
+  const gridMe = aggregateZoneCounts(filteredShots, "me");
+  const gridOpponent = aggregateZoneCounts(filteredShots, "opponent");
 
   const donutData = distribution.map((d) => ({
     shotType: d.shotType,
@@ -75,16 +121,23 @@ export function MatchStatsCharts({ shots }: MatchStatsChartsProps) {
 
   return (
     <div className="space-y-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-        Shot stats
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+          Shot stats
+        </h2>
+        {showSelector && (
+          <PlayerFilterSelect value={playerFilter} onChange={setPlayerFilter} />
+        )}
+      </div>
 
       {/* Consistent shot-type color legend (bright on white) */}
       <ShotTypeLegend />
 
-      {shots.length === 0 ? (
+      {filteredShots.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          No shots yet. Add shots in the panel to see charts.
+          {shots.length === 0
+            ? "No shots yet. Add shots in the panel to see charts."
+            : "No shots by the selected player(s)."}
         </p>
       ) : (
         <>

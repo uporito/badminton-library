@@ -3,6 +3,10 @@
 /* Scan Tremor components for Tailwind classes */
 @source "../../node_modules/@tremor/react/dist/**/*.js";
 
+/* Safelist chart fill/stroke classes Tremor builds at runtime (e.g. fill-blue-500) */
+@source inline("{dark:,}fill-{blue,cyan,rose,violet,amber,emerald,pink,slate,green,red}-500");
+@source inline("{dark:,}stroke-{blue,cyan,rose,violet,amber,emerald,pink,slate,green,red}-500");
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
