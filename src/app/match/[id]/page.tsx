@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getMatchById } from "@/lib/get_match_by_id";
 import { getRalliesByMatchId } from "@/lib/get_rallies_by_match_id";
 import { InputShotsPanel } from "./input_shots_panel";
+import { MatchStatsCharts } from "./match_stats_charts";
+import type { ShotForStats } from "@/lib/shot_chart_utils";
 
 interface MatchPageProps {
   params: Promise<{ id: string }>;
@@ -21,6 +23,15 @@ export default async function MatchPage({ params }: MatchPageProps) {
   const ralliesResult = getRalliesByMatchId(numId);
   const rallies = ralliesResult.ok ? ralliesResult.data : [];
   const videoUrl = `/api/video?path=${encodeURIComponent(match.videoPath)}`;
+  const shotsForCharts: ShotForStats[] = rallies.flatMap((r) =>
+    r.shots.map((s) => ({
+      shotType: s.shotType,
+      outcome: s.outcome,
+      player: s.player,
+      zoneFrom: s.zoneFrom,
+      zoneTo: s.zoneTo,
+    }))
+  );
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
@@ -79,6 +90,9 @@ export default async function MatchPage({ params }: MatchPageProps) {
           </div>
           <div className="min-w-0">
             <InputShotsPanel matchId={match.id} initialRallies={rallies} />
+            <div className="mt-4">
+              <MatchStatsCharts shots={shotsForCharts} />
+            </div>
           </div>
         </div>
       </main>
