@@ -168,6 +168,11 @@ export function InputShotsPanel({
       ? rallyIdToNumber.get(currentRallyId) ?? initialRallies.length + 1
       : null;
 
+  const myPoints = initialRallies.filter((r) => r.wonByMe === true).length;
+  const opponentPoints = initialRallies.filter(
+    (r) => r.wonByMe === false
+  ).length;
+
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
       <h2 className="mb-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
@@ -188,14 +193,19 @@ export function InputShotsPanel({
               </span>
             )}
           </p>
-          <button
-            type="button"
-            onClick={handleStartNewRally}
-            disabled={isPending}
-            className="rounded bg-zinc-600 px-3 py-1.5 text-sm text-white hover:bg-zinc-500 disabled:opacity-50"
-          >
-            Start new rally
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleStartNewRally}
+              disabled={isPending}
+              className="rounded bg-zinc-600 px-3 py-1.5 text-sm text-white hover:bg-zinc-500 disabled:opacity-50"
+            >
+              Start new rally
+            </button>
+            <span className="text-sm font-medium tabular-nums text-zinc-600 dark:text-zinc-300">
+              Me {myPoints} – {opponentPoints} Opponent
+            </span>
+          </div>
         </div>
 
         <div className="flex items-stretch gap-4">

@@ -10,6 +10,14 @@ function zoneAt(row: number, col: number): Zone {
   return zoneEnum[row * 3 + col];
 }
 
+/** Opponent court is "facing" us: back line at top, front at bottom; left/right mirrored */
+function zoneAtDisplay(side: Side, displayRow: number, displayCol: number): Zone {
+  if (side === "opponent") {
+    return zoneAt(2 - displayRow, 2 - displayCol);
+  }
+  return zoneAt(displayRow, displayCol);
+}
+
 interface CourtZoneGridProps {
   zoneFrom: { side: Side; zone: Zone } | null;
   zoneTo: { side: Side; zone: Zone } | null;
@@ -18,7 +26,15 @@ interface CourtZoneGridProps {
 
 const COURT_GREEN = "bg-green-700";
 const COURT_GREEN_HOVER = "hover:bg-green-600";
-const COURT_LINE = "border border-green-800";
+function courtBorderClass(displayRow: number, displayCol: number): string {
+  const sides = [
+    displayRow < 2 ? "border-b" : "",
+    displayCol < 2 ? "border-r" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return `${sides} border-green-800`;
+}
 
 function ZoneGrid({
   side,
@@ -36,26 +52,28 @@ function ZoneGrid({
   return (
     <div className="inline-block">
       <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">{label}</p>
-      <div className="grid grid-cols-3 gap-0">
-        {[0, 1, 2].map((row) =>
-          [0, 1, 2].map((col) => {
-            const zone = zoneAt(row, col);
+      <div className="inline-grid h-[6.75rem] w-[6.75rem] grid-cols-3 grid-rows-3 gap-0 border border-green-800 sm:h-[7.5rem] sm:w-[7.5rem]">
+        {[0, 1, 2].map((displayRow) =>
+          [0, 1, 2].map((displayCol) => {
+            const zone = zoneAtDisplay(side, displayRow, displayCol);
             const isFrom =
               zoneFrom?.side === side && zoneFrom?.zone === zone;
             const isTo = zoneTo?.side === side && zoneTo?.zone === zone;
+            const dataRow = side === "opponent" ? 2 - displayRow : displayRow;
+            const dataCol = side === "opponent" ? 2 - displayCol : displayCol;
             return (
               <button
                 key={zone}
                 type="button"
                 onClick={() => onZoneClick(side, zone)}
-                className={`flex h-9 w-9 items-center justify-center text-xs text-white sm:h-10 sm:w-10 ${COURT_LINE} ${
+                className={`flex aspect-square min-w-0 items-center justify-center text-xs text-white ${courtBorderClass(displayRow, displayCol)} ${
                   isFrom
                     ? "bg-green-600 ring-2 ring-inset ring-white hover:bg-green-500"
                     : isTo
                       ? "bg-green-500 ring-2 ring-inset ring-blue-300 hover:bg-green-400"
                       : `${COURT_GREEN} ${COURT_GREEN_HOVER}`
                 }`}
-                title={`${COL_LABELS[col]} ${ROW_LABELS[row].toLowerCase()}`}
+                title={`${COL_LABELS[dataCol]} ${ROW_LABELS[dataRow].toLowerCase()}`}
               >
                 {isFrom ? "F" : isTo ? "T" : ""}
               </button>
