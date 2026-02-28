@@ -8,7 +8,8 @@ import {
 import {
   aggregateShotDistribution,
   aggregateOutcomesByShotType,
-  aggregateZoneCounts,
+  aggregateZoneToCountsBySide,
+  aggregateZoneFromCountsBySide,
   SHOT_TYPE_LABELS,
   SHOT_TYPE_COLORS,
   SHOT_TYPE_ORDER,
@@ -98,8 +99,8 @@ export function MatchStatsCharts({
 
   const distribution = aggregateShotDistribution(filteredShots);
   const outcomesByType = aggregateOutcomesByShotType(filteredShots);
-  const gridMe = aggregateZoneCounts(filteredShots, "me");
-  const gridOpponent = aggregateZoneCounts(filteredShots, "opponent");
+  const gridOpponentTo = aggregateZoneToCountsBySide(filteredShots, "opponent");
+  const gridMeFrom = aggregateZoneFromCountsBySide(filteredShots, "me");
 
   const donutData = distribution.map((d) => ({
     shotType: d.shotType,
@@ -141,19 +142,34 @@ export function MatchStatsCharts({
         </p>
       ) : (
         <>
-          <div>
-            <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              Shot distribution
-            </h3>
-            <DonutChart
-              data={donutData}
-              category="count"
-              index="label"
-              colors={donutColors}
-              valueFormatter={(v) => v.toString()}
-              showLabel
-              className="h-48"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-stretch">
+            <div className="flex min-h-0 flex-col">
+              <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Shot distribution
+              </h3>
+              <div className="min-h-[16rem] flex-1">
+                <DonutChart
+                  data={donutData}
+                  category="count"
+                  index="label"
+                  colors={donutColors}
+                  valueFormatter={(v) => v.toString()}
+                  showLabel
+                  className="h-full min-h-[12rem]"
+                />
+              </div>
+            </div>
+            <div className="flex min-h-0 flex-col">
+              <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Court zone heatmaps
+              </h3>
+              <div className="min-h-[16rem] flex-1 flex items-center">
+                <ZoneHeatmaps
+                  gridOpponentTo={gridOpponentTo}
+                  gridMeFrom={gridMeFrom}
+                />
+              </div>
+            </div>
           </div>
 
           <div>
@@ -170,13 +186,6 @@ export function MatchStatsCharts({
               showLegend
               className="h-48"
             />
-          </div>
-
-          <div>
-            <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              Zone heatmaps (from zone)
-            </h3>
-            <ZoneHeatmaps gridMe={gridMe} gridOpponent={gridOpponent} />
           </div>
         </>
       )}

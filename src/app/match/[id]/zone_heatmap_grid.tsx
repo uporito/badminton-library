@@ -1,6 +1,5 @@
 "use client";
 
-import type { Side } from "@/db/schema";
 import { zoneCountRange } from "@/lib/shot_chart_utils";
 
 const ROW_LABELS = ["Front", "Mid", "Back"];
@@ -36,51 +35,88 @@ function getHeatTextColor(count: number, min: number, max: number): string {
   return t >= 0.5 ? "#ffffff" : "#0c4a6e";
 }
 
-interface ZoneHeatmapGridProps {
-  /** 3x3 grid of shot counts (zoneFrom) */
-  grid: number[][];
-  title: string;
-}
-
-export function ZoneHeatmapGrid({ grid, title }: ZoneHeatmapGridProps) {
-  const { min, max } = zoneCountRange(grid);
-
-  return (
-    <div className="inline-block">
-      <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-        {title}
-      </p>
-      <div className="inline-grid h-[6.75rem] w-[6.75rem] grid-cols-3 grid-rows-3 gap-0.5 rounded border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 sm:h-[7.5rem] sm:w-[7.5rem]">
-        {grid.map((row, displayRow) =>
-          row.map((count, displayCol) => (
-            <div
-              key={`${displayRow}-${displayCol}`}
-              className="flex aspect-square min-w-0 items-center justify-center rounded text-xs font-medium text-white drop-shadow-sm"
-              style={{
-                backgroundColor: getHeatColor(count, min, max),
-                color: getHeatTextColor(count, min, max),
-              }}
-              title={`${COL_LABELS[displayCol]} ${ROW_LABELS[displayRow].toLowerCase()}: ${count} shots`}
-            >
-              {count > 0 ? count : ""}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
+/** Opponent court: display (row,col) shows data at (2-row, 2-col) — flipped and mirrored */
+function courtBorderClass(displayRow: number, displayCol: number): string {
+  const sides = [
+    displayRow < 2 ? "border-b" : "",
+    displayCol < 2 ? "border-r" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return `${sides} border-green-800`;
 }
 
 interface ZoneHeatmapsProps {
-  gridMe: number[][];
-  gridOpponent: number[][];
+  /** 3x3 grid: shots TO each zone on opponent's court (data coords: row 0 = front, col 0 = left) */
+  gridOpponentTo: number[][];
+  /** 3x3 grid: shots FROM each zone on my court (data coords: row 0 = front, col 0 = left) */
+  gridMeFrom: number[][];
 }
 
-export function ZoneHeatmaps({ gridMe, gridOpponent }: ZoneHeatmapsProps) {
+export function ZoneHeatmaps({ gridOpponentTo, gridMeFrom }: ZoneHeatmapsProps) {
+  const rangeTop = zoneCountRange(gridOpponentTo);
+  const rangeBottom = zoneCountRange(gridMeFrom);
+  const min = Math.min(rangeTop.min, rangeBottom.min);
+  const max = Math.max(rangeTop.max, rangeBottom.max);
+
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
-      <ZoneHeatmapGrid grid={gridOpponent} title="Opponent shots (from zone)" />
-      <ZoneHeatmapGrid grid={gridMe} title="My shots (from zone)" />
+    <div className="inline-flex flex-col gap-0">
+      {/* Opponent court (top): shots TO each zone; display flipped and mirrored like court_zone_grid */}
+      <div>
+        <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          Opponent&apos;s court (shots to zone)
+        </p>
+        <div className="inline-grid h-[6.75rem] w-[6.75rem] grid-cols-3 grid-rows-3 gap-0 border border-green-800 sm:h-[7.5rem] sm:w-[7.5rem]">
+          {[0, 1, 2].map((displayRow) =>
+            [0, 1, 2].map((displayCol) => {
+              const dataRow = 2 - displayRow;
+              const dataCol = 2 - displayCol;
+              const count = gridOpponentTo[dataRow]?.[dataCol] ?? 0;
+              const dataZoneLabel = `${COL_LABELS[dataCol]} ${ROW_LABELS[dataRow].toLowerCase()}`;
+              return (
+                <div
+                  key={`opp-${displayRow}-${displayCol}`}
+                  className={`flex aspect-square min-w-0 items-center justify-center text-xs font-medium drop-shadow-sm ${courtBorderClass(displayRow, displayCol)}`}
+                  style={{
+                    backgroundColor: getHeatColor(count, min, max),
+                    color: getHeatTextColor(count, min, max),
+                  }}
+                  title={`${dataZoneLabel}: ${count} shots`}
+                >
+                  {count > 0 ? count : ""}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+      {/* My court (bottom): shots FROM each zone; display matches data coords */}
+      <div>
+        <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          My court (shots from zone)
+        </p>
+        <div className="inline-grid h-[6.75rem] w-[6.75rem] grid-cols-3 grid-rows-3 gap-0 border border-green-800 sm:h-[7.5rem] sm:w-[7.5rem]">
+          {[0, 1, 2].map((displayRow) =>
+            [0, 1, 2].map((displayCol) => {
+              const count = gridMeFrom[displayRow]?.[displayCol] ?? 0;
+              const dataZoneLabel = `${COL_LABELS[displayCol]} ${ROW_LABELS[displayRow].toLowerCase()}`;
+              return (
+                <div
+                  key={`me-${displayRow}-${displayCol}`}
+                  className={`flex aspect-square min-w-0 items-center justify-center text-xs font-medium drop-shadow-sm ${courtBorderClass(displayRow, displayCol)}`}
+                  style={{
+                    backgroundColor: getHeatColor(count, min, max),
+                    color: getHeatTextColor(count, min, max),
+                  }}
+                  title={`${dataZoneLabel}: ${count} shots`}
+                >
+                  {count > 0 ? count : ""}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }

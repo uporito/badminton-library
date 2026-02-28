@@ -34,7 +34,7 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
           : `?matchIds=${ids.join(",")}`;
     fetch(`/api/stats/shots${query}`)
       .then((res) => (res.ok ? res.json() : []))
-      .then((raw: { shotType: string; outcome: string; player: string; zoneFrom: string; zoneTo: string }[]) => {
+      .then((raw: { shotType: string; outcome: string; player: string; zoneFrom: string; zoneTo: string; zoneFromSide: string; zoneToSide: string }[]) => {
         setShots(
           raw.map((s) => ({
             shotType: s.shotType,
@@ -42,6 +42,8 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
             player: s.player,
             zoneFrom: s.zoneFrom,
             zoneTo: s.zoneTo,
+            zoneFromSide: s.zoneFromSide,
+            zoneToSide: s.zoneToSide,
           })) as ShotForStats[]
         );
       })

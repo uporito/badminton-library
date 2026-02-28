@@ -30,6 +30,8 @@ export default async function MatchPage({ params }: MatchPageProps) {
       player: s.player,
       zoneFrom: s.zoneFrom,
       zoneTo: s.zoneTo,
+      zoneFromSide: s.zoneFromSide,
+      zoneToSide: s.zoneToSide,
     }))
   );
 

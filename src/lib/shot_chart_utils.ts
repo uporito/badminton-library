@@ -51,6 +51,8 @@ export interface ShotForStats {
   player: Side;
   zoneFrom: string;
   zoneTo: string;
+  zoneFromSide: Side;
+  zoneToSide: Side;
 }
 
 /** Pie/donut data: shot distribution by type */
@@ -118,6 +120,42 @@ export function aggregateZoneCounts(
   ];
   for (const s of shots) {
     if (s.player !== player) continue;
+    const pos = ZONE_INDEX[s.zoneFrom];
+    if (pos) grid[pos.row][pos.col]++;
+  }
+  return grid;
+}
+
+/** Count shots TO each zone on the given side (zoneToSide === side). Returns 3x3 grid [row][col]. */
+export function aggregateZoneToCountsBySide(
+  shots: ShotForStats[],
+  side: Side
+): number[][] {
+  const grid = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ];
+  for (const s of shots) {
+    if (s.zoneToSide !== side) continue;
+    const pos = ZONE_INDEX[s.zoneTo];
+    if (pos) grid[pos.row][pos.col]++;
+  }
+  return grid;
+}
+
+/** Count shots FROM each zone on the given side (zoneFromSide === side). Returns 3x3 grid [row][col]. */
+export function aggregateZoneFromCountsBySide(
+  shots: ShotForStats[],
+  side: Side
+): number[][] {
+  const grid = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ];
+  for (const s of shots) {
+    if (s.zoneFromSide !== side) continue;
     const pos = ZONE_INDEX[s.zoneFrom];
     if (pos) grid[pos.row][pos.col]++;
   }
