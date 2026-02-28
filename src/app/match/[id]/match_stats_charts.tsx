@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DonutChart } from "@tremor/react";
+import { DonutChart } from "@/components/donut_chart";
 import {
   ResponsiveContainer,
   BarChart as RechartsBarChart,
@@ -70,12 +70,12 @@ function OutcomeBarTooltip({
   }));
 
   return (
-    <div className="w-60 -translate-y-5 rounded-tremor-default border border-zinc-200 bg-white px-4 py-3 text-tremor-default shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
+    <div className="w-60 -translate-y-5 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
       <p className="flex items-center justify-between">
-        <span className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+        <span className="font-medium text-zinc-900 dark:text-zinc-100">
           Shot type
         </span>
-        <span className="text-tremor-content dark:text-dark-tremor-content">
+        <span className="text-zinc-600 dark:text-zinc-400">
           {label}
         </span>
       </p>
@@ -89,14 +89,14 @@ function OutcomeBarTooltip({
               aria-hidden
             />
             <div className="flex w-full justify-between">
-              <span className="text-tremor-content-emphasis dark:text-dark-tremor-content-emphasis">
+              <span className="text-zinc-700 dark:text-zinc-300">
                 {outcome}
               </span>
               <div className="flex items-center space-x-1">
-                <span className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">
                   {value}
                 </span>
-                <span className="text-tremor-content dark:text-dark-tremor-content">
+                <span className="text-zinc-600 dark:text-zinc-400">
                   ({percentage}%)
                 </span>
               </div>
@@ -128,17 +128,17 @@ function DonutTooltip({
   const colorKey = item.color ?? "slate";
 
   return (
-    <div className="flex w-52 items-center justify-between space-x-4 rounded-tremor-default border border-zinc-200 bg-white px-2.5 py-2 text-tremor-default shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
+    <div className="flex w-52 items-center justify-between space-x-4 rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-sm shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
       <div className="flex items-center space-x-2 truncate">
         <span
           className={`size-2.5 shrink-0 rounded-sm border-0 ${LEGEND_BG[colorKey] ?? "bg-slate-500"}`}
           aria-hidden
         />
-        <p className="truncate text-tremor-content dark:text-dark-tremor-content">
+        <p className="truncate text-zinc-600 dark:text-zinc-400">
           {item.name ?? label}
         </p>
       </div>
-      <p className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+      <p className="font-medium text-zinc-900 dark:text-zinc-100">
         {valueFormatter(item.value)}
       </p>
     </div>
