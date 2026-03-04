@@ -1,0 +1,13 @@
+---
+description: Stop dev server before git operations to avoid DB lock
+globs: **/*
+alwaysApply: true
+---
+
+# Workflow
+
+## Git and the dev server
+
+- **Stop the Next.js dev server** (`npm run dev`) **before running git operations** that may touch the database or the repo (e.g. merge, checkout, pull, stash, restore of `data/sqlite.db`).
+- SQLite keeps an exclusive or shared lock on `data/sqlite.db` while the app is running. If the server is running, git may fail with "unable to unlink" or "Permission denied" when updating that file, and merges can be blocked.
+- If you need to run merges or branch switches: stop the dev server first, then run the git commands, then start the server again if needed.

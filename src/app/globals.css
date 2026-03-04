@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (toggle via .dark on html) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Safelist chart fill/stroke classes for Recharts (e.g. fill-blue-500) */
+@source inline("{dark:,}fill-{blue,cyan,rose,violet,amber,emerald,pink,slate,green,red}-500");
+@source inline("{dark:,}stroke-{blue,cyan,rose,violet,amber,emerald,pink,slate,green,red}-500");
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -17,6 +24,11 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {

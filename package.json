@@ -12,12 +12,17 @@
     "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "better-sqlite3": "^12.6.2",
+    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.1",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "recharts": "^2.15.0",
+    "tailwind-merge": "^2.6.0",
+    "tailwind-variants": "^0.3.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

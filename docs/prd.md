@@ -14,12 +14,14 @@ Players record badminton matches but have no simple way to organize them, attach
 
 ## Feature list and roadmap
 
-| Phase | Feature | Acceptance criteria |
-|-------|---------|---------------------|
-| **1** | Library + playback | List matches (thumbnail, title, duration); click to play in-app. Videos loaded from one configurable root folder. |
-| **2** | Metadata | Create/edit match: date, opponents, result, notes. Filter/sort library by date, opponent. |
+
+| Phase  | Feature                 | Acceptance criteria                                                                                                                                            |
+| ------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1**  | Library + playback      | List matches (thumbnail, title, duration); click to play in-app. Videos loaded from one configurable root folder.                                              |
+| **2**  | Metadata                | Create/edit match: date, opponents, result, notes. Filter/sort library by date, opponent.                                                                      |
 | **3a** | Manual stats + analysis | Enter per-match or per-point: winner, errors, winners, shot types (serve, clear, smash, drop, etc.). Dashboards: shot distribution, errors vs winners, trends. |
-| **3b** | Vision (stretch) | Separate track: pose or shot-type experiment; integrate only when stable as “suggested” values user can confirm. |
+| **3b** | Vision (stretch)        | Separate track: pose or shot-type experiment; integrate only when stable as “suggested” values user can confirm.                                               |
+
 
 ---
 
@@ -43,15 +45,17 @@ One match has many match_stats (per-point or one aggregate row per match for a s
 
 ## API endpoints
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/api/matches` | List matches (query: sort, filter by date/opponent). |
-| GET | `/api/matches/[id]` | Get one match with stats. |
-| POST | `/api/matches` | Create match (metadata + videoPath). |
-| PATCH | `/api/matches/[id]` | Update match metadata. |
-| DELETE | `/api/matches/[id]` | Delete match and its stats. |
-| GET | `/api/matches/[id]/stats` | Get stats for a match. |
-| POST | `/api/matches/[id]/stats` | Add or replace stats for a match. |
-| GET | `/api/video` | Stream video by path (query: path=). |
+
+| Method | Path                      | Purpose                                              |
+| ------ | ------------------------- | ---------------------------------------------------- |
+| GET    | `/api/matches`            | List matches (query: sort, filter by date/opponent). |
+| GET    | `/api/matches/[id]`       | Get one match with stats.                            |
+| POST   | `/api/matches`            | Create match (metadata + videoPath).                 |
+| PATCH  | `/api/matches/[id]`       | Update match metadata.                               |
+| DELETE | `/api/matches/[id]`       | Delete match and its stats.                          |
+| GET    | `/api/matches/[id]/stats` | Get stats for a match.                               |
+| POST   | `/api/matches/[id]/stats` | Add or replace stats for a match.                    |
+| GET    | `/api/video`              | Stream video by path (query: path=).                 |
+
 
 Optional: `GET /api/config` for root folder path if stored in DB or env.
