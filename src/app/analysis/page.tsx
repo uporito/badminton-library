@@ -6,9 +6,7 @@ export default function AnalysisPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        <AnalysisDashboard matches={matches} />
-      </div>
+      <AnalysisDashboard matches={matches} />
     </div>
   );
 }

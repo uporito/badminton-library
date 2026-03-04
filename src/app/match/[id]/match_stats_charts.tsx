@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DonutChart } from "@/components/donut_chart";
 import {
   ResponsiveContainer,
@@ -70,7 +70,7 @@ function OutcomeBarTooltip({
   }));
 
   return (
-    <div className="w-60 -translate-y-5 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
+    <div className="w-60 -translate-y-5 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-xs shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
       <p className="flex items-center justify-between">
         <span className="font-medium text-zinc-900 dark:text-zinc-100">
           Shot type
@@ -128,7 +128,7 @@ function DonutTooltip({
   const colorKey = item.color ?? "slate";
 
   return (
-    <div className="flex w-52 items-center justify-between space-x-4 rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-sm shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
+    <div className="flex w-52 items-center justify-between space-x-4 rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md">
       <div className="flex items-center space-x-2 truncate">
         <span
           className={`size-2.5 shrink-0 rounded-sm border-0 ${LEGEND_BG[colorKey] ?? "bg-slate-500"}`}
@@ -155,6 +155,25 @@ const LEGEND_BG: Record<string, string> = {
   pink: "bg-pink-500",
   slate: "bg-slate-500",
 };
+
+/** Darker fill for bar chart tooltip cursor in dark mode (zinc-800 with opacity) */
+const BAR_CURSOR_FILL = {
+  light: "rgba(0, 0, 0, 0.06)",
+  dark: "rgba(39, 39, 42, 0.75)",
+} as const;
+
+function useIsDark(): boolean {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const el = document.documentElement;
+    const check = () => setIsDark(el.classList.contains("dark"));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+  return isDark;
+}
 
 function ShotTypeLegend() {
   return (
@@ -211,6 +230,7 @@ export function MatchStatsCharts({
   onPlayerFilterChange,
   hidePlayerFilter = false,
 }: MatchStatsChartsProps) {
+  const isDark = useIsDark();
   const [internalFilter, setInternalFilter] = useState<PlayerFilter>("me");
   const playerFilter = controlledFilter ?? internalFilter;
   const setPlayerFilter =
@@ -270,7 +290,7 @@ export function MatchStatsCharts({
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-stretch">
             <div className="flex min-h-0 flex-col sm:col-span-2">
-              <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              <h3 className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 Shot distribution
               </h3>
               <div className="min-h-[16rem] flex-1">
@@ -292,10 +312,10 @@ export function MatchStatsCharts({
               </div>
             </div>
             <div className="flex min-h-0 flex-col sm:col-span-1">
-              <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              <h3 className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 Distribution of shots From/To
               </h3>
-              <div className="min-h-[16rem] flex-1 flex items-center">
+              <div className="min-h-[16rem] flex flex-1 items-center justify-center">
                 <ZoneHeatmaps
                   gridOpponentTo={gridOpponentTo}
                   gridMeFrom={gridMeFrom}
@@ -304,8 +324,8 @@ export function MatchStatsCharts({
             </div>
           </div>
 
-          <div>
-            <h3 className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <div className="mt-8">
+            <h3 className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Outcomes by shot type (winner / error / neither)
             </h3>
             <div className="h-48 w-full">
@@ -337,6 +357,11 @@ export function MatchStatsCharts({
                     tickFormatter={(v) => String(v)}
                   />
                   <Tooltip
+                    cursor={{
+                      fill: isDark
+                        ? BAR_CURSOR_FILL.dark
+                        : BAR_CURSOR_FILL.light,
+                    }}
                     content={(props) => (
                       <OutcomeBarTooltip {...props} data={barData} />
                     )}

@@ -61,23 +61,21 @@ export default async function DebugPage() {
   const onDiskButNotInDb = videoFiles.filter((p) => !dbPathsSet.has(p));
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-6 font-sans dark:bg-zinc-950">
-      <div className="mx-auto max-w-6xl">
-        <h1 className="mb-8 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-          Debug: DB &amp; videos
-        </h1>
-        {!videoRoot && (
-          <p className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-            VIDEO_ROOT is not set. Video file list will be empty.
-          </p>
-        )}
-        <DebugMatchList
-          matches={matchesWithShots}
-          videoFiles={videoFiles}
-          inDbButMissing={inDbButMissing}
-          onDiskButNotInDb={onDiskButNotInDb}
-        />
-      </div>
+    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
+      <h1 className="mb-8 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        Debug: DB &amp; videos
+      </h1>
+      {!videoRoot && (
+        <p className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          VIDEO_ROOT is not set. Video file list will be empty.
+        </p>
+      )}
+      <DebugMatchList
+        matches={matchesWithShots}
+        videoFiles={videoFiles}
+        inDbButMissing={inDbButMissing}
+        onDiskButNotInDb={onDiskButNotInDb}
+      />
     </div>
   );
 }

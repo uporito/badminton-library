@@ -1,3 +1,4 @@
+import { FilmStripIcon, TrayIcon } from "@phosphor-icons/react/ssr";
 import { listMatches } from "@/lib/list_matches";
 import { groupMatchesForLibrary } from "@/lib/group_matches_for_library";
 import type { ListMatchesCategoryFilter, ListMatchesSort } from "@/lib/list_matches";
@@ -49,12 +50,12 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <FilmStripIcon className="h-7 w-7 shrink-0" aria-hidden />
           My Matches
         </h1>
 
-        <div className="mb-4 flex flex-wrap items-center gap-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
             <span className="mr-2 self-center px-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
               Category
@@ -75,7 +76,7 @@ export default async function Home({ searchParams }: HomeProps) {
           </div>
           <div className="flex rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
             <span className="mr-2 self-center px-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              Sort
+              Sort by
             </span>
             {SORT_OPTIONS.map((s) => (
               <Link
@@ -94,7 +95,11 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
 
         {matches.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
+            <TrayIcon
+              className="h-12 w-12 text-zinc-400 dark:text-zinc-500"
+              aria-hidden
+            />
             <p className="text-zinc-600 dark:text-zinc-400">
               No matches yet. Add matches from the Database page.
             </p>
@@ -117,7 +122,6 @@ export default async function Home({ searchParams }: HomeProps) {
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 }

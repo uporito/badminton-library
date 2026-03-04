@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PlayIcon } from "@phosphor-icons/react/ssr";
 import { formatDuration } from "@/lib/format_duration";
 import type { MatchRow } from "@/lib/get_match_by_id";
 import type { MatchCategory } from "@/db/schema";
@@ -38,14 +39,7 @@ function VideoPlaceholder({ category }: { category: MatchCategory | null | undef
       className={`flex aspect-video w-full items-center justify-center rounded-lg ${bgClass}`}
       aria-hidden
     >
-      <svg
-        className={`h-8 w-8 ${iconClass}`}
-        fill="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden
-      >
-        <path d="M8 5v14l11-7L8 5zM6 3v18h2V3H6zm14 0v18h2V3h-2z" />
-      </svg>
+      <PlayIcon className={`h-8 w-8 ${iconClass}`} aria-hidden />
     </div>
   );
 }
