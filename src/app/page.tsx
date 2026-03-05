@@ -49,14 +49,14 @@ export default async function Home({ searchParams }: HomeProps) {
   const sections = groupMatchesForLibrary(matches, validSort);
 
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
+    <div className="min-h-screen font-sans">
       <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
           <FilmStripIcon className="h-7 w-7 shrink-0" aria-hidden />
           My Matches
         </h1>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="frame-glass flex rounded-xl p-1">
             <span className="mr-2 self-center px-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
               Category
             </span>
@@ -74,7 +74,7 @@ export default async function Home({ searchParams }: HomeProps) {
               </Link>
             ))}
           </div>
-          <div className="flex rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="frame-glass flex rounded-xl p-1">
             <span className="mr-2 self-center px-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
               Sort by
             </span>
@@ -95,7 +95,7 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
 
         {matches.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="frame-glass flex flex-col items-center gap-3 rounded-xl p-12 text-center">
             <TrayIcon
               className="h-12 w-12 text-zinc-400 dark:text-zinc-500"
               aria-hidden

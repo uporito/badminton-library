@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { CircleNotchIcon, CalendarBlankIcon } from "@phosphor-icons/react";
+import { Court3D } from "@/app/analysis/court_3d";
+import { AnalysisShotSelection } from "@/app/analysis/analysis_shot_selection";
+import { AnalysisOutcomesChart } from "@/app/analysis/analysis_outcomes_chart";
 import {
-  CaretDownIcon,
-  CaretUpIcon,
-  ChartLineUpIcon,
-  CircleNotchIcon,
-  ListChecksIcon,
-  CalendarBlankIcon,
-} from "@phosphor-icons/react";
-import { MatchStatsCharts } from "@/app/match/[id]/match_stats_charts";
-import type { ShotForStats } from "@/lib/shot_chart_utils";
+  type ShotForStats,
+  getMostPlayedShotByCourt,
+  filterShotsByCourtRow,
+  type CourtRow,
+} from "@/lib/shot_chart_utils";
 
 type MatchRow = {
   id: number;
@@ -26,11 +26,10 @@ interface AnalysisDashboardProps {
 
 const WEEKS_IN_YEAR = 52;
 const DAYS_PER_WEEK = 7;
-const TOTAL_DAYS = WEEKS_IN_YEAR * DAYS_PER_WEEK; // 364
+const TOTAL_DAYS = WEEKS_IN_YEAR * DAYS_PER_WEEK;
 
-/** Light (no games) -> deep green (most games) */
-const GRID_COLOR_EMPTY = "#f4f4f5"; /* zinc-100 */
-const GRID_COLOR_FULL = "#15803d"; /* green-700 */
+const GRID_COLOR_EMPTY = "#f4f4f5";
+const GRID_COLOR_FULL = "#15803d";
 
 function interpolateHex(hexFrom: string, hexTo: string, t: number): string {
   const parse = (hex: string) => {
@@ -75,6 +74,14 @@ function formatLongDate(date: Date): string {
   return `${weekday}, ${month} ${ordinal(date.getDate())}, ${date.getFullYear()}`;
 }
 
+type AnalysisTab = "global" | "shot-patterns" | "shot-analysis";
+
+const TABS: { id: AnalysisTab; label: string }[] = [
+  { id: "global", label: "Global Analysis" },
+  { id: "shot-patterns", label: "Shot Patterns" },
+  { id: "shot-analysis", label: "Shot Analysis" },
+];
+
 interface MatchTimelineGridProps {
   matches: MatchRow[];
 }
@@ -108,15 +115,9 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
   }, [matches]);
 
   const [hoveredCell, setHoveredCell] = useState<GridTooltipState>(null);
-
-  const maxCount = Math.max(
-    1,
-    ...Object.values(countByDate)
-  );
-
+  const maxCount = Math.max(1, ...Object.values(countByDate));
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   const startDate = (() => {
     const first = addDays(today, -TOTAL_DAYS + 1);
     const d = first.getDay();
@@ -133,27 +134,14 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
       : null;
   });
 
-  const dayLabelSlots = [
-    null,
-    "Mon",
-    null,
-    "Wed",
-    null,
-    "Fri",
-    null,
-    "Sun",
-  ] as const;
+  const dayLabelSlots = [null, "Mon", null, "Wed", null, "Fri", null, "Sun"] as const;
 
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-[auto_1fr] gap-2 items-stretch">
-        <div className="flex flex-col justify-between text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="flex flex-col justify-between text-xs text-zinc-400">
           {dayLabelSlots.map((label, i) => (
-            <span
-              key={i}
-              className="leading-none"
-              aria-hidden
-            >
+            <span key={i} className="leading-none" aria-hidden>
               {label ?? "\u00A0"}
             </span>
           ))}
@@ -167,30 +155,19 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
             const date = new Date(hoveredCell.dateKey);
             return (
               <div
-                className="pointer-events-none fixed z-50 max-w-sm rounded-lg border border-zinc-200 bg-white px-4 py-3 text-xs shadow-md transition-[left_0.15s_ease-out,top_0.15s_ease-out] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md"
-                style={{
-                  left: hoveredCell.x + 12,
-                  top: hoveredCell.y + 12,
-                }}
+                className="frame-glass pointer-events-none fixed z-50 max-w-sm rounded-xl px-4 py-3 text-xs shadow-lg"
+                style={{ left: hoveredCell.x + 12, top: hoveredCell.y + 12 }}
               >
-                <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="font-medium text-zinc-100">
                   {formatLongDate(date)}
                 </p>
-                <ul className="mt-2 space-y-1 border-t border-zinc-200 pt-2 dark:border-zinc-700">
+                <ul className="mt-2 space-y-1 border-t border-zinc-600 pt-2">
                   {dayMatches.length === 0 ? (
-                    <li className="text-zinc-600 dark:text-zinc-400">
-                      No matches played
-                    </li>
+                    <li className="text-zinc-400">No matches played</li>
                   ) : (
                     dayMatches.map((m) => (
-                      <li
-                        key={m.id}
-                        className="text-zinc-700 dark:text-zinc-300"
-                      >
-                        <a
-                          href={`/match/${m.id}`}
-                          className="hover:underline"
-                        >
+                      <li key={m.id} className="text-zinc-300">
+                        <a href={`/match/${m.id}`} className="hover:underline">
                           {m.title}
                           {m.opponent ? ` vs ${m.opponent}` : ""}
                           {m.result ? ` ${m.result}` : ""}
@@ -203,7 +180,7 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
             );
           })()}
           <div
-            className="grid w-full min-w-[520px] gap-x-1 text-xs text-zinc-500 dark:text-zinc-400"
+            className="grid w-full min-w-[320px] gap-x-1 text-xs text-zinc-400"
             style={{
               gridTemplateColumns: `repeat(${WEEKS_IN_YEAR}, minmax(0, 1fr))`,
             }}
@@ -215,7 +192,7 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
             ))}
           </div>
           <div
-            className="grid w-full min-w-[520px] gap-1 rounded-[1px] mt-0.5"
+            className="grid w-full min-w-[320px] gap-0.5 rounded-[1px] mt-0.5"
             style={{
               gridTemplateColumns: `repeat(${WEEKS_IN_YEAR}, minmax(0, 1fr))`,
               gridTemplateRows: `repeat(${DAYS_PER_WEEK}, minmax(0, 1fr))`,
@@ -238,7 +215,7 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
               return (
                 <div
                   key={`${col}-${row}`}
-                  className={`min-h-0 min-w-0 rounded-[1px] ${count === 0 ? "bg-zinc-100 dark:bg-zinc-800" : ""} ${isHovered ? "ring-2 ring-zinc-400 dark:ring-zinc-500" : ""}`}
+                  className={`min-h-0 min-w-0 rounded-[1px] ${count === 0 ? "bg-zinc-800" : ""} ${isHovered ? "ring-2 ring-accent" : ""}`}
                   style={bg != null ? { backgroundColor: bg } : undefined}
                   onMouseEnter={(e) =>
                     setHoveredCell({
@@ -253,13 +230,13 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="flex items-center gap-2 text-xs text-zinc-400">
         <span>Less</span>
-        <div className="flex gap-1">
+        <div className="flex gap-0.5">
           {[0, 0.25, 0.5, 0.75, 1].map((t) => (
             <div
               key={t}
-              className={`h-[10px] w-[10px] rounded-[1px] ${t === 0 ? "bg-zinc-100 dark:bg-zinc-800" : ""}`}
+              className={`h-[8px] w-[8px] rounded-[1px] ${t === 0 ? "bg-zinc-800" : ""}`}
               style={
                 t > 0
                   ? {
@@ -280,24 +257,83 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
   );
 }
 
-export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
-  const [selectedMatchIds, setSelectedMatchIds] = useState<Set<number>>(
-    () => new Set(matches.map((m) => m.id))
+const COURT_ROW_LABELS: Record<CourtRow, string> = {
+  front: "Front Court",
+  mid: "Mid Court",
+  back: "Back Court",
+};
+
+function MostPlayedShotCard({
+  courtRow,
+  metric,
+  selected,
+  onSelect,
+  className,
+}: {
+  courtRow: CourtRow;
+  metric: { label: string; percentage: number } | null;
+  selected: boolean;
+  onSelect: () => void;
+  className?: string;
+}) {
+  const courtLabel = COURT_ROW_LABELS[courtRow];
+  const isSelected = selected;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`cursor-pointer rounded-lg px-4 py-3 flex flex-row items-center justify-between gap-4 shadow-lg min-h-0 text-left transition-colors outline-none hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent ${className ?? ""} ${
+        isSelected
+          ? "bg-accent text-zinc-900"
+          : "frame-glass text-zinc-400 hover:bg-zinc-700/30"
+      }`}
+    >
+      <div className="flex flex-col justify-center gap-0.5 min-w-0 shrink">
+        <span
+          className={`text-xs font-normal ${isSelected ? "text-zinc-700" : "text-zinc-500"}`}
+        >
+          {courtLabel}
+        </span>
+        <span
+          className={`font-normal text-sm ${isSelected ? "text-zinc-900" : "text-zinc-100"}`}
+        >
+          {metric?.label ?? "—"}
+        </span>
+      </div>
+      <span
+        className={`text-4xl font-normal tabular-nums shrink-0 ${isSelected ? "text-zinc-900" : "text-zinc-100"}`}
+      >
+        {metric != null ? `${metric.percentage} %` : "—"}
+      </span>
+    </button>
   );
-  const [matchesSectionCollapsed, setMatchesSectionCollapsed] = useState(true);
+}
+
+export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
+  const [activeTab, setActiveTab] = useState<AnalysisTab>("global");
   const [shots, setShots] = useState<ShotForStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCourtRow, setSelectedCourtRow] = useState<CourtRow | null>(
+    null
+  );
+
+  const filteredShots = useMemo(
+    () => filterShotsByCourtRow(shots, selectedCourtRow),
+    [shots, selectedCourtRow]
+  );
+
+  const mostPlayedByCourt = useMemo(
+    () => getMostPlayedShotByCourt(filteredShots),
+    [filteredShots]
+  );
+
+  function handleCourtCardClick(courtRow: CourtRow) {
+    setSelectedCourtRow((prev) => (prev === courtRow ? null : courtRow));
+  }
 
   useEffect(() => {
     setLoading(true);
-    const ids = Array.from(selectedMatchIds);
-    const query =
-      ids.length === 0
-        ? "?matchIds="
-        : ids.length === matches.length
-          ? ""
-          : `?matchIds=${ids.join(",")}`;
-    fetch(`/api/stats/shots${query}`)
+    fetch("/api/stats/shots")
       .then((res) => (res.ok ? res.json() : []))
       .then((raw: { shotType: string; outcome: string; player: string; zoneFrom: string; zoneTo: string; zoneFromSide: string; zoneToSide: string }[]) => {
         setShots(
@@ -314,121 +350,175 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
       })
       .catch(() => setShots([]))
       .finally(() => setLoading(false));
-  }, [selectedMatchIds, matches.length]);
-
-  const toggleMatch = (id: number) => {
-    setSelectedMatchIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const selectAll = () => setSelectedMatchIds(new Set(matches.map((m) => m.id)));
-  const selectNone = () => setSelectedMatchIds(new Set());
-
-  const sortedMatches = [...matches].sort((a, b) => {
-    const da = a.date ?? "";
-    const db = b.date ?? "";
-    return db.localeCompare(da);
-  });
+  }, []);
 
   return (
-    <div className="space-y-8">
-      <h1 className="flex items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-        <ChartLineUpIcon className="h-7 w-7 shrink-0" aria-hidden />
-        Analysis
-      </h1>
-
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-            <ListChecksIcon className="h-4 w-4 shrink-0" aria-hidden />
-            Matches to include
-          </h2>
+    <div className="w-full flex flex-col">
+      <nav
+        className="flex gap-6 border-b border-zinc-700/50 pb-3 mb-5"
+        aria-label="Analysis sections"
+      >
+        {TABS.map(({ id, label }) => (
           <button
+            key={id}
             type="button"
-            onClick={() => setMatchesSectionCollapsed((c) => !c)}
-            className="shrink-0 rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-            aria-expanded={!matchesSectionCollapsed}
-            aria-label={matchesSectionCollapsed ? "Expand matches section" : "Collapse matches section"}
+            onClick={() => setActiveTab(id)}
+            className={`text-sm font-medium transition-colors ${
+              activeTab === id
+                ? "text-accent border-b-2 border-accent -mb-[11px] pb-3"
+                : "text-zinc-400 hover:text-zinc-300"
+            }`}
           >
-            {matchesSectionCollapsed ? (
-              <CaretDownIcon className="h-4 w-4" aria-hidden />
-            ) : (
-              <CaretUpIcon className="h-4 w-4" aria-hidden />
-            )}
+            {label}
           </button>
-        </div>
-        {!matchesSectionCollapsed && (
-          <>
-            <p className="mb-3 mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-              By default all matches are included. Toggle to limit analysis to selected matches.
-            </p>
-            <div className="mb-2 flex gap-2">
-              <button
-                type="button"
-                onClick={selectAll}
-                className="rounded border border-zinc-300 bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={selectNone}
-                className="rounded border border-zinc-300 bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-              >
-                None
-              </button>
-            </div>
-            <ul className="max-h-48 space-y-1 overflow-y-auto">
-              {sortedMatches.map((m) => (
-                <li key={m.id} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id={`match-${m.id}`}
-                    checked={selectedMatchIds.has(m.id)}
-                    onChange={() => toggleMatch(m.id)}
-                    className="h-4 w-4 rounded border-zinc-300 text-zinc-600 focus:ring-zinc-500"
+        ))}
+      </nav>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-0">
+        {/* Left: visuals with frame-glass, overlapping court slightly */}
+        <div className="relative z-10 flex flex-col gap-6 lg:mr-[-2rem]">
+          {/* Top row: 2 cols — left: donut + legend (wider), right: 3 cards */}
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-5">
+            <div className="frame-glass rounded-xl p-5 shadow-lg min-h-0 flex flex-col h-[260px]">
+              <h2 className="mb-3 text-xs font-semibold text-zinc-200 shrink-0">
+                Shot Selection
+              </h2>
+              <div className="flex-1 min-h-0">
+                {loading ? (
+                  <p className="flex items-center gap-2 text-xs text-zinc-400">
+                    <CircleNotchIcon
+                      className="h-3.5 w-3.5 shrink-0 animate-spin"
+                      aria-hidden
+                    />
+                    Loading…
+                  </p>
+                ) : (
+                  <AnalysisShotSelection
+                    shots={filteredShots}
+                    className="h-full"
                   />
-                  <label
-                    htmlFor={`match-${m.id}`}
-                    className="cursor-pointer text-sm text-zinc-700 dark:text-zinc-300"
-                  >
-                    {m.date ?? "—"} · {m.title}
-                    {m.opponent ? ` vs ${m.opponent}` : ""}
-                    {m.result ? ` (${m.result})` : ""}
-                  </label>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 min-h-0 h-[260px]">
+              <p className="text-xs font-semibold text-zinc-200 shrink-0">
+                Most played shot from :
+              </p>
+              <div className="flex flex-col gap-3 flex-1 min-h-0">
+                <MostPlayedShotCard
+                  courtRow="front"
+                  metric={
+                    mostPlayedByCourt.front
+                      ? {
+                          label: mostPlayedByCourt.front.label,
+                          percentage: mostPlayedByCourt.front.percentage,
+                        }
+                      : null
+                  }
+                  selected={selectedCourtRow === "front"}
+                  onSelect={() => handleCourtCardClick("front")}
+                  className="flex-1 min-h-0"
+                />
+                <MostPlayedShotCard
+                  courtRow="mid"
+                  metric={
+                    mostPlayedByCourt.mid
+                      ? {
+                          label: mostPlayedByCourt.mid.label,
+                          percentage: mostPlayedByCourt.mid.percentage,
+                        }
+                      : null
+                  }
+                  selected={selectedCourtRow === "mid"}
+                  onSelect={() => handleCourtCardClick("mid")}
+                  className="flex-1 min-h-0"
+                />
+                <MostPlayedShotCard
+                  courtRow="back"
+                  metric={
+                    mostPlayedByCourt.back
+                      ? {
+                          label: mostPlayedByCourt.back.label,
+                          percentage: mostPlayedByCourt.back.percentage,
+                        }
+                      : null
+                  }
+                  selected={selectedCourtRow === "back"}
+                  onSelect={() => handleCourtCardClick("back")}
+                  className="flex-1 min-h-0"
+                />
+              </div>
+            </div>
+          </div>
 
-      {loading ? (
-        <p className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-          <CircleNotchIcon
-            className="h-4 w-4 shrink-0 animate-spin"
+          {/* Middle row: outcomes per shot type bar chart */}
+          <div className="frame-glass rounded-xl p-5 shadow-lg h-[280px] flex flex-col">
+            <h2 className="mb-3 text-xs font-semibold text-zinc-200 shrink-0">
+              Outcomes per shot type
+            </h2>
+            <div className="flex-1 min-h-0">
+              {loading ? (
+                <p className="flex items-center gap-2 text-xs text-zinc-400">
+                  <CircleNotchIcon
+                    className="h-3.5 w-3.5 shrink-0 animate-spin"
+                    aria-hidden
+                  />
+                  Loading shots…
+                </p>
+              ) : (
+                <AnalysisOutcomesChart shots={filteredShots} className="h-full" />
+              )}
+            </div>
+          </div>
+
+          {/* Bottom row: match timeline grid */}
+          <div className="frame-glass rounded-xl p-5 shadow-lg">
+            <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold text-zinc-200">
+              <CalendarBlankIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              Match timeline
+            </h2>
+            <MatchTimelineGrid matches={matches} />
+          </div>
+        </div>
+
+        {/* Right (lg+): court visual, ~half space, no frame, drop shadow */}
+        <div
+          className="hidden lg:flex items-center justify-center py-6 pl-6"
+          style={{ perspective: "800px" }}
+        >
+          <div
+            className="w-full max-w-md flex justify-center"
+            style={{
+              filter: "drop-shadow(0 20px 25px rgba(0,0,0,0.25))",
+            }}
             aria-hidden
-          />
-          Loading shots…
-        </p>
-      ) : (
-        <MatchStatsCharts shots={shots} />
-      )}
+          >
+            <Court3D
+              selectedZone={null}
+              highlightedCourtRow={selectedCourtRow}
+            />
+          </div>
+        </div>
+      </div>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-          <CalendarBlankIcon className="h-4 w-4 shrink-0" aria-hidden />
-          Match timeline
-        </h2>
-        <MatchTimelineGrid matches={matches} />
-      </section>
+      {/* Mobile: court below content, no overlap */}
+      <div
+        className="lg:hidden flex justify-center py-8"
+        style={{ perspective: "800px" }}
+      >
+        <div
+          className="flex justify-center"
+          style={{
+            filter: "drop-shadow(0 20px 25px rgba(0,0,0,0.25))",
+          }}
+          aria-hidden
+        >
+          <Court3D
+            selectedZone={null}
+            highlightedCourtRow={selectedCourtRow}
+          />
+        </div>
+      </div>
     </div>
   );
 }

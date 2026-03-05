@@ -20,7 +20,7 @@
     "next-auth": "^4.24.13",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "recharts": "^2.15.0",
+    "recharts": "^3",
     "tailwind-merge": "^2.6.0",
     "tailwind-variants": "^0.3.0",
     "zod": "^4.3.6"

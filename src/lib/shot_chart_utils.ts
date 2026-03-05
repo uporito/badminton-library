@@ -25,6 +25,18 @@ export const SHOT_TYPE_COLORS: Record<ShotType, string> = {
   block: "slate",
 };
 
+/** Design-system hex colors per shot type (align with globals.css) */
+export const SHOT_TYPE_HEX: Record<ShotType, string> = {
+  serve: "#455DDC",
+  clear: "#F73463",
+  smash: "#9646EF",
+  drop: "#FF862E",
+  drive: "#00BFA5",
+  lift: "#F9A826",
+  net: "#2E7D32",
+  block: "#5C6BC0",
+};
+
 /** Outcome colors: green = winner, red = error, neutral for neither */
 export const OUTCOME_COLORS: Record<Outcome, string> = {
   winner: "green",
@@ -173,4 +185,86 @@ export function zoneCountRange(grid: number[][]): { min: number; max: number } {
     }
   }
   return { min: min === Infinity ? 0 : min, max: max === -Infinity ? 0 : max };
+}
+
+/** Court row: front = row 0, mid = row 1, back = row 2 */
+export type CourtRow = "front" | "mid" | "back";
+
+const ROW_TO_COURT: CourtRow[] = ["front", "mid", "back"];
+
+export interface MostPlayedFromCourt {
+  shotType: ShotType;
+  label: string;
+  percentage: number;
+}
+
+/**
+ * For each court row (front / mid / back), find the most played shot type and its share.
+ * Uses zoneFrom: row 0 = front, row 1 = mid, row 2 = back.
+ */
+export function getMostPlayedShotByCourt(
+  shots: ShotForStats[]
+): Record<CourtRow, MostPlayedFromCourt | null> {
+  const byCourt: Record<
+    CourtRow,
+    { total: number; byType: Map<ShotType, number> }
+  > = {
+    front: { total: 0, byType: new Map() },
+    mid: { total: 0, byType: new Map() },
+    back: { total: 0, byType: new Map() },
+  };
+
+  for (const s of shots) {
+    const pos = ZONE_INDEX[s.zoneFrom];
+    if (!pos) continue;
+    const court = ROW_TO_COURT[pos.row] as CourtRow;
+    const bag = byCourt[court];
+    bag.total++;
+    bag.byType.set(s.shotType, (bag.byType.get(s.shotType) ?? 0) + 1);
+  }
+
+  const result: Record<CourtRow, MostPlayedFromCourt | null> = {
+    front: null,
+    mid: null,
+    back: null,
+  };
+
+  for (const court of ROW_TO_COURT) {
+    const { total, byType } = byCourt[court];
+    if (total === 0) continue;
+    let maxCount = 0;
+    let bestType: ShotType | null = null;
+    byType.forEach((count, shotType) => {
+      if (count > maxCount) {
+        maxCount = count;
+        bestType = shotType;
+      }
+    });
+    if (bestType != null) {
+      result[court] = {
+        shotType: bestType,
+        label: SHOT_TYPE_LABELS[bestType],
+        percentage: Math.round((maxCount / total) * 100),
+      };
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Filter shots to those from a given court row (zoneFrom).
+ * Pass null to return all shots (no filter).
+ */
+export function filterShotsByCourtRow(
+  shots: ShotForStats[],
+  courtRow: CourtRow | null
+): ShotForStats[] {
+  if (courtRow == null) return shots;
+  const rowIndex = ROW_TO_COURT.indexOf(courtRow);
+  if (rowIndex < 0) return shots;
+  return shots.filter((s) => {
+    const pos = ZONE_INDEX[s.zoneFrom];
+    return pos && pos.row === rowIndex;
+  });
 }

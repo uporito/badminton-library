@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { MatchForm } from "@/app/match_form";
@@ -94,13 +95,13 @@ export function DebugMatchList({
         </section>
       )}
 
-      <section>
+      <section className="frame-glass rounded-xl p-4">
         <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
           Database: matches ({matches.length})
         </h2>
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
+        <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
+            <thead className="border-b border-zinc-200/50 dark:border-zinc-600/50 bg-white/5 dark:bg-black/10">
               <tr>
                 <th className="px-3 py-2 font-medium">ID</th>
                 <th className="px-3 py-2 font-medium">Title</th>
@@ -114,11 +115,18 @@ export function DebugMatchList({
                 <th className="px-3 py-2 font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+            <tbody className="divide-y divide-zinc-200/50 dark:divide-zinc-600/50">
               {matches.map((m) => (
-                <tr key={m.id} className="bg-white dark:bg-zinc-900">
+                <tr key={m.id}>
                   <td className="px-3 py-2">{m.id}</td>
-                  <td className="px-3 py-2">{m.title}</td>
+                  <td className="px-3 py-2">
+                    <Link
+                      href={`/debug/${m.id}`}
+                      className="font-medium text-accent underline hover:no-underline"
+                    >
+                      {m.title}
+                    </Link>
+                  </td>
                   <td className="px-3 py-2 font-mono text-xs">{m.videoPath}</td>
                   <td className="px-3 py-2">{m.durationSeconds ?? "—"}</td>
                   <td className="px-3 py-2">{m.date ?? "—"}</td>
@@ -133,7 +141,13 @@ export function DebugMatchList({
                       .join(", ")}
                     {m.shots.length > 3 ? " …" : ""}
                   </td>
-                  <td className="px-3 py-2 flex gap-1">
+                  <td className="px-3 py-2 flex flex-wrap gap-1">
+                    <Link
+                      href={`/debug/${m.id}`}
+                      className="rounded bg-accent px-2 py-1 text-xs text-white hover:opacity-90"
+                    >
+                      View details
+                    </Link>
                     <button
                       type="button"
                       onClick={() => setEditingId(m.id)}
@@ -158,11 +172,11 @@ export function DebugMatchList({
         </div>
       </section>
 
-      <section>
+      <section className="frame-glass rounded-xl p-4">
         <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
           VIDEO_ROOT: video files ({videoFiles.length})
         </h2>
-        <ul className="max-h-48 list-inside list-disc overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <ul className="max-h-48 list-inside list-disc overflow-y-auto font-mono text-sm text-zinc-700 dark:text-zinc-300">
           {videoFiles.length === 0 ? (
             <li className="text-zinc-500">No video files found</li>
           ) : (
@@ -178,7 +192,7 @@ export function DebugMatchList({
       </section>
 
       {(inDbButMissing.length > 0 || onDiskButNotInDb.length > 0) && (
-        <section>
+        <section className="frame-glass rounded-xl p-4">
           <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
             Mismatches (informational)
           </h2>
