@@ -37,7 +37,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
+    <div className="min-h-screen font-sans">
       <h1 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
         {match.title}
       </h1>
@@ -55,7 +55,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
               Your browser does not support the video tag.
             </video>
           </div>
-          <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="frame-glass rounded-xl p-4">
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-zinc-500 dark:text-zinc-400">Date</dt>

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { zoneCountRange } from "@/lib/shot_chart_utils";
+import { zoneEnum } from "@/db/schema";
+import type { Side, Zone } from "@/db/schema";
 
 const ROW_LABELS = ["Front", "Mid", "Back"];
 const COL_LABELS = ["Left", "Center", "Right"];
@@ -36,11 +38,22 @@ function getHeatTextColor(count: number, min: number, max: number): string | und
   return t >= 0.5 ? "#ffffff" : "#166534"; /* green-800 on light green */
 }
 
+/** Same layout as court_3d: opponent top grid, me bottom grid; zone from data coords */
+function zoneAt(row: number, col: number): Zone {
+  return zoneEnum[row * 3 + col];
+}
+
+export type SelectedZone = { side: Side; zone: Zone } | null;
+
 interface ZoneHeatmapsProps {
   /** 3x3 grid: shots TO each zone on opponent's court (data coords: row 0 = front, col 0 = left) */
   gridOpponentTo: number[][];
   /** 3x3 grid: shots FROM each zone on my court (data coords: row 0 = front, col 0 = left) */
   gridMeFrom: number[][];
+  /** When provided, clicking a zone reports here and the cell shows as selected (e.g. to sync with 3D court) */
+  selectedZone?: SelectedZone;
+  /** Called when a zone cell is clicked with (side, zone) */
+  onZoneClick?: (side: Side, zone: Zone) => void;
 }
 
 const TOOLTIP_OFFSET = 12;
@@ -52,7 +65,12 @@ type TooltipState = {
   y: number;
 } | null;
 
-export function ZoneHeatmaps({ gridOpponentTo, gridMeFrom }: ZoneHeatmapsProps) {
+export function ZoneHeatmaps({
+  gridOpponentTo,
+  gridMeFrom,
+  selectedZone = null,
+  onZoneClick,
+}: ZoneHeatmapsProps) {
   const [tooltip, setTooltip] = useState<TooltipState>(null);
   const rangeTop = zoneCountRange(gridOpponentTo);
   const rangeBottom = zoneCountRange(gridMeFrom);
@@ -76,7 +94,7 @@ export function ZoneHeatmaps({ gridOpponentTo, gridMeFrom }: ZoneHeatmapsProps) 
     >
       {tooltip != null && (
         <div
-          className="pointer-events-none fixed z-50 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-xs shadow-md transition-[left_0.15s_ease-out,top_0.15s_ease-out] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md"
+          className="frame-glass pointer-events-none fixed z-50 rounded-xl px-4 py-3 text-xs shadow-lg transition-[left_0.15s_ease-out,top_0.15s_ease-out]"
           style={{
             left: tooltip.x + TOOLTIP_OFFSET,
             top: tooltip.y + TOOLTIP_OFFSET,
@@ -103,23 +121,29 @@ export function ZoneHeatmaps({ gridOpponentTo, gridMeFrom }: ZoneHeatmapsProps) 
             [0, 1, 2].map((displayCol) => {
               const dataRow = 2 - displayRow;
               const dataCol = 2 - displayCol;
+              const zone = zoneAt(dataRow, dataCol);
+              const isSelected =
+                selectedZone?.side === "opponent" && selectedZone?.zone === zone;
               const count = gridOpponentTo[dataRow]?.[dataCol] ?? 0;
               const dataZoneLabel = `${COL_LABELS[dataCol]} ${ROW_LABELS[dataRow].toLowerCase()}`;
               const bg = getHeatColor(count, min, max);
               const fg = getHeatTextColor(count, min, max);
               return (
-                <div
+                <button
+                  type="button"
                   key={`opp-${displayRow}-${displayCol}`}
-                  className={`flex aspect-square min-w-0 cursor-default items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${count === 0 ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" : ""}`}
+                  className={`flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-zinc-900" : ""} ${count === 0 ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" : ""}`}
                   style={{
                     ...(bg != null && { backgroundColor: bg }),
                     ...(fg != null && { color: fg }),
                   }}
                   onMouseEnter={(e) =>
                     handleCellEnter(e, dataZoneLabel, count)}
+                  onClick={() => onZoneClick?.("opponent", zone)}
+                  title={dataZoneLabel}
                 >
                   {count > 0 ? count : ""}
-                </div>
+                </button>
               );
             })
           )}
@@ -130,23 +154,29 @@ export function ZoneHeatmaps({ gridOpponentTo, gridMeFrom }: ZoneHeatmapsProps) 
         <div className="inline-grid h-[6.75rem] w-[6.75rem] grid-cols-3 grid-rows-3 gap-1 sm:h-[7.5rem] sm:w-[7.5rem]">
           {[0, 1, 2].map((displayRow) =>
             [0, 1, 2].map((displayCol) => {
+              const zone = zoneAt(displayRow, displayCol);
+              const isSelected =
+                selectedZone?.side === "me" && selectedZone?.zone === zone;
               const count = gridMeFrom[displayRow]?.[displayCol] ?? 0;
               const dataZoneLabel = `${COL_LABELS[displayCol]} ${ROW_LABELS[displayRow].toLowerCase()}`;
               const bg = getHeatColor(count, min, max);
               const fg = getHeatTextColor(count, min, max);
               return (
-                <div
+                <button
+                  type="button"
                   key={`me-${displayRow}-${displayCol}`}
-                  className={`flex aspect-square min-w-0 cursor-default items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${count === 0 ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" : ""}`}
+                  className={`flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-zinc-900" : ""} ${count === 0 ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" : ""}`}
                   style={{
                     ...(bg != null && { backgroundColor: bg }),
                     ...(fg != null && { color: fg }),
                   }}
                   onMouseEnter={(e) =>
                     handleCellEnter(e, dataZoneLabel, count)}
+                  onClick={() => onZoneClick?.("me", zone)}
+                  title={dataZoneLabel}
                 >
                   {count > 0 ? count : ""}
-                </div>
+                </button>
               );
             })
           )}

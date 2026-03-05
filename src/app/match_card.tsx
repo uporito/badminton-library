@@ -4,16 +4,16 @@ import { formatDuration } from "@/lib/format_duration";
 import type { MatchRow } from "@/lib/get_match_by_id";
 import type { MatchCategory } from "@/db/schema";
 
-function getCategoryCardClasses(category: MatchCategory | null | undefined): string {
+function getCategoryAccentClass(category: MatchCategory | null | undefined): string {
   switch (category) {
     case "Singles":
-      return "border-indigo-200 bg-white dark:border-indigo-800 dark:bg-indigo-950/30";
+      return "border-l-indigo-500 dark:border-l-indigo-400";
     case "Doubles":
-      return "border-emerald-200 bg-white dark:border-emerald-800 dark:bg-emerald-950/30";
+      return "border-l-emerald-500 dark:border-l-emerald-400";
     case "Mixed":
-      return "border-violet-200 bg-white dark:border-violet-800 dark:bg-violet-950/30";
+      return "border-l-violet-500 dark:border-l-violet-400";
     default:
-      return "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
+      return "border-l-zinc-400 dark:border-l-zinc-500";
   }
 }
 
@@ -50,11 +50,11 @@ export interface MatchCardProps {
 
 export function MatchCard({ match }: MatchCardProps) {
   const category = match.category ?? "Uncategorized";
-  const cardClasses = getCategoryCardClasses(category);
+  const accentClass = getCategoryAccentClass(category);
   return (
     <Link
       href={`/match/${match.id}`}
-      className={`block rounded-xl border p-0 shadow-sm transition-shadow hover:shadow-md ${cardClasses}`}
+      className={`frame-glass block rounded-xl border-l-4 p-0 shadow-sm transition-shadow hover:shadow-md ${accentClass}`}
     >
       <VideoPlaceholder category={category} />
       <div className="p-2">

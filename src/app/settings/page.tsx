@@ -48,7 +48,7 @@ export default function SettingsPage() {
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
           Appearance
         </h2>
-        <div className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3">
+        <div className="frame-glass flex items-center justify-between gap-4 rounded-xl px-4 py-3">
           <label
             htmlFor="dark-mode"
             className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
@@ -83,7 +83,7 @@ export default function SettingsPage() {
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
           Video
         </h2>
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3">
+        <div className="frame-glass rounded-xl px-4 py-3">
           <label
             htmlFor="video-folder-path"
             className="block text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2"

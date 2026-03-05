@@ -6,7 +6,7 @@ import {
   Pie,
   Cell,
   Tooltip,
-  type TooltipProps,
+  type TooltipContentProps,
 } from "recharts";
 
 /** Hex fills for Recharts (Tailwind 500 equivalents) */
@@ -81,7 +81,7 @@ export function DonutChart({
   return (
     <div className={className ?? ""} style={{ width: "100%", height: "100%", minHeight: "12rem" }}>
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart margin={{ top: 0, left: 0, right: 0, bottom: 0 }}>
+        <PieChart margin={{ top: 8, left: 8, right: 8, bottom: 8 }}>
           {showLabel && total > 0 && (
             <text
               x="50%"
@@ -89,7 +89,7 @@ export function DonutChart({
               textAnchor="middle"
               dominantBaseline="middle"
               className="fill-zinc-700 dark:fill-zinc-200"
-              style={{ fontSize: "1rem", fontWeight: 500 }}
+              style={{ fontSize: "0.875rem", fontWeight: 500 }}
             >
               {total}
             </text>
@@ -100,9 +100,10 @@ export function DonutChart({
             nameKey="name"
             cx="50%"
             cy="50%"
-            innerRadius="75%"
-            outerRadius="100%"
-            paddingAngle={0}
+            innerRadius="78%"
+            outerRadius="85%"
+            cornerRadius="50%"
+            paddingAngle={5}      // gap between slices
             stroke=""
             startAngle={90}
             endAngle={-270}
@@ -118,7 +119,7 @@ export function DonutChart({
             wrapperStyle={{ outline: "none" }}
             content={
               CustomTooltip
-                ? (props: TooltipProps<number, string>) => {
+                ? (props: TooltipContentProps<number, string>) => {
                     const payload = props.payload?.map((p) => ({
                       name: p.name ?? "",
                       value: p.value as number,
@@ -128,7 +129,7 @@ export function DonutChart({
                       <CustomTooltip
                         active={props.active}
                         payload={payload}
-                        label={props.label}
+                        label={props.label != null ? String(props.label) : undefined}
                         valueFormatter={valueFormatter}
                       />
                     );

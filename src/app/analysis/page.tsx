@@ -5,7 +5,7 @@ export default function AnalysisPage() {
   const matches = listMatches();
 
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
+    <div className="min-h-screen font-sans">
       <AnalysisDashboard matches={matches} />
     </div>
   );

@@ -28,7 +28,7 @@ export function NavBar() {
 
   return (
     <aside
-      className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-zinc-200 bg-white transition-[width] duration-200 ease-in-out dark:border-zinc-800 dark:bg-zinc-900 ${
+      className={`frame-glass sticky top-0 flex h-screen shrink-0 flex-col transition-[width] duration-200 ease-in-out ${
         collapsed ? "w-14" : "w-56"
       }`}
     >

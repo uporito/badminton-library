@@ -125,7 +125,7 @@ export function MatchForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+      className="frame-glass flex flex-col gap-3 rounded-xl p-4"
     >
       <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
         {mode === "create" ? "Add match" : "Edit match"}

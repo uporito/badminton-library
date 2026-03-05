@@ -133,6 +133,29 @@ export function InputShotsPanel({
     }
   }
 
+  async function handleClearAllShots() {
+    if (
+      !initialRallies.length ||
+      !confirm("Clear all shots and rallies for this match? This cannot be undone.")
+    ) {
+      return;
+    }
+    setError(null);
+    const res = await fetch(`/api/matches/${matchId}/rallies`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Failed to clear shots");
+      return;
+    }
+    setCurrentRallyId(null);
+    setZoneFrom(null);
+    setZoneTo(null);
+    setZoneStep("from");
+    startTransition(() => router.refresh());
+  }
+
   const rallyIdToNumber = new Map(
     initialRallies.map((r, i) => [r.id, i + 1])
   );
@@ -147,7 +170,7 @@ export function InputShotsPanel({
   ).length;
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <section className="frame-glass rounded-xl p-4">
       <h2 className="mb-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
         Input Shots
       </h2>
@@ -263,14 +286,24 @@ export function InputShotsPanel({
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         )}
 
-        <button
-          type="button"
-          onClick={handleAddShot}
-          disabled={isPending || !zoneFrom || !zoneTo}
-          className="rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50"
-        >
-          Add shot
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleAddShot}
+            disabled={isPending || !zoneFrom || !zoneTo}
+            className="rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50"
+          >
+            Add shot
+          </button>
+          <button
+            type="button"
+            onClick={handleClearAllShots}
+            disabled={isPending || !initialRallies.length}
+            className="rounded border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          >
+            Clear all shots
+          </button>
+        </div>
       </div>
     </section>
   );

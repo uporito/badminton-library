@@ -50,7 +50,7 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
 
   if (completedRallies.length === 0) {
     return (
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <section className="frame-glass rounded-xl p-4">
         <h2 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           Rally score
         </h2>
@@ -78,7 +78,7 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
   };
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <section className="frame-glass rounded-xl p-4">
       <h2 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
         Rally score
       </h2>
@@ -93,7 +93,7 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
           const playerLabel = SIDE_LABELS[shot.player];
           return (
             <div
-              className="pointer-events-none fixed z-50 max-w-sm rounded-lg border border-zinc-200 bg-white px-4 py-3 text-xs shadow-md transition-[left_0.15s_ease-out,top_0.15s_ease-out] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-md"
+              className="frame-glass pointer-events-none fixed z-50 max-w-sm rounded-xl px-4 py-3 text-xs shadow-lg transition-[left_0.15s_ease-out,top_0.15s_ease-out]"
               style={{
                 left: hoveredCell.x + 12,
                 top: hoveredCell.y + 12,

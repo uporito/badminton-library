@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Outfit } from "next/font/google";
 import { NavBar } from "./nav_bar";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
 });
 
@@ -31,12 +31,12 @@ export default function RootLayout({
         }}
       />
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen antialiased`}
+        className={`${outfit.variable} ${geistMono.variable} min-h-screen antialiased`}
       >
         <div className="flex min-h-screen">
           <NavBar />
           <main className="min-w-0 flex-1 px-4 py-8 sm:px-6">
-            <div className="mx-auto max-w-6xl">{children}</div>
+            <div className="mx-auto max-w-7xl">{children}</div>
           </main>
         </div>
       </body>
