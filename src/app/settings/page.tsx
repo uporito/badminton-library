@@ -8,6 +8,7 @@ import {
   setStoredVideoFolderPath,
   type ThemeValue,
 } from "@/lib/settings";
+import { GoogleDriveLogo, CheckCircle, XCircle } from "@phosphor-icons/react";
 
 function applyTheme(value: ThemeValue) {
   const isDark =
@@ -18,13 +19,23 @@ function applyTheme(value: ThemeValue) {
   document.documentElement.classList.toggle("dark", isDark);
 }
 
+interface GDriveStatus {
+  configured: boolean;
+  serviceAccountEmail: string | null;
+}
+
 export default function SettingsPage() {
   const [theme, setTheme] = useState<ThemeValue>("system");
   const [videoFolderPath, setVideoFolderPath] = useState("");
+  const [gdriveStatus, setGdriveStatus] = useState<GDriveStatus | null>(null);
 
   useEffect(() => {
     setTheme(getStoredTheme());
     setVideoFolderPath(getStoredVideoFolderPath());
+    fetch("/api/gdrive/status")
+      .then((r) => r.json())
+      .then((d) => setGdriveStatus(d))
+      .catch(() => setGdriveStatus({ configured: false, serviceAccountEmail: null }));
   }, []);
 
   function handleThemeChange(value: ThemeValue) {
@@ -40,23 +51,23 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mb-6">
+      <h1 className="text-2xl font-semibold text-text-main mb-6">
         Settings
       </h1>
 
       <section className="space-y-4 mb-8">
-        <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+        <h2 className="text-sm font-medium text-text-soft uppercase tracking-wide">
           Appearance
         </h2>
-        <div className="frame-glass flex items-center justify-between gap-4 rounded-xl px-4 py-3">
+        <div className="frame flex items-center justify-between gap-4 rounded-xl px-4 py-3">
           <label
             htmlFor="dark-mode"
-            className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
+            className="text-sm font-medium text-text-main"
           >
             Dark mode
           </label>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs text-text-soft">
               {theme === "light"
                 ? "Off"
                 : theme === "dark"
@@ -69,7 +80,7 @@ export default function SettingsPage() {
               onChange={(e) =>
                 handleThemeChange(e.target.value as ThemeValue)
               }
-              className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500"
+              className="rounded-md border border-ui-elevated-more bg-ui-elevated text-foreground px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ui-elevated-more"
             >
               <option value="light">Light</option>
               <option value="dark">Dark</option>
@@ -79,14 +90,14 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-          Video
+      <section className="space-y-4 mb-8">
+        <h2 className="text-sm font-medium text-text-soft uppercase tracking-wide">
+          Video — Local
         </h2>
-        <div className="frame-glass rounded-xl px-4 py-3">
+        <div className="frame rounded-xl px-4 py-3">
           <label
             htmlFor="video-folder-path"
-            className="block text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2"
+            className="block text-sm font-medium text-text-main mb-2"
           >
             Video folder path
           </label>
@@ -96,12 +107,80 @@ export default function SettingsPage() {
             value={videoFolderPath}
             onChange={(e) => handleVideoFolderPathChange(e.target.value)}
             placeholder="e.g. videos or C:\Videos\badminton"
-            className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-3 py-2 text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500"
+            className="w-full rounded-md border border-ui-elevated-more bg-ui-elevated text-foreground px-3 py-2 text-sm placeholder:text-text-soft focus:outline-none focus:ring-2 focus:ring-ui-elevated-more"
           />
-          <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1.5 text-xs text-text-soft">
             Default path used when adding new matches. Server uses VIDEO_ROOT for
             actual file resolution.
           </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-sm font-medium text-text-soft uppercase tracking-wide">
+          Video — Google Drive
+        </h2>
+        <div className="frame rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 mb-3">
+            <GoogleDriveLogo size={20} className="text-text-soft" />
+            <span className="text-sm font-medium text-text-main">
+              Google Drive integration
+            </span>
+            {gdriveStatus && (
+              <span className="ml-auto flex items-center gap-1 text-xs">
+                {gdriveStatus.configured ? (
+                  <>
+                    <CheckCircle size={14} className="text-ui-success" weight="fill" />
+                    <span className="text-ui-success">Connected</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={14} className="text-text-soft" weight="fill" />
+                    <span className="text-text-soft">Not configured</span>
+                  </>
+                )}
+              </span>
+            )}
+          </div>
+
+          {gdriveStatus?.configured && gdriveStatus.serviceAccountEmail && (
+            <div className="mb-3 rounded-md bg-ui-elevated px-3 py-2">
+              <p className="text-xs text-text-soft">Service account</p>
+              <p className="text-xs font-mono text-text-main break-all">
+                {gdriveStatus.serviceAccountEmail}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2 text-xs text-text-soft">
+            <p className="font-medium text-text-main text-sm">Setup instructions</p>
+            <ol className="list-decimal list-inside space-y-1.5 pl-1">
+              <li>
+                Go to the{" "}
+                <a
+                  href="https://console.cloud.google.com/apis/credentials"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-text-main"
+                >
+                  Google Cloud Console
+                </a>{" "}
+                and create a Service Account.
+              </li>
+              <li>Enable the <strong>Google Drive API</strong> for your project.</li>
+              <li>Download the service account JSON key file.</li>
+              <li>
+                Set <code className="rounded bg-ui-elevated px-1 py-0.5">GOOGLE_SERVICE_ACCOUNT_KEY</code> in
+                your <code className="rounded bg-ui-elevated px-1 py-0.5">.env</code> file to the JSON
+                content of the key file (as a single-line string).
+              </li>
+              <li>
+                Share your Google Drive folder(s) with the service account email
+                (give it <strong>Viewer</strong> access).
+              </li>
+              <li>Restart the dev server.</li>
+            </ol>
+          </div>
         </div>
       </section>
     </div>

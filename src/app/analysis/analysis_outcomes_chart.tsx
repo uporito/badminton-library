@@ -15,7 +15,8 @@ import {
   OutcomeBarTooltip,
   useIsDark,
   OUTCOME_HEX,
-  BAR_CURSOR_FILL,
+  UI_ELEVATED_FILL,
+  UI_ELEVATED_MORE_FILL,
   type BarDataItem,
 } from "@/components/shot_chart_shared";
 import {
@@ -69,13 +70,13 @@ export function AnalysisOutcomesChart({
           <XAxis
             dataKey="label"
             tick={{ fontSize: 12, fill: "currentColor" }}
-            className="text-zinc-600 dark:text-zinc-400"
+            className="text-text-soft"
             tickLine={false}
             axisLine={false}
           />
           <YAxis
             tick={{ fontSize: 12, fill: "currentColor" }}
-            className="text-zinc-600 dark:text-zinc-400"
+            className="text-text-soft"
             tickLine={false}
             axisLine={false}
             allowDecimals={false}
@@ -83,7 +84,7 @@ export function AnalysisOutcomesChart({
           />
           <Tooltip
             cursor={{
-              fill: isDark ? BAR_CURSOR_FILL.dark : BAR_CURSOR_FILL.light,
+              fill: isDark ? UI_ELEVATED_FILL.dark : UI_ELEVATED_FILL.light,
             }}
             content={(props) => (
               <OutcomeBarTooltip {...props} data={barData} />
@@ -99,7 +100,7 @@ export function AnalysisOutcomesChart({
                 key={key}
                 dataKey={key}
                 stackId="a"
-                fill={OUTCOME_HEX[key]}
+                fill={key === "Neither" ? (isDark ? UI_ELEVATED_MORE_FILL.dark : UI_ELEVATED_MORE_FILL.light) : OUTCOME_HEX[key]}
                 barSize={5}
               />
             ))}

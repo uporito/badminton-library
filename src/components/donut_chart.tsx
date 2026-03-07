@@ -9,7 +9,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 
-/** Hex fills for Recharts (Tailwind 500 equivalents) */
+/** Fallback hex when color is a name (legacy); prefer passing design-system hex from SHOT_TYPE_HEX */
 const COLOR_HEX: Record<string, string> = {
   blue: "#3b82f0",
   cyan: "#06b6d4",
@@ -20,6 +20,10 @@ const COLOR_HEX: Record<string, string> = {
   pink: "#ec4899",
   slate: "#64748b",
 };
+
+function resolveFill(color: string): string {
+  return color.startsWith("#") ? color : COLOR_HEX[color] ?? COLOR_HEX.slate;
+}
 
 export interface DonutChartDataItem {
   label: string;
@@ -73,7 +77,7 @@ export function DonutChart({
       <div
         className={`flex min-h-[12rem] items-center justify-center rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 ${className ?? ""}`}
       >
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No data</p>
+        <p className="text-sm text-text-soft">No data</p>
       </div>
     );
   }
@@ -111,11 +115,14 @@ export function DonutChart({
             {pieData.map((entry, i) => (
               <Cell
                 key={`cell-${i}`}
-                fill={COLOR_HEX[entry.color] ?? COLOR_HEX.slate}
+                fill={resolveFill(entry.color)}
               />
             ))}
           </Pie>
           <Tooltip
+            isAnimationActive={false}
+            animationDuration={120}
+            animationEasing="ease-out"
             wrapperStyle={{ outline: "none" }}
             content={
               CustomTooltip

@@ -22,8 +22,8 @@ function interpolateHex(hexFrom: string, hexTo: string, t: number): string {
   return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
 }
 
-/** Interpolation start (0 shots) and end (most) for heat — empty cell uses Tailwind for light/dark */
-const HEAT_EMPTY = "#f4f4f5"; /* zinc-100 */
+/** Interpolation start (0 shots) and end (most) for heat — empty cell uses bg-ui-elevated for light/dark */
+const HEAT_EMPTY = "#d8dae2"; /* ui-elevated (light) */
 const HEAT_FULL = "#15803d"; /* green-700 */
 
 function getHeatColor(count: number, min: number, max: number): string | undefined {
@@ -101,14 +101,14 @@ export function ZoneHeatmaps({
           }}
         >
           <div className="flex w-40 items-center justify-between gap-4">
-            <span className="text-zinc-600 dark:text-zinc-400">Zone</span>
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+            <span className="text-text-soft">Zone</span>
+            <span className="font-medium text-text-main">
               {tooltip.label}
             </span>
           </div>
-          <div className="mt-1.5 flex items-center justify-between gap-4 border-t border-zinc-200 dark:border-zinc-700 pt-1.5">
-            <span className="text-zinc-600 dark:text-zinc-400">Shots</span>
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+          <div className="mt-1.5 flex items-center justify-between gap-4 border-t border-ui-elevated-more pt-1.5">
+            <span className="text-text-soft">Shots</span>
+            <span className="font-medium text-text-main">
               {tooltip.count}
             </span>
           </div>
@@ -132,7 +132,7 @@ export function ZoneHeatmaps({
                 <button
                   type="button"
                   key={`opp-${displayRow}-${displayCol}`}
-                  className={`flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-zinc-900" : ""} ${count === 0 ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" : ""}`}
+                  className={`flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-ui-bg" : ""} ${count === 0 ? "bg-ui-elevated text-foreground" : ""}`}
                   style={{
                     ...(bg != null && { backgroundColor: bg }),
                     ...(fg != null && { color: fg }),
@@ -165,7 +165,7 @@ export function ZoneHeatmaps({
                 <button
                   type="button"
                   key={`me-${displayRow}-${displayCol}`}
-                  className={`flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-zinc-900" : ""} ${count === 0 ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" : ""}`}
+                  className={`flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-ui-bg" : ""} ${count === 0 ? "bg-ui-elevated text-foreground" : ""}`}
                   style={{
                     ...(bg != null && { backgroundColor: bg }),
                     ...(fg != null && { color: fg }),

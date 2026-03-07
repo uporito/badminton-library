@@ -1,4 +1,4 @@
----
+--- 
 description: Visual language — frames, colors, typography for dashboards and analysis
 globs: **/*.tsx,**/globals.css
 alwaysApply: false
@@ -6,26 +6,34 @@ alwaysApply: false
 
 # Design
 
+## Unified UI color scale
+
+All UI colors are defined in `src/app/globals.css` under "Unified UI color scale". Change the `--ui-*` variables there to experiment.
+
+- **--ui-bg**: page background (darkest in dark mode, lightest in light mode).
+- **--ui-frame**: panels/cards; use the `.frame` class.
+- **--ui-elevated**: buttons, dropdowns, empty-state surfaces (one step above frames).
+- **--ui-success**: success actions, winner shots, confirm. Tailwind: `bg-ui-success`, `text-ui-success`.
+- **--ui-error**: delete, cancel, error shots. Tailwind: `bg-ui-error`, `text-ui-error`.
+
+Body uses `--ui-bg` and `--foreground`. Prefer `bg-ui-elevated` for form controls and secondary surfaces.
+
 ## Frames and panels
 
 - **No stroke** on cards/panels. Do not use borders for frame separation.
-- **Glass effect**: use the `.frame-glass` utility (defined in `src/app/globals.css`) for analysis and dashboard cards. It provides:
-  - No border
-  - Semi-transparent background (`rgba(255,255,255,0.06)` in dark)
-  - `backdrop-filter: blur(12px)` for glassmorphism
-- Use `.frame-glass` for all analysis dashboard cards/panels. Add rounded corners via Tailwind (e.g. `rounded-xl`) as needed.
+- Use the **`.frame`** class for all panels and cards. It sets the frame background color and a drop shadow (and rounded corners). Defined in `src/app/globals.css`.
+- **`.frame-glass`** is kept in CSS for reference but should not be used in new UI.
 
 ## Colors
 
-- **Accent** `#43D1A7`: use sparingly and in bold splashes (active tab, key metrics, primary CTAs). CSS variable `--accent`; Tailwind `text-accent`, `bg-accent`, etc.
-- **Background (dark mode)** `#222631`: main dark background. CSS variable `--background` when `.dark`; Tailwind `bg-background` or `bg-background-dark`.
-- **Shot-type colors** (one per shot type, for charts and legends): defined in `globals.css` as `--shot-serve`, `--shot-clear`, etc., and in `src/lib/shot_chart_utils.ts` as `SHOT_TYPE_HEX`. Use for bar fills, donut segments, and legends.
+- **Accent** `#43D1A7`: optional CTA highlight. CSS variable `--accent`; Tailwind `text-accent`, `bg-accent`.
+- **Shot-type colors** (charts, legends): `--shot-serve`, `--shot-clear`, etc. in `globals.css` and `SHOT_TYPE_HEX` in `src/lib/shot_chart_utils.ts`. Use for bar fills, donut segments, legends.
 
 ## Typography
 
-- App font is set in `src/app/layout.tsx` (Outfit) and applied via `--font-sans` in `globals.css`. Use the default sans font for UI; keep it consistent across pages.
+- App font is set in `src/app/layout.tsx` (Outfit) and applied via `--font-sans`. Keep it consistent across pages.
 
 ## Reference
 
-- Token definitions: `src/app/globals.css`
+- Token definitions: `src/app/globals.css` (Unified UI color scale + shot-type tokens)
 - Shot-type hex map: `SHOT_TYPE_HEX` in `src/lib/shot_chart_utils.ts`

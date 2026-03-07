@@ -39,7 +39,7 @@ function ZoneGrid({
 }) {
   return (
     <div className="inline-block">
-      <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">{label}</p>
+      <p className="mb-1 text-xs text-text-soft">{label}</p>
       <div className="inline-grid h-[6.75rem] w-[6.75rem] grid-cols-3 grid-rows-3 gap-1 sm:h-[7.5rem] sm:w-[7.5rem]">
         {[0, 1, 2].map((displayRow) =>
           [0, 1, 2].map((displayCol) => {
@@ -52,7 +52,7 @@ function ZoneGrid({
             const baseCell =
               "flex aspect-square min-w-0 items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm";
             const unselected =
-              "bg-zinc-100 text-zinc-500 hover:ring-2 hover:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:ring-zinc-500";
+              "bg-ui-elevated text-text-soft hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500";
             return (
               <button
                 key={zone}
@@ -60,9 +60,9 @@ function ZoneGrid({
                 onClick={() => onZoneClick(side, zone)}
                 className={`${baseCell} ${
                   isFrom
-                    ? "bg-green-600 text-white ring-2 ring-inset ring-white hover:bg-green-500"
+                    ? "bg-ui-success text-white ring-2 ring-inset ring-white hover:opacity-90"
                     : isTo
-                      ? "bg-green-500 text-white ring-2 ring-inset ring-blue-300 hover:bg-green-400"
+                      ? "bg-ui-success text-white ring-2 ring-inset ring-blue-300 hover:opacity-90"
                       : unselected
                 }`}
                 title={`${COL_LABELS[dataCol]} ${ROW_LABELS[dataRow].toLowerCase()}`}

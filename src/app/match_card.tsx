@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PlayIcon } from "@phosphor-icons/react/ssr";
+import { PlayIcon, GoogleDriveLogo } from "@phosphor-icons/react/ssr";
 import { formatDuration } from "@/lib/format_duration";
 import type { MatchRow } from "@/lib/get_match_by_id";
 import type { MatchCategory } from "@/db/schema";
@@ -13,7 +13,7 @@ function getCategoryAccentClass(category: MatchCategory | null | undefined): str
     case "Mixed":
       return "border-l-violet-500 dark:border-l-violet-400";
     default:
-      return "border-l-zinc-400 dark:border-l-zinc-500";
+      return "border-l-ui-elevated-more";
   }
 }
 
@@ -25,7 +25,7 @@ function VideoPlaceholder({ category }: { category: MatchCategory | null | undef
         ? "bg-emerald-200 dark:bg-emerald-800/50"
         : category === "Mixed"
           ? "bg-violet-200 dark:bg-violet-800/50"
-          : "bg-zinc-200 dark:bg-zinc-800";
+          : "bg-ui-elevated";
   const iconClass =
     category === "Singles"
       ? "text-indigo-500 dark:text-indigo-400"
@@ -33,7 +33,7 @@ function VideoPlaceholder({ category }: { category: MatchCategory | null | undef
         ? "text-emerald-500 dark:text-emerald-400"
         : category === "Mixed"
           ? "text-violet-500 dark:text-violet-400"
-          : "text-zinc-500 dark:text-zinc-400";
+          : "text-foreground";
   return (
     <div
       className={`flex aspect-video w-full items-center justify-center rounded-lg ${bgClass}`}
@@ -54,14 +54,19 @@ export function MatchCard({ match }: MatchCardProps) {
   return (
     <Link
       href={`/match/${match.id}`}
-      className={`frame-glass block rounded-xl border-l-4 p-0 shadow-sm transition-shadow hover:shadow-md ${accentClass}`}
+      className={`frame block rounded-xl border-l-4 p-0 ${accentClass}`}
     >
       <VideoPlaceholder category={category} />
       <div className="p-2">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
-          {match.title}
-        </h2>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="flex items-center gap-1">
+          <h2 className="text-sm font-semibold text-text-main line-clamp-2">
+            {match.title}
+          </h2>
+          {match.videoSource === "gdrive" && (
+            <GoogleDriveLogo size={12} className="shrink-0 text-text-soft" />
+          )}
+        </div>
+        <p className="mt-0.5 text-xs text-text-soft">
           {formatDuration(match.durationSeconds)}
         </p>
       </div>

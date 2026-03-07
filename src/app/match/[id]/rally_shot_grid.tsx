@@ -41,6 +41,10 @@ function getLastDecidingShot(rally: RallyWithShots): ShotRow | null {
   return last;
 }
 
+function hasAiShots(rally: RallyWithShots): boolean {
+  return rally.shots.some((s) => s.source === "ai_suggested");
+}
+
 export function RallyShotGrid({ rallies }: RallyShotGridProps) {
   const [hoveredCell, setHoveredCell] = useState<HoverState | null>(null);
 
@@ -50,11 +54,11 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
 
   if (completedRallies.length === 0) {
     return (
-      <section className="frame-glass rounded-xl p-4">
-        <h2 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+      <section className="frame rounded-xl p-4">
+        <h2 className="mb-3 text-sm font-semibold text-text-main">
           Rally score
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-text-soft">
           No completed rallies yet. Add shots with Winner or Error to see the grid.
         </p>
       </section>
@@ -69,17 +73,17 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
   const cellClass = (color: CellColor) => {
     switch (color) {
       case "winner":
-        return "bg-green-500 dark:bg-green-600";
+        return "bg-ui-success";
       case "error":
-        return "bg-red-500 dark:bg-red-600";
+        return "bg-ui-error";
       default:
-        return "bg-zinc-100 dark:bg-zinc-800";
+        return "bg-ui-elevated";
     }
   };
 
   return (
-    <section className="frame-glass rounded-xl p-4">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+    <section className="frame rounded-xl p-4">
+      <h2 className="mb-3 text-sm font-semibold text-text-main">
         Rally score
       </h2>
       <div
@@ -91,6 +95,7 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
           const shotTypeLabel = SHOT_TYPE_LABELS[shot.shotType];
           const outcomeLabel = OUTCOME_LABELS[shot.outcome];
           const playerLabel = SIDE_LABELS[shot.player];
+          const isAi = hasAiShots(rally);
           return (
             <div
               className="frame-glass pointer-events-none fixed z-50 max-w-sm rounded-xl px-4 py-3 text-xs shadow-lg transition-[left_0.15s_ease-out,top_0.15s_ease-out]"
@@ -99,33 +104,39 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
                 top: hoveredCell.y + 12,
               }}
             >
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+              <p className="font-medium text-text-main">
                 Rally {hoveredCell.index + 1}
+                {isAi && (
+                  <span className="ml-2 rounded bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                    AI
+                  </span>
+                )}
               </p>
-              <p className="mt-0.5 text-zinc-600 dark:text-zinc-400">
+              <p className="mt-0.5 text-text-soft">
                 {rally.shots.length} shots
               </p>
-              <p className="mt-2 border-t border-zinc-200 pt-2 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300">
+              <p className="mt-2 border-t border-ui-elevated-more pt-2 text-text-main">
                 {shotTypeLabel} {outcomeLabel} ({playerLabel})
               </p>
             </div>
           );
         })()}
         <div
-          className="inline-grid gap-1 text-xs text-zinc-600 dark:text-zinc-400"
+          className="inline-grid gap-1 text-xs text-text-soft"
           style={{
             gridTemplateColumns: `auto repeat(${completedRallies.length}, minmax(1.25rem, 1.25rem))`,
             gridTemplateRows: "auto auto",
           }}
         >
           <div className="flex items-center pr-2 font-medium">Me</div>
-          {completedRallies.map(({ shot }, i) => {
+          {completedRallies.map(({ rally, shot }, i) => {
             const isHovered = hoveredCell?.index === i;
+            const isAi = hasAiShots(rally);
             return (
               <div
                 key={`me-${i}`}
-                className={`h-5 w-5 min-w-5 rounded-sm ${cellClass(getCellColor("me", shot))} ${isHovered ? "ring-2 ring-zinc-400 dark:ring-zinc-500" : ""}`}
-                aria-label={`Rally ${i + 1}, me: ${getCellColor("me", shot)}`}
+                className={`h-5 w-5 min-w-5 rounded-sm ${cellClass(getCellColor("me", shot))} ${isAi ? "border border-dashed border-accent/60" : ""} ${isHovered ? "ring-2 ring-zinc-400 dark:ring-zinc-500" : ""}`}
+                aria-label={`Rally ${i + 1}, me: ${getCellColor("me", shot)}${isAi ? " (AI)" : ""}`}
                 onMouseEnter={(e) =>
                   setHoveredCell({ index: i, x: e.clientX, y: e.clientY })
                 }
@@ -133,13 +144,14 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
             );
           })}
           <div className="flex items-center pr-2 font-medium">Opponent</div>
-          {completedRallies.map(({ shot }, i) => {
+          {completedRallies.map(({ rally, shot }, i) => {
             const isHovered = hoveredCell?.index === i;
+            const isAi = hasAiShots(rally);
             return (
               <div
                 key={`opp-${i}`}
-                className={`h-5 w-5 min-w-5 rounded-sm ${cellClass(getCellColor("opponent", shot))} ${isHovered ? "ring-2 ring-zinc-400 dark:ring-zinc-500" : ""}`}
-                aria-label={`Rally ${i + 1}, opponent: ${getCellColor("opponent", shot)}`}
+                className={`h-5 w-5 min-w-5 rounded-sm ${cellClass(getCellColor("opponent", shot))} ${isAi ? "border border-dashed border-accent/60" : ""} ${isHovered ? "ring-2 ring-zinc-400 dark:ring-zinc-500" : ""}`}
+                aria-label={`Rally ${i + 1}, opponent: ${getCellColor("opponent", shot)}${isAi ? " (AI)" : ""}`}
                 onMouseEnter={(e) =>
                   setHoveredCell({ index: i, x: e.clientX, y: e.clientY })
                 }
@@ -148,15 +160,21 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
           })}
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-text-soft">
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-green-500 dark:bg-green-600" aria-hidden />
+          <span className="h-3 w-3 rounded-sm bg-ui-success" aria-hidden />
           Winner
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-red-500 dark:bg-red-600" aria-hidden />
+          <span className="h-3 w-3 rounded-sm bg-ui-error" aria-hidden />
           Error
         </span>
+        {completedRallies.some(({ rally }) => hasAiShots(rally)) && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-sm border border-dashed border-accent/60 bg-ui-elevated" aria-hidden />
+            AI suggested
+          </span>
+        )}
       </div>
     </section>
   );

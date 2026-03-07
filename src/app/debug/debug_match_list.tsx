@@ -73,7 +73,7 @@ export function DebugMatchList({
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-4 text-xl font-semibold text-text-main">
           Add match
         </h2>
         <MatchForm mode="create" onSuccess={() => startTransition(() => router.refresh())} />
@@ -81,7 +81,7 @@ export function DebugMatchList({
 
       {editingId !== null && (
         <section>
-          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="mb-4 text-xl font-semibold text-text-main">
             Edit match
           </h2>
           <MatchForm
@@ -95,13 +95,13 @@ export function DebugMatchList({
         </section>
       )}
 
-      <section className="frame-glass rounded-xl p-4">
-        <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <section className="frame rounded-xl p-4">
+        <h2 className="mb-4 text-xl font-semibold text-text-main">
           Database: matches ({matches.length})
         </h2>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-zinc-200/50 dark:border-zinc-600/50 bg-white/5 dark:bg-black/10">
+            <thead className="border-b border-ui-elevated-more bg-ui-elevated">
               <tr>
                 <th className="px-3 py-2 font-medium">ID</th>
                 <th className="px-3 py-2 font-medium">Title</th>
@@ -115,7 +115,7 @@ export function DebugMatchList({
                 <th className="px-3 py-2 font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/50 dark:divide-zinc-600/50">
+            <tbody className="divide-y divide-ui-elevated-more">
               {matches.map((m) => (
                 <tr key={m.id}>
                   <td className="px-3 py-2">{m.id}</td>
@@ -152,7 +152,7 @@ export function DebugMatchList({
                       type="button"
                       onClick={() => setEditingId(m.id)}
                       disabled={isPending}
-                      className="rounded bg-zinc-600 px-2 py-1 text-xs text-white hover:bg-zinc-500 disabled:opacity-50"
+                      className="rounded bg-ui-elevated-more px-2 py-1 text-xs text-foreground hover:opacity-90 disabled:opacity-50"
                     >
                       Edit
                     </button>
@@ -160,7 +160,7 @@ export function DebugMatchList({
                       type="button"
                       onClick={() => handleDelete(m.id)}
                       disabled={isPending}
-                      className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-500 disabled:opacity-50"
+                      className="rounded bg-ui-error px-2 py-1 text-xs text-white hover:opacity-90 disabled:opacity-50"
                     >
                       Delete
                     </button>
@@ -172,17 +172,17 @@ export function DebugMatchList({
         </div>
       </section>
 
-      <section className="frame-glass rounded-xl p-4">
-        <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <section className="frame rounded-xl p-4">
+        <h2 className="mb-4 text-xl font-semibold text-text-main">
           VIDEO_ROOT: video files ({videoFiles.length})
         </h2>
-        <ul className="max-h-48 list-inside list-disc overflow-y-auto font-mono text-sm text-zinc-700 dark:text-zinc-300">
+        <ul className="max-h-48 list-inside list-disc overflow-y-auto font-mono text-sm text-text-main">
           {videoFiles.length === 0 ? (
-            <li className="text-zinc-500">No video files found</li>
+            <li className="text-text-soft">No video files found</li>
           ) : (
             <>
               {videoFiles.map((p) => (
-                <li key={p} className="text-zinc-700 dark:text-zinc-300">
+                <li key={p} className="text-text-main">
                   {p}
                 </li>
               ))}
@@ -192,8 +192,8 @@ export function DebugMatchList({
       </section>
 
       {(inDbButMissing.length > 0 || onDiskButNotInDb.length > 0) && (
-        <section className="frame-glass rounded-xl p-4">
-          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <section className="frame rounded-xl p-4">
+          <h2 className="mb-4 text-xl font-semibold text-text-main">
             Mismatches (informational)
           </h2>
           {inDbButMissing.length > 0 && (

@@ -9,26 +9,94 @@
 @source inline("{dark:,}fill-{blue,cyan,rose,violet,amber,emerald,pink,slate,green,red}-500");
 @source inline("{dark:,}stroke-{blue,cyan,rose,violet,amber,emerald,pink,slate,green,red}-500");
 
+/* =============================================================================
+   Unified UI color scale — change these to experiment with the look.
+   Use --ui-* for panels, buttons, and semantic colors; keep shot-type below.
+   ============================================================================= */
+
 :root {
-  --background: #ffffff;
+  /* UI scale (light mode): background → frames → elevated → elevated-more */
+  --ui-bg: #f6f7fa;
+  --ui-frame: #e8eaef;
+  --ui-frame-opacity: 0.92;
+  --ui-elevated: #d8dae2;
+  --ui-elevated-more: #c6c8d2;
+  --ui-success: #4de63e;
+  --ui-error: #e63e3e;
+
+  /* Foreground (text) — ensure contrast on --ui-bg */
   --foreground: #171717;
+  --foreground-muted: #52525b;
+
+  /* Text: main (primary) and soft (muted) — use text-text-main / text-text-soft */
+  --text-main: #323234;
+  --text-soft: #a8a8ab;
+
+  /* Accent (optional CTA highlight) */
   --accent: #43d1a7;
-  /* Shot-type design tokens (also used in dark) */
+
+  /* Shot-type design tokens (charts, legends) */
   --shot-serve: #455ddc;
-  --shot-clear: #f73463;
-  --shot-smash: #9646ef;
-  --shot-drop: #ff862e;
-  --shot-drive: #00bfa5;
+  --shot-clear: #ff862e;
+  --shot-smash: #f73463;
+  --shot-drop: #00bfa5;
+  --shot-drive: #9646ef;
   --shot-lift: #f9a826;
   --shot-net: #2e7d32;
   --shot-block: #5c6bc0;
+}
+
+.dark {
+  /* UI scale (dark mode): background → frames → elevated → elevated-more */
+  --ui-bg: #14141e;
+  --ui-frame: #212435;
+  --ui-frame-opacity: 0.92;
+  --ui-elevated: #303143;
+  --ui-elevated-more: rgb(79, 80, 103);
+  --ui-success: #4de63e;
+  --ui-error: #e63e3e;
+
+  --foreground: #e4e4e7;
+  --foreground-muted: #a1a1aa;
+
+  /* Text: main and soft (dark mode) */
+  --text-main: #f4f4f5;
+  --text-soft: #9f9fa9;
+
+  /* Accent and shot-type tokens (same in dark) */
+  --accent: #43d1a7;
+  --shot-serve: #455ddc;
+  --shot-clear: #ff862e;
+  --shot-smash: #f73463;
+  --shot-drop: #00bfa5;
+  --shot-drive: #9646ef;
+  --shot-lift: #f9a826;
+  --shot-net: #2e7d32;
+  --shot-block: #5c6bc0;
+}
+
+/* Legacy alias for body background (maps to UI scale) */
+:root {
+  --background: var(--ui-bg);
+}
+.dark {
+  --background: var(--ui-bg);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
-  --color-background-dark: #222631;
+  /* UI scale — use in Tailwind: bg-ui-bg, bg-ui-frame, bg-ui-elevated, bg-ui-elevated-more, etc. */
+  --color-ui-bg: var(--ui-bg);
+  --color-ui-frame: var(--ui-frame);
+  --color-ui-elevated: var(--ui-elevated);
+  --color-ui-elevated-more: var(--ui-elevated-more);
+  --color-ui-success: var(--ui-success);
+  --color-ui-error: var(--ui-error);
+  --color-text-main: var(--text-main);
+  --color-text-soft: var(--text-soft);
+  /* Shot-type (unchanged) */
   --color-shot-serve: var(--shot-serve);
   --color-shot-clear: var(--shot-clear);
   --color-shot-smash: var(--shot-smash);
@@ -41,31 +109,46 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #222631;
-    --foreground: #e4e4e7;
-  }
-}
-
-.dark {
-  --background: #222631;
-  --foreground: #e4e4e7;
-}
-
 body {
-  background: var(--background);
+  background: var(--ui-bg);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Glass frame: glassmorphism (backdrop blur). Edge 17+ supports it; keep both
-   properties in sync. isolation + translateZ help compositing so the blur renders. */
-.frame-glass {
-  isolation: isolate;
-  background-color: rgba(215, 215, 215, 0.18);
+/* Frame: panels/cards using UI frame color + drop shadow. Use this for all frames. */
+.frame {
+  background-color: color-mix(in srgb, var(--ui-frame) calc(var(--ui-frame-opacity) * 100%), transparent);
   backdrop-filter: blur(16px) saturate(180%);
-  /* -webkit-backdrop-filter: blur(16px) saturate(180%); */
-  transform: translateZ(0);
   border: none;
+  border-radius: 0.75rem;
+  box-shadow:
+    0 8px 24px -4px rgb(0 0 0 / 0.12),
+    0 4px 12px -2px rgb(0 0 0 / 0.08);
+}
+.dark .frame {
+  box-shadow:
+    0 12px 32px -4px rgb(0 0 0 / 0.35),
+    0 6px 16px -4px rgb(0 0 0 / 0.25);
+}
+
+/* Legacy glass frame (kept for reference; prefer .frame for new UI). */
+.frame-glass {
+  background-color: rgba(214, 214, 227, 0.65);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: none;
+}
+
+/* Filter dropdown panel (used by FilterDropdown in analysis_dashboard) */
+.filter-dropdown-panel {
+  background-color: var(--ui-frame);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow:
+    0 8px 24px -4px rgb(0 0 0 / 0.15),
+    0 4px 12px -2px rgb(0 0 0 / 0.10);
+}
+.dark .filter-dropdown-panel {
+  box-shadow:
+    0 12px 32px -4px rgb(0 0 0 / 0.45),
+    0 6px 16px -4px rgb(0 0 0 / 0.30);
 }

@@ -1,5 +1,5 @@
 import { shotTypeEnum, outcomeEnum, zoneEnum } from "@/db/schema";
-import type { ShotType, Outcome, Side } from "@/db/schema";
+import type { ShotType, Outcome, Side, Zone } from "@/db/schema";
 
 /** Consistent display labels for shot types (used in legends and tooltips) */
 export const SHOT_TYPE_LABELS: Record<ShotType, string> = {
@@ -28,10 +28,10 @@ export const SHOT_TYPE_COLORS: Record<ShotType, string> = {
 /** Design-system hex colors per shot type (align with globals.css) */
 export const SHOT_TYPE_HEX: Record<ShotType, string> = {
   serve: "#455DDC",
-  clear: "#F73463",
-  smash: "#9646EF",
-  drop: "#FF862E",
-  drive: "#00BFA5",
+  clear: "#FF862E",
+  smash: "#F73463",
+  drop: "#00BFA5",
+  drive: "#9646EF",
   lift: "#F9A826",
   net: "#2E7D32",
   block: "#5C6BC0",
@@ -112,11 +112,15 @@ export function aggregateOutcomesByShotType(
   });
 }
 
-/** Zone index for 3x3 grid: row 0 = front, row 2 = back; col 0 = left, col 2 = right */
+/**
+ * Zone index for 3x3 grid: row 0 = front, row 2 = back; col 0 = left, col 2 = right.
+ * zoneEnum is grouped by side (left_*, center_*, right_*), so depth cycles within each
+ * group of 3: row = i % 3 (front/mid/back), col = floor(i / 3) (left/center/right).
+ */
 const ZONE_INDEX: Record<string, { row: number; col: number }> = {};
 zoneEnum.forEach((z, i) => {
-  const row = Math.floor(i / 3);
-  const col = i % 3;
+  const row = i % 3;
+  const col = Math.floor(i / 3);
   ZONE_INDEX[z] = { row, col };
 });
 
@@ -250,6 +254,20 @@ export function getMostPlayedShotByCourt(
   }
 
   return result;
+}
+
+/**
+ * Filter shots to those played from a specific zone+side.
+ * Pass null to return all shots (no filter).
+ */
+export function filterShotsByZone(
+  shots: ShotForStats[],
+  zone: { side: Side; zone: Zone } | null
+): ShotForStats[] {
+  if (zone == null) return shots;
+  return shots.filter(
+    (s) => s.zoneFrom === zone.zone && s.zoneFromSide === zone.side
+  );
 }
 
 /**

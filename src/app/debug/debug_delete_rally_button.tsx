@@ -35,7 +35,7 @@ export function DeleteRallyButton({ matchId, rallyId }: DeleteRallyButtonProps) 
           type="button"
           onClick={handleDelete}
           disabled={isPending}
-          className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-500 disabled:opacity-50"
+          className="rounded bg-ui-error px-2 py-1 text-xs text-white hover:opacity-90 disabled:opacity-50"
         >
           Confirm
         </button>
@@ -43,7 +43,7 @@ export function DeleteRallyButton({ matchId, rallyId }: DeleteRallyButtonProps) 
           type="button"
           onClick={() => setConfirming(false)}
           disabled={isPending}
-          className="rounded bg-zinc-500 px-2 py-1 text-xs text-white hover:bg-zinc-400"
+          className="rounded bg-ui-elevated px-2 py-1 text-xs text-white hover:opacity-90"
         >
           Cancel
         </button>
@@ -56,7 +56,7 @@ export function DeleteRallyButton({ matchId, rallyId }: DeleteRallyButtonProps) 
       type="button"
       onClick={() => setConfirming(true)}
       disabled={isPending}
-      className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-500 disabled:opacity-50"
+      className="rounded bg-ui-error px-2 py-1 text-xs text-white hover:opacity-90 disabled:opacity-50"
     >
       Delete rally
     </button>

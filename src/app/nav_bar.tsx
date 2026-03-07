@@ -28,7 +28,7 @@ export function NavBar() {
 
   return (
     <aside
-      className={`frame-glass sticky top-0 flex h-screen shrink-0 flex-col transition-[width] duration-200 ease-in-out ${
+      className={`frame sticky top-0 flex h-screen shrink-0 flex-col transition-[width] duration-200 ease-in-out ${
         collapsed ? "w-14" : "w-56"
       }`}
     >
@@ -38,11 +38,11 @@ export function NavBar() {
         className="flex shrink-0 items-center gap-3 px-3 py-4"
       >
         <div
-          className="h-8 w-8 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-600"
+          className="h-8 w-8 shrink-0 rounded-full bg-ui-elevated-more"
           aria-hidden
         />
         {!collapsed && (
-          <span className="min-w-0 truncate font-semibold text-zinc-900 dark:text-zinc-100">
+          <span className="min-w-0 truncate font-semibold text-text-main">
             Bird&apos;s Eye View
           </span>
         )}
@@ -51,7 +51,7 @@ export function NavBar() {
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
-          className="flex items-center rounded-md py-2 pl-[10px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          className="flex items-center rounded-md py-2 pl-[10px] text-text-soft hover:bg-ui-elevated hover:text-text-main"
           aria-expanded={!collapsed}
           aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
         >
@@ -69,8 +69,8 @@ export function NavBar() {
                   collapsed ? "" : "gap-3"
                 } ${
                   active
-                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                    ? "bg-accent text-text-main"
+                    : "text-text-soft hover:text-accent"
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" aria-hidden />
@@ -81,7 +81,7 @@ export function NavBar() {
             );
           })}
         </nav>
-        <div className="mt-auto pt-3 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="mt-auto pt-3 border-t border-ui-elevated">
           <Link
             href="/settings"
             aria-label={collapsed ? "Settings" : undefined}
@@ -89,8 +89,8 @@ export function NavBar() {
               collapsed ? "" : "gap-3"
             } ${
               pathname.startsWith("/settings")
-                ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
-                : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                ? "bg-accent text-text-main"
+                : "text-text-soft hover:text-accent"
             }`}
           >
             <GearIcon className="h-5 w-5 shrink-0" aria-hidden />

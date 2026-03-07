@@ -169,22 +169,56 @@ export function InputShotsPanel({
     (r) => r.wonByMe === false
   ).length;
 
+  const aiSuggestedCount = initialRallies.reduce(
+    (sum, r) => sum + r.shots.filter((s) => s.source === "ai_suggested").length,
+    0
+  );
+
+  async function handleConfirmAll() {
+    setError(null);
+    const res = await fetch(`/api/matches/${matchId}/shots`, {
+      method: "PATCH",
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Failed to confirm shots");
+      return;
+    }
+    startTransition(() => router.refresh());
+  }
+
   return (
-    <section className="frame-glass rounded-xl p-4">
-      <h2 className="mb-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+    <section className="frame rounded-xl p-4">
+      <h2 className="mb-4 text-sm font-semibold text-text-main">
         Input Shots
       </h2>
 
       <div className="space-y-4">
+        {aiSuggestedCount > 0 && (
+          <div className="flex items-center justify-between rounded-lg bg-accent/10 px-3 py-2">
+            <p className="text-xs text-accent">
+              <span className="font-semibold">{aiSuggestedCount}</span> AI-suggested shot{aiSuggestedCount !== 1 ? "s" : ""} pending review
+            </p>
+            <button
+              type="button"
+              onClick={handleConfirmAll}
+              disabled={isPending}
+              className="rounded bg-accent px-2.5 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+            >
+              Confirm all
+            </button>
+          </div>
+        )}
+
         <div>
-          <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <p className="mb-2 text-xs font-medium text-text-soft">
             Current rally
             {currentRallyNumber !== null ? (
-              <span className="ml-1.5 font-normal text-zinc-600 dark:text-zinc-300">
+              <span className="ml-1.5 font-normal text-text-main">
                 — Rally #{currentRallyNumber}
               </span>
             ) : (
-              <span className="ml-1.5 font-normal text-zinc-400 dark:text-zinc-500">
+              <span className="ml-1.5 font-normal text-text-soft">
                 — None
               </span>
             )}
@@ -194,11 +228,11 @@ export function InputShotsPanel({
               type="button"
               onClick={handleStartNewRally}
               disabled={isPending}
-              className="rounded bg-zinc-600 px-3 py-1.5 text-sm text-white hover:bg-zinc-500 disabled:opacity-50"
+              className="rounded bg-ui-elevated-more px-3 py-1.5 text-sm text-foreground hover:opacity-90 disabled:opacity-50"
             >
               Start new rally
             </button>
-            <span className="text-sm font-medium tabular-nums text-zinc-600 dark:text-zinc-300">
+            <span className="text-sm font-medium tabular-nums text-text-main">
               Me {myPoints} – {opponentPoints} Opponent
             </span>
           </div>
@@ -206,7 +240,7 @@ export function InputShotsPanel({
 
         <div className="flex items-stretch gap-4">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <p className="mb-2 text-xs font-medium text-text-soft">
               Shot type
             </p>
             <div className="flex flex-col gap-1">
@@ -217,8 +251,8 @@ export function InputShotsPanel({
                   onClick={() => setShotType(t)}
                   className={`w-full rounded px-2 py-1 text-center text-sm ${
                     shotType === t
-                      ? "bg-zinc-700 text-white dark:bg-zinc-500"
-                      : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
+                      ? "bg-ui-elevated-more text-foreground"
+                      : "bg-ui-elevated text-foreground hover:bg-ui-elevated-more"
                   }`}
                 >
                   {SHOT_TYPE_LABELS[t]}
@@ -227,7 +261,7 @@ export function InputShotsPanel({
             </div>
           </div>
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <p className="mb-2 text-xs font-medium text-text-soft">
               Shot From/To
             </p>
             <CourtZoneGrid
@@ -239,7 +273,7 @@ export function InputShotsPanel({
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <p className="mb-2 text-xs font-medium text-text-soft">
             Outcome
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -250,8 +284,8 @@ export function InputShotsPanel({
                 onClick={() => setOutcome(o)}
                 className={`rounded px-2 py-1 text-sm ${
                   outcome === o
-                    ? "bg-zinc-700 text-white dark:bg-zinc-500"
-                    : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
+                    ? "bg-ui-elevated-more text-foreground"
+                    : "bg-ui-elevated text-foreground hover:bg-ui-elevated-more"
                 }`}
               >
                 {OUTCOME_LABELS[o]}
@@ -261,7 +295,7 @@ export function InputShotsPanel({
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <p className="mb-2 text-xs font-medium text-text-soft">
             Player
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -272,8 +306,8 @@ export function InputShotsPanel({
                 onClick={() => setPlayer(s)}
                 className={`rounded px-2 py-1 text-sm ${
                   player === s
-                    ? "bg-zinc-700 text-white dark:bg-zinc-500"
-                    : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
+                    ? "bg-ui-elevated-more text-foreground"
+                    : "bg-ui-elevated text-foreground hover:bg-ui-elevated-more"
                 }`}
               >
                 {SIDE_LABELS[s]}
@@ -291,7 +325,7 @@ export function InputShotsPanel({
             type="button"
             onClick={handleAddShot}
             disabled={isPending || !zoneFrom || !zoneTo}
-            className="rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50"
+            className="rounded bg-ui-success px-3 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             Add shot
           </button>
@@ -299,7 +333,7 @@ export function InputShotsPanel({
             type="button"
             onClick={handleClearAllShots}
             disabled={isPending || !initialRallies.length}
-            className="rounded border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            className="rounded border border-ui-elevated-more bg-ui-elevated px-3 py-2 text-sm font-medium text-foreground hover:opacity-90 disabled:opacity-50"
           >
             Clear all shots
           </button>

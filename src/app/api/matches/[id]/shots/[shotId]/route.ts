@@ -1,8 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getMatchById } from "@/lib/get_match_by_id";
 import { getDb } from "@/db/client";
-import { matchRally, matchShots } from "@/db/schema";
+import { matchRally, matchShots, shotSourceEnum } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
+
+const PatchShotBodySchema = z.object({
+  source: z.enum(shotSourceEnum).optional(),
+});
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; shotId: string }> }
+) {
+  const { id, shotId } = await params;
+  const matchId = Number(id);
+  const shotIdNum = Number(shotId);
+  if (Number.isNaN(matchId) || matchId < 1) {
+    return Response.json({ error: "Invalid match id" }, { status: 400 });
+  }
+  if (Number.isNaN(shotIdNum) || shotIdNum < 1) {
+    return Response.json({ error: "Invalid shot id" }, { status: 400 });
+  }
+  const result = getMatchById(matchId);
+  if (!result.ok) {
+    return Response.json({ error: result.error }, { status: 404 });
+  }
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parsed = PatchShotBodySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const db = getDb();
+  const [existing] = await db
+    .select()
+    .from(matchShots)
+    .where(and(eq(matchShots.id, shotIdNum), eq(matchShots.matchId, matchId)))
+    .limit(1);
+  if (!existing) {
+    return Response.json({ error: "Shot not found" }, { status: 404 });
+  }
+  const setValues: Partial<typeof matchShots.$inferInsert> = {};
+  if (parsed.data.source !== undefined) setValues.source = parsed.data.source;
+  if (Object.keys(setValues).length === 0) {
+    return NextResponse.json(existing, { status: 200 });
+  }
+  const [updated] = await db
+    .update(matchShots)
+    .set(setValues)
+    .where(eq(matchShots.id, shotIdNum))
+    .returning();
+  return NextResponse.json(updated, { status: 200 });
+}
 
 export async function DELETE(
   _request: NextRequest,
