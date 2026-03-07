@@ -34,19 +34,19 @@ export default async function DebugMatchPage({ params }: DebugMatchPageProps) {
       <div className="mb-6 flex items-center gap-4">
         <Link
           href="/debug"
-          className="text-sm text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          className="text-sm text-text-soft underline hover:text-text-main"
         >
           ← Back to Debug
         </Link>
       </div>
 
-      <h1 className="mb-8 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h1 className="mb-8 text-2xl font-bold text-text-main">
         Debug: {match.title} (ID {match.id})
       </h1>
 
       {/* Match metadata — all fields */}
-      <section className="frame-glass mb-8 rounded-xl p-4">
-        <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <section className="frame mb-8 rounded-xl p-4">
+        <h2 className="mb-4 text-xl font-semibold text-text-main">
           Match
         </h2>
         <div className="overflow-x-auto">
@@ -109,17 +109,17 @@ export default async function DebugMatchPage({ params }: DebugMatchPageProps) {
 
       {/* Rallies with full shot details */}
       <section className="space-y-8">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="text-xl font-semibold text-text-main">
           Rallies ({rallies.length})
         </h2>
 
         {rallies.length === 0 ? (
-          <p className="text-zinc-500 dark:text-zinc-400">No rallies for this match.</p>
+          <p className="text-text-soft">No rallies for this match.</p>
         ) : (
           rallies.map((rally) => (
-            <div key={rally.id} className="frame-glass rounded-xl p-4">
+            <div key={rally.id} className="frame rounded-xl p-4">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+                <h3 className="text-lg font-medium text-text-main">
                   Rally #{rally.id}
                 </h3>
                 <DeleteRallyButton matchId={numId} rallyId={rally.id} />
@@ -155,11 +155,11 @@ export default async function DebugMatchPage({ params }: DebugMatchPageProps) {
                 </tbody>
               </table>
 
-              <h4 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <h4 className="mb-2 text-sm font-medium text-text-main">
                 Shots ({rally.shots.length})
               </h4>
               {rally.shots.length === 0 ? (
-                <p className="text-xs text-zinc-500">No shots in this rally.</p>
+                <p className="text-xs text-text-soft">No shots in this rally.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left text-xs">

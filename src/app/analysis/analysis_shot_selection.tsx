@@ -1,11 +1,11 @@
 "use client";
 
 import { DonutChart } from "@/components/donut_chart";
-import { DonutTooltip, LEGEND_BG } from "@/components/shot_chart_shared";
+import { DonutTooltip } from "@/components/shot_chart_shared";
 import {
   aggregateShotDistribution,
+  SHOT_TYPE_HEX,
   SHOT_TYPE_LABELS,
-  SHOT_TYPE_COLORS,
   SHOT_TYPE_ORDER,
   type ShotForStats,
 } from "@/lib/shot_chart_utils";
@@ -28,7 +28,7 @@ export function AnalysisShotSelection({ shots, className }: AnalysisShotSelectio
     label: d.label,
   }));
   const donutColors = distribution.map(
-    (d) => SHOT_TYPE_COLORS[d.shotType as keyof typeof SHOT_TYPE_COLORS]
+    (d) => SHOT_TYPE_HEX[d.shotType as keyof typeof SHOT_TYPE_HEX]
   );
 
   return (
@@ -54,13 +54,15 @@ export function AnalysisShotSelection({ shots, className }: AnalysisShotSelectio
           />
         </div>
       </div>
-      <div className="flex shrink-0 flex-col justify-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+      <div className="flex shrink-0 flex-col justify-center gap-1.5 text-xs text-text-soft">
         {SHOT_TYPE_ORDER.map((t) => (
           <span key={t} className="flex items-center gap-2">
             <span
-              className={`h-2.5 w-2.5 shrink-0 rounded-full ${LEGEND_BG[SHOT_TYPE_COLORS[t]] ?? "bg-slate-500"}`}
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: SHOT_TYPE_HEX[t] }}
+              aria-hidden
             />
-            <span className="text-zinc-700 dark:text-zinc-300">
+            <span className="text-text-main">
               {SHOT_TYPE_LABELS[t]}
             </span>
           </span>

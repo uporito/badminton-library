@@ -62,11 +62,11 @@ export default async function DebugPage() {
 
   return (
     <div className="min-h-screen font-sans">
-      <h1 className="mb-8 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h1 className="mb-8 text-2xl font-bold text-text-main">
         Debug: DB &amp; videos
       </h1>
       {!videoRoot && (
-        <p className="frame-glass mb-4 rounded-xl p-3 text-sm text-amber-700 dark:text-amber-400">
+        <p className="frame mb-4 rounded-xl p-3 text-sm text-amber-700 dark:text-amber-400">
           VIDEO_ROOT is not set. Video file list will be empty.
         </p>
       )}

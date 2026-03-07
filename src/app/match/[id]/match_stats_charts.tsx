@@ -16,9 +16,9 @@ import {
   OutcomeBarTooltip,
   DonutTooltip,
   useIsDark,
-  LEGEND_BG,
   OUTCOME_HEX,
-  BAR_CURSOR_FILL,
+  UI_ELEVATED_FILL,
+  UI_ELEVATED_MORE_FILL,
   type BarDataItem,
 } from "@/components/shot_chart_shared";
 import {
@@ -26,8 +26,8 @@ import {
   aggregateOutcomesByShotType,
   aggregateZoneToCountsBySide,
   aggregateZoneFromCountsBySide,
+  SHOT_TYPE_HEX,
   SHOT_TYPE_LABELS,
-  SHOT_TYPE_COLORS,
   SHOT_TYPE_ORDER,
   type ShotForStats,
 } from "@/lib/shot_chart_utils";
@@ -40,13 +40,15 @@ const barCategories = ["Winner", "Error", "Neither"];
 
 function ShotTypeLegend() {
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-soft">
       {SHOT_TYPE_ORDER.map((t) => (
         <span key={t} className="flex items-center gap-1.5">
           <span
-            className={`h-2.5 w-2.5 shrink-0 rounded-full ${LEGEND_BG[SHOT_TYPE_COLORS[t]] ?? "bg-slate-500"}`}
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: SHOT_TYPE_HEX[t] }}
+            aria-hidden
           />
-          <span className="text-zinc-700 dark:text-zinc-300">
+          <span className="text-text-main">
             {SHOT_TYPE_LABELS[t]}
           </span>
         </span>
@@ -77,7 +79,7 @@ function PlayerFilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as PlayerFilter)}
-      className={`rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500 dark:focus:ring-zinc-500 ${className ?? ""}`}
+      className={`rounded border border-ui-elevated-more bg-ui-elevated px-2 py-1.5 text-sm text-foreground shadow-sm focus:border-ui-elevated-more focus:outline-none focus:ring-1 focus:ring-ui-elevated-more ${className ?? ""}`}
       aria-label="Filter by player"
     >
       <option value="both">Both</option>
@@ -116,7 +118,7 @@ export function MatchStatsCharts({
     label: d.label,
   }));
   const donutColors = distribution.map(
-    (d) => SHOT_TYPE_COLORS[d.shotType as keyof typeof SHOT_TYPE_COLORS]
+    (d) => SHOT_TYPE_HEX[d.shotType as keyof typeof SHOT_TYPE_HEX]
   );
 
   const barData: BarDataItem[] = outcomesByType
@@ -136,10 +138,10 @@ export function MatchStatsCharts({
 
   return (
     <div
-      className={`space-y-6 p-4 frame-glass rounded-xl ${className ?? ""}`}
+      className={`space-y-6 p-4 frame rounded-xl ${className ?? ""}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+        <h2 className="text-sm font-semibold text-text-main">
           Shot stats
         </h2>
         <PlayerFilterSelect value={playerFilter} onChange={setPlayerFilter} />
@@ -148,14 +150,14 @@ export function MatchStatsCharts({
       <ShotTypeLegend />
 
       {filteredShots.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-text-soft">
           {emptyMessage}
         </p>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-stretch">
             <div className="flex min-h-0 flex-col sm:col-span-2">
-              <h2 className="mb-3 shrink-0 text-xs font-semibold text-zinc-200">
+              <h2 className="mb-3 shrink-0 text-xs font-semibold text-text-soft">
                 Shot distribution
               </h2>
               <div className="min-h-[16rem] flex-1">
@@ -177,7 +179,7 @@ export function MatchStatsCharts({
               </div>
             </div>
             <div className="flex min-h-0 flex-col sm:col-span-1">
-              <h3 className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              <h3 className="mb-3 text-xs font-medium text-text-soft">
                 Distribution of shots From/To
               </h3>
               <div className="flex min-h-[16rem] flex-1 items-center justify-center">
@@ -202,19 +204,19 @@ export function MatchStatsCharts({
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    className="stroke-zinc-200 dark:stroke-zinc-700"
+                    className="stroke-ui-elevated-more"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 12, fill: "currentColor" }}
-                    className="text-zinc-600 dark:text-zinc-400"
+                    className="text-text-soft"
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
                     tick={{ fontSize: 12, fill: "currentColor" }}
-                    className="text-zinc-600 dark:text-zinc-400"
+                    className="text-text-soft"
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
@@ -223,8 +225,8 @@ export function MatchStatsCharts({
                   <Tooltip
                     cursor={{
                       fill: isDark
-                        ? BAR_CURSOR_FILL.dark
-                        : BAR_CURSOR_FILL.light,
+                        ? UI_ELEVATED_FILL.dark
+                        : UI_ELEVATED_FILL.light,
                     }}
                     content={(props) => (
                       <OutcomeBarTooltip {...props} data={barData} />
@@ -239,8 +241,8 @@ export function MatchStatsCharts({
                       key={key}
                       dataKey={key}
                       stackId="a"
-                      fill={OUTCOME_HEX[key]}
-                      maxBarSize={4}
+                      fill={key === "Neither" ? (isDark ? UI_ELEVATED_MORE_FILL.dark : UI_ELEVATED_MORE_FILL.light) : OUTCOME_HEX[key]}
+                      barSize={5}
                     />
                   ))}
                 </RechartsBarChart>

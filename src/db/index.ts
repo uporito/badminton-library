@@ -15,5 +15,6 @@ export {
   sideEnum,
   shotTypeEnum,
   outcomeEnum,
+  shotSourceEnum,
 } from "./schema";
-export type { Zone, Side, ShotType, Outcome } from "./schema";
+export type { Zone, Side, ShotType, Outcome, ShotSource } from "./schema";

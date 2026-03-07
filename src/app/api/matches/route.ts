@@ -3,7 +3,7 @@ import path from "path";
 import { z } from "zod";
 import { listMatches } from "@/lib/list_matches";
 import { getDb } from "@/db/client";
-import { matches, matchCategoryEnum } from "@/db/schema";
+import { matches, matchCategoryEnum, videoSourceEnum } from "@/db/schema";
 import { NextResponse } from "next/server";
 
 const SortSchema = z.enum(["date", "opponent"]).optional();
@@ -14,6 +14,7 @@ const CategorySchema = z
 const CreateMatchBodySchema = z.object({
   title: z.string().min(1).optional(),
   videoPath: z.string().min(1),
+  videoSource: z.enum(videoSourceEnum).optional(),
   durationSeconds: z.number().int().nonnegative().optional(),
   date: z.string().optional(),
   opponent: z.string().optional(),
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
   const {
     title,
     videoPath,
+    videoSource,
     durationSeconds,
     date,
     opponent,
@@ -62,13 +64,14 @@ export async function POST(request: NextRequest) {
     category,
   } = parsed.data;
   const titleToUse =
-    title?.trim() || path.basename(videoPath) || "Untitled";
+    title?.trim() || (videoSource === "gdrive" ? videoPath : path.basename(videoPath)) || "Untitled";
   const db = getDb();
   const [created] = await db
     .insert(matches)
     .values({
       title: titleToUse,
       videoPath,
+      videoSource: videoSource ?? "local",
       durationSeconds: durationSeconds ?? null,
       date: date ?? null,
       opponent: opponent ?? null,

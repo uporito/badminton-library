@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { MatchRow } from "@/lib/get_match_by_id";
-import { matchCategoryEnum } from "@/db/schema";
+import { matchCategoryEnum, type VideoSource } from "@/db/schema";
+import { GDrivePicker } from "./gdrive_picker";
+import { HardDrive, GoogleDriveLogo } from "@phosphor-icons/react";
 
 const CATEGORY_OPTIONS = matchCategoryEnum;
 
@@ -17,6 +19,7 @@ function emptyValues(): Record<string, string | number | ""> {
   return {
     title: "",
     videoPath: "",
+    videoSource: "local",
     durationSeconds: "",
     date: "",
     opponent: "",
@@ -30,6 +33,7 @@ function matchToValues(m: MatchRow): Record<string, string | number | ""> {
   return {
     title: m.title ?? "",
     videoPath: m.videoPath ?? "",
+    videoSource: m.videoSource ?? "local",
     durationSeconds: m.durationSeconds ?? "",
     date: m.date ?? "",
     opponent: m.opponent ?? "",
@@ -52,9 +56,35 @@ export function MatchForm({
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [message, setMessage] = useState("");
+  const [showGDrivePicker, setShowGDrivePicker] = useState(false);
+  const [gdriveAvailable, setGdriveAvailable] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/gdrive/status")
+      .then((r) => r.json())
+      .then((d) => setGdriveAvailable(d.configured === true))
+      .catch(() => setGdriveAvailable(false));
+  }, []);
+
+  const videoSource = String(values.videoSource) as VideoSource;
 
   function setValue(name: string, value: string | number) {
     setValues((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function switchVideoSource(source: VideoSource) {
+    setValues((prev) => ({ ...prev, videoSource: source, videoPath: "" }));
+    setShowGDrivePicker(false);
+  }
+
+  function handleGDriveSelect(fileId: string, fileName: string) {
+    setValues((prev) => ({
+      ...prev,
+      videoSource: "gdrive",
+      videoPath: fileId,
+      title: prev.title || fileName.replace(/\.[^.]+$/, ""),
+    }));
+    setShowGDrivePicker(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -64,6 +94,7 @@ export function MatchForm({
     const body = {
       title: String(values.title).trim() || undefined,
       videoPath: String(values.videoPath).trim(),
+      videoSource: String(values.videoSource) as VideoSource,
       durationSeconds:
         values.durationSeconds === ""
           ? undefined
@@ -120,19 +151,54 @@ export function MatchForm({
   }
 
   const inputClass =
-    "rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100";
+    "rounded border border-ui-elevated-more bg-ui-elevated px-3 py-2 text-sm text-foreground";
+
+  const selectedGDriveFileName = videoSource === "gdrive" && values.videoPath
+    ? String(values.videoPath)
+    : "";
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="frame-glass flex flex-col gap-3 rounded-xl p-4"
+      className="frame flex flex-col gap-3 rounded-xl p-4"
     >
-      <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+      <h2 className="text-sm font-semibold text-text-main">
         {mode === "create" ? "Add match" : "Edit match"}
       </h2>
+
+      {/* Video source tabs */}
+      {gdriveAvailable && (
+        <div className="flex gap-1 rounded-lg bg-ui-elevated p-0.5">
+          <button
+            type="button"
+            onClick={() => switchVideoSource("local")}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              videoSource === "local"
+                ? "bg-ui-elevated-more text-text-main shadow-sm"
+                : "text-text-soft hover:text-text-main"
+            }`}
+          >
+            <HardDrive size={14} />
+            Local file
+          </button>
+          <button
+            type="button"
+            onClick={() => switchVideoSource("gdrive")}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              videoSource === "gdrive"
+                ? "bg-ui-elevated-more text-text-main shadow-sm"
+                : "text-text-soft hover:text-text-main"
+            }`}
+          >
+            <GoogleDriveLogo size={14} />
+            Google Drive
+          </button>
+        </div>
+      )}
+
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-xs font-medium text-text-soft">
             Title (required)
           </span>
           <input
@@ -144,23 +210,62 @@ export function MatchForm({
             placeholder="e.g. My match"
           />
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            Video path (required)
-          </span>
-          <input
-            type="text"
-            value={values.videoPath}
-            onChange={(e) => setValue("videoPath", e.target.value)}
-            required
-            className={inputClass}
-            placeholder="e.g. my_video.mp4"
-          />
-        </label>
+
+        {videoSource === "local" ? (
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-text-soft">
+              Video path (required)
+            </span>
+            <input
+              type="text"
+              value={values.videoPath}
+              onChange={(e) => setValue("videoPath", e.target.value)}
+              required
+              className={inputClass}
+              placeholder="e.g. my_video.mp4"
+            />
+          </label>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-text-soft">
+              Google Drive video (required)
+            </span>
+            {selectedGDriveFileName && !showGDrivePicker ? (
+              <div className="flex items-center gap-2">
+                <span className="truncate rounded border border-ui-elevated-more bg-ui-elevated px-3 py-2 text-sm text-text-main flex-1">
+                  {values.title || selectedGDriveFileName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowGDrivePicker(true)}
+                  className="shrink-0 rounded bg-ui-elevated-more px-2 py-2 text-xs text-text-soft hover:text-text-main"
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowGDrivePicker(true)}
+                className="rounded border border-dashed border-ui-elevated-more bg-ui-elevated px-3 py-2 text-sm text-text-soft hover:text-text-main hover:border-text-soft transition-colors"
+              >
+                Browse Google Drive…
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      {showGDrivePicker && videoSource === "gdrive" && (
+        <GDrivePicker
+          onSelect={handleGDriveSelect}
+          onCancel={() => setShowGDrivePicker(false)}
+        />
+      )}
+
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-xs font-medium text-text-soft">
             Duration (s)
           </span>
           <input
@@ -174,7 +279,7 @@ export function MatchForm({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-xs font-medium text-text-soft">
             Date
           </span>
           <input
@@ -185,7 +290,7 @@ export function MatchForm({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-xs font-medium text-text-soft">
             Opponent
           </span>
           <input
@@ -196,7 +301,7 @@ export function MatchForm({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-xs font-medium text-text-soft">
             Result
           </span>
           <input
@@ -210,7 +315,7 @@ export function MatchForm({
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-xs font-medium text-text-soft">
             Notes
           </span>
           <input
@@ -221,7 +326,7 @@ export function MatchForm({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-xs font-medium text-text-soft">
             Category
           </span>
           <select
@@ -241,7 +346,7 @@ export function MatchForm({
         <button
           type="submit"
           disabled={status === "loading" || !String(values.videoPath).trim()}
-          className="rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+          className="rounded bg-ui-elevated-more px-4 py-2 text-sm font-medium text-foreground hover:opacity-90 disabled:opacity-50"
         >
           {status === "loading"
             ? mode === "create"
@@ -256,7 +361,7 @@ export function MatchForm({
             className={`text-sm ${
               status === "error"
                 ? "text-red-600 dark:text-red-400"
-                : "text-zinc-600 dark:text-zinc-400"
+                : "text-text-soft"
             }`}
           >
             {message}

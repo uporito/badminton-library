@@ -13,10 +13,15 @@ export const matchCategoryEnum = [
 
 export type MatchCategory = (typeof matchCategoryEnum)[number];
 
+export const videoSourceEnum = ["local", "gdrive"] as const;
+
+export type VideoSource = (typeof videoSourceEnum)[number];
+
 export const matches = sqliteTable("matches", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   videoPath: text("video_path").notNull(),
+  videoSource: text("video_source", { enum: videoSourceEnum }).notNull().default("local"),
   durationSeconds: integer("duration_seconds"),
   date: text("date"),
   opponent: text("opponent"),
@@ -80,6 +85,10 @@ export const outcomeEnum = ["winner", "error", "neither"] as const;
 
 export type Outcome = (typeof outcomeEnum)[number];
 
+export const shotSourceEnum = ["manual", "ai_suggested", "ai_confirmed"] as const;
+
+export type ShotSource = (typeof shotSourceEnum)[number];
+
 export const matchShots = sqliteTable("match_shots", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   matchId: integer("match_id")
@@ -99,6 +108,7 @@ export const matchShots = sqliteTable("match_shots", {
     .notNull()
     .default(false),
   player: text("player", { enum: sideEnum }).notNull(),
+  source: text("source", { enum: shotSourceEnum }).notNull().default("manual"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),

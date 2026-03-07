@@ -35,7 +35,7 @@ export function DeleteShotButton({ matchId, shotId }: DeleteShotButtonProps) {
           type="button"
           onClick={handleDelete}
           disabled={isPending}
-          className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] text-white hover:bg-red-500 disabled:opacity-50"
+          className="rounded bg-ui-error px-1.5 py-0.5 text-[10px] text-white hover:opacity-90 disabled:opacity-50"
         >
           Yes
         </button>
@@ -43,7 +43,7 @@ export function DeleteShotButton({ matchId, shotId }: DeleteShotButtonProps) {
           type="button"
           onClick={() => setConfirming(false)}
           disabled={isPending}
-          className="rounded bg-zinc-500 px-1.5 py-0.5 text-[10px] text-white hover:bg-zinc-400"
+          className="rounded bg-ui-elevated px-1.5 py-0.5 text-[10px] text-white hover:opacity-90"
         >
           No
         </button>
@@ -56,7 +56,7 @@ export function DeleteShotButton({ matchId, shotId }: DeleteShotButtonProps) {
       type="button"
       onClick={() => setConfirming(true)}
       disabled={isPending}
-      className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] text-white hover:bg-red-500 disabled:opacity-50"
+      className="rounded bg-ui-error px-1.5 py-0.5 text-[10px] text-white hover:opacity-90 disabled:opacity-50"
     >
       Delete
     </button>

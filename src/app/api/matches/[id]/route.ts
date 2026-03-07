@@ -3,12 +3,13 @@ import { z } from "zod";
 import { getMatchById } from "@/lib/get_match_by_id";
 import { getDb } from "@/db/client";
 import { matches } from "@/db/schema";
-import { matchCategoryEnum } from "@/db/schema";
+import { matchCategoryEnum, videoSourceEnum } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 const UpdateMatchBodySchema = z.object({
   title: z.string().min(1).optional(),
   videoPath: z.string().min(1).optional(),
+  videoSource: z.enum(videoSourceEnum).optional(),
   durationSeconds: z.number().int().nonnegative().optional().nullable(),
   date: z.string().optional().nullable(),
   opponent: z.string().optional().nullable(),
@@ -93,6 +94,7 @@ export async function PATCH(
   };
   if (data.title !== undefined) setValues.title = data.title;
   if (data.videoPath !== undefined) setValues.videoPath = data.videoPath;
+  if (data.videoSource !== undefined) setValues.videoSource = data.videoSource;
   if (data.durationSeconds !== undefined)
     setValues.durationSeconds = data.durationSeconds;
   if (data.date !== undefined) setValues.date = data.date;

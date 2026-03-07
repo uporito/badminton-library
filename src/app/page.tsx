@@ -50,14 +50,14 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <div className="min-h-screen font-sans">
-      <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold text-text-main">
           <FilmStripIcon className="h-7 w-7 shrink-0" aria-hidden />
           My Matches
         </h1>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="frame-glass flex rounded-xl p-1">
-            <span className="mr-2 self-center px-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <div className="frame flex rounded-xl p-1">
+            <span className="mr-2 self-center px-2 text-xs font-medium text-text-soft">
               Category
             </span>
             {CATEGORY_OPTIONS.map((c) => (
@@ -66,16 +66,16 @@ export default async function Home({ searchParams }: HomeProps) {
                 href={buildLibraryUrl({ category: c.value, sort: validSort })}
                 className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                   validCategory === c.value
-                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    ? "bg-ui-elevated-more text-foreground"
+                    : "text-text-soft hover:bg-ui-elevated"
                 }`}
               >
                 {c.label}
               </Link>
             ))}
           </div>
-          <div className="frame-glass flex rounded-xl p-1">
-            <span className="mr-2 self-center px-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <div className="frame flex rounded-xl p-1">
+            <span className="mr-2 self-center px-2 text-xs font-medium text-text-soft">
               Sort by
             </span>
             {SORT_OPTIONS.map((s) => (
@@ -84,8 +84,8 @@ export default async function Home({ searchParams }: HomeProps) {
                 href={buildLibraryUrl({ category: validCategory, sort: s.value })}
                 className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                   validSort === s.value
-                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    ? "bg-ui-elevated-more text-foreground"
+                    : "text-text-soft hover:bg-ui-elevated"
                 }`}
               >
                 {s.label}
@@ -95,12 +95,12 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
 
         {matches.length === 0 ? (
-          <div className="frame-glass flex flex-col items-center gap-3 rounded-xl p-12 text-center">
+          <div className="frame flex flex-col items-center gap-3 rounded-xl p-12 text-center">
             <TrayIcon
-              className="h-12 w-12 text-zinc-400 dark:text-zinc-500"
+              className="h-12 w-12 text-text-soft"
               aria-hidden
             />
-            <p className="text-zinc-600 dark:text-zinc-400">
+            <p className="text-text-soft">
               No matches yet. Add matches from the Database page.
             </p>
           </div>
@@ -108,7 +108,7 @@ export default async function Home({ searchParams }: HomeProps) {
           <div className="space-y-8">
             {sections.map((section) => (
               <section key={section.label}>
-                <h2 className="mb-3 border-b border-zinc-200 pb-2 text-sm font-semibold text-zinc-700 dark:border-zinc-700 dark:text-zinc-300">
+                <h2 className="mb-3 border-b border-ui-elevated-more pb-2 text-sm font-semibold text-text-main">
                   {section.label}
                 </h2>
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
