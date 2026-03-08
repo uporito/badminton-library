@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeMatch } from "@/lib/analyze_match";
 
+// Allow up to 10 minutes for upload + Gemini processing + generation (long videos).
+export const maxDuration = 600;
+
 const ERROR_STATUS: Record<string, number> = {
   NOT_FOUND: 404,
   VIDEO_NOT_FOUND: 404,

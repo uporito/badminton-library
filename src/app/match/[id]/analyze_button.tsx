@@ -38,7 +38,15 @@ export function AnalyzeButton({ matchId }: AnalyzeButtonProps) {
       router.refresh();
     } catch (e) {
       setState("error");
-      setMessage(e instanceof Error ? e.message : "Network error");
+      const msg = e instanceof Error ? e.message : "Network error";
+      const isFetchFailed =
+        msg.toLowerCase().includes("fetch failed") ||
+        msg.toLowerCase().includes("network error");
+      setMessage(
+        isFetchFailed
+          ? "Request failed (connection lost or timeout). For long videos, analysis can take 5+ minutes — check the server terminal to see how far it got."
+          : msg
+      );
     }
   }
 

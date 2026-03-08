@@ -158,6 +158,7 @@ export async function analyzeMatch(
 
   let uploadedFile;
   try {
+    console.log("[analyze] Uploading video to Gemini...");
     if (match.videoSource === "gdrive") {
       const dlResult = await downloadGDriveFileToBuffer(match.videoPath);
       if (!dlResult.ok) return { ok: false, error: "VIDEO_NOT_FOUND", detail: dlResult.error };
@@ -174,7 +175,9 @@ export async function analyzeMatch(
         config: { mimeType: getMimeType(videoResult.fullPath) },
       });
     }
+    console.log("[analyze] Upload complete.");
   } catch (e) {
+    console.error("[analyze] Upload failed:", e);
     return {
       ok: false,
       error: "UPLOAD_FAILED",
@@ -187,6 +190,7 @@ export async function analyzeMatch(
   }
 
   if (uploadedFile.state === FileState.PROCESSING) {
+    console.log("[analyze] Video uploaded; waiting for Gemini to finish processing...");
     const ready = await waitForFileActive(ai, uploadedFile.name);
     if (!ready) {
       return { ok: false, error: "PROCESSING_FAILED", detail: "Video processing timed out or failed" };
@@ -197,6 +201,7 @@ export async function analyzeMatch(
 
   let responseText: string;
   try {
+    console.log("[analyze] Generating rally/shot analysis (this can take several minutes for long videos)...");
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: createUserContent([
@@ -210,6 +215,7 @@ export async function analyzeMatch(
     });
     responseText = response.text ?? "";
   } catch (e) {
+    console.error("[analyze] Generation failed:", e);
     return {
       ok: false,
       error: "GENERATION_FAILED",
@@ -222,6 +228,7 @@ export async function analyzeMatch(
     const raw = JSON.parse(responseText);
     parsed = AnalysisResponseSchema.parse(raw);
   } catch (e) {
+    console.error("[analyze] Parse failed:", e);
     return {
       ok: false,
       error: "PARSE_FAILED",
@@ -230,6 +237,7 @@ export async function analyzeMatch(
   }
 
   try {
+    console.log("[analyze] Writing rallies and shots to database...");
     const db = getDb();
 
     let totalShots = 0;
@@ -269,6 +277,7 @@ export async function analyzeMatch(
       }
     }
 
+    console.log("[analyze] Done.");
     return {
       ok: true,
       data: { rallyCount: parsed.rallies.length, shotCount: totalShots },

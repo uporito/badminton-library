@@ -78,3 +78,33 @@ You should see:
 4. **Expected:** “Analyzing video…” for 1–3 minutes, then a success message like “Analysis complete — X rallies, Y shots detected.” The page refreshes and the right-hand panel and stats show the suggested rallies/shots.
 
 If anything fails, check the browser Network tab for the `POST /api/matches/[id]/analyze` response body (`error` and `detail`) and the terminal for server errors.
+
+---
+
+## 3. Debugging “fetch failed” (long videos)
+
+If the button shows **“fetch failed”** or a timeout-style error after several minutes, the browser lost the connection to the server before the analysis finished. Common causes:
+
+- **Request took too long** — For long videos (e.g. 15–20+ minutes), upload + Gemini processing + generation can exceed 5–10 minutes. The server is now allowed to run the route for up to 10 minutes (`maxDuration = 600`). If you deploy to Vercel, check your plan’s [max duration](https://vercel.com/docs/functions/configuring-functions/duration) (e.g. Hobby: 10s, Pro: 60s).
+- **Connection closed** — Proxy, firewall, or dev server closed the connection.
+
+### What to do
+
+1. **Watch the server terminal**  
+   Run `npm run dev` in a terminal and leave it visible. When you click **Analyze with AI**, you should see logs in order:
+   - `[analyze] Uploading video to Gemini...`
+   - `[analyze] Upload complete.`
+   - `[analyze] Video uploaded; waiting for Gemini to finish processing...`
+   - `[analyze] Generating rally/shot analysis (this can take several minutes for long videos)...`
+   - `[analyze] Writing rallies and shots to database...`
+   - `[analyze] Done.`  
+   If it stops before **Done.**, the last log shows where it failed (upload, processing, or generation). Any thrown error is logged there too (e.g. `[analyze] Upload failed: ...`).
+
+2. **Try a shorter clip first**  
+   Use a match with a 1–3 minute video to confirm the flow works; then try longer ones.
+
+3. **If it always fails during “Generating…”**  
+   Gemini may be timing out or rate-limiting. Check the terminal for the exact error. For very long videos, the model might hit internal limits; splitting the video or using a shorter segment is a workaround.
+
+4. **Deployed (e.g. Vercel)**  
+   Increase the route’s `maxDuration` only if your plan allows it, or run analysis locally against your production DB/videos if that fits your setup.
