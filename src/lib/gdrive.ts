@@ -41,6 +41,8 @@ export interface GDriveFile {
   mimeType: string;
   size: string;
   modifiedTime: string;
+  createdTime: string;
+  durationMs: number | null;
   thumbnailLink?: string;
 }
 
@@ -71,7 +73,7 @@ export async function listGDriveVideos(
     do {
       const res = await drive.files.list({
         q: query,
-        fields: "nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink)",
+        fields: "nextPageToken, files(id, name, mimeType, size, modifiedTime, createdTime, videoMediaMetadata/durationMillis, thumbnailLink)",
         pageSize: 100,
         orderBy: "modifiedTime desc",
         pageToken,
@@ -81,12 +83,15 @@ export async function listGDriveVideos(
 
       for (const f of res.data.files ?? []) {
         if (f.id && f.name && f.mimeType) {
+          const rawDuration = f.videoMediaMetadata?.durationMillis;
           files.push({
             id: f.id,
             name: f.name,
             mimeType: f.mimeType,
             size: f.size ?? "0",
             modifiedTime: f.modifiedTime ?? "",
+            createdTime: f.createdTime ?? "",
+            durationMs: rawDuration ? Number(rawDuration) : null,
             thumbnailLink: f.thumbnailLink ?? undefined,
           });
         }

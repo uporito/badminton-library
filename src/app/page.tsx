@@ -3,6 +3,8 @@ import { listMatches } from "@/lib/list_matches";
 import { groupMatchesForLibrary } from "@/lib/group_matches_for_library";
 import type { ListMatchesCategoryFilter, ListMatchesSort } from "@/lib/list_matches";
 import { MatchCard } from "./match_card";
+import { GDriveImportPanel } from "./gdrive_import_panel";
+import { isGDriveConfigured } from "@/lib/gdrive";
 import Link from "next/link";
 
 const CATEGORY_OPTIONS: { value: ListMatchesCategoryFilter; label: string }[] = [
@@ -48,12 +50,23 @@ export default async function Home({ searchParams }: HomeProps) {
   });
   const sections = groupMatchesForLibrary(matches, validSort);
 
+  const gdriveConfigured = isGDriveConfigured();
+  const existingMatches = gdriveConfigured
+    ? matches.map((m) => ({ videoPath: m.videoPath, videoSource: m.videoSource ?? "local" }))
+    : [];
+
   return (
     <div className="min-h-screen font-sans">
       <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold text-text-main">
           <FilmStripIcon className="h-7 w-7 shrink-0" aria-hidden />
           My Matches
         </h1>
+
+        {gdriveConfigured && (
+          <div className="mb-6">
+            <GDriveImportPanel existingMatches={existingMatches} />
+          </div>
+        )}
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="frame flex rounded-xl p-1">
