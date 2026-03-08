@@ -155,19 +155,18 @@ export default function SettingsPage() {
           <div className="space-y-2 text-xs text-text-soft">
             <p className="font-medium text-text-main text-sm">Setup instructions</p>
             <ol className="list-decimal list-inside space-y-1.5 pl-1">
-              <li>
-                Go to the{" "}
+              <li>Create a Google Cloud project (or use existing) at {" "}
                 <a
-                  href="https://console.cloud.google.com/apis/credentials"
+                  href="https://console.cloud.google.com/projectcreate"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-text-main"
                 >
-                  Google Cloud Console
-                </a>{" "}
-                and create a Service Account.
+                   Google Cloud Console.
+                </a>
               </li>
               <li>Enable the <strong>Google Drive API</strong> for your project.</li>
+              <li>Create a Service Account under IAM & Admin {'>'} Service Accounts</li>
               <li>Download the service account JSON key file.</li>
               <li>
                 Set <code className="rounded bg-ui-elevated px-1 py-0.5">GOOGLE_SERVICE_ACCOUNT_KEY</code> in
