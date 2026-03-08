@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { PlayIcon, GoogleDriveLogo } from "@phosphor-icons/react/ssr";
 import { formatDuration } from "@/lib/format_duration";
 import type { MatchRow } from "@/lib/get_match_by_id";
 import type { MatchCategory } from "@/db/schema";
+import { thumbnailExists } from "@/lib/gdrive";
 
 function getCategoryAccentClass(category: MatchCategory | null | undefined): string {
   switch (category) {
@@ -51,12 +53,26 @@ export interface MatchCardProps {
 export function MatchCard({ match }: MatchCardProps) {
   const category = match.category ?? "Uncategorized";
   const accentClass = getCategoryAccentClass(category);
+  const hasThumbnail = match.videoSource === "gdrive" && thumbnailExists(match.id);
+
   return (
     <Link
       href={`/match/${match.id}`}
       className={`frame block rounded-xl border-l-4 p-0 ${accentClass}`}
     >
-      <VideoPlaceholder category={category} />
+      {hasThumbnail ? (
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+          <Image
+            src={`/api/thumbnail?id=${match.id}`}
+            alt={match.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          />
+        </div>
+      ) : (
+        <VideoPlaceholder category={category} />
+      )}
       <div className="p-2">
         <div className="flex items-center gap-1">
           <h2 className="text-sm font-semibold text-text-main line-clamp-2">

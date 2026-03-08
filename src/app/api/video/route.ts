@@ -7,6 +7,8 @@ import {
 } from "@/lib/video_path";
 import { streamGDriveFile } from "@/lib/gdrive";
 
+export const dynamic = "force-dynamic";
+
 async function handleLocalVideo(pathParam: string, rangeHeader: string | null) {
   const result = resolveVideoPath(pathParam);
   if (!result.ok) {
@@ -65,8 +67,7 @@ async function handleGDriveVideo(fileId: string, rangeHeader: string | null) {
     return Response.json({ error: result.error }, { status: 500 });
   }
 
-  const webStream = Readable.toWeb(result.stream) as ReadableStream;
-  return new Response(webStream, {
+  return new Response(result.stream, {
     status: result.status,
     headers: result.headers,
   });

@@ -203,6 +203,8 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
     let successCount = 0;
     let failCount = 0;
 
+    const createdMatchIds: number[] = [];
+
     for (const fileId of selectedIds) {
       const file = files.find((f) => f.id === fileId);
       if (!file) continue;
@@ -224,8 +226,13 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
             date,
           }),
         });
-        if (res.ok) successCount++;
-        else failCount++;
+        if (res.ok) {
+          successCount++;
+          const data = await res.json();
+          if (data.id) createdMatchIds.push(data.id);
+        } else {
+          failCount++;
+        }
       } catch {
         failCount++;
       }
@@ -239,6 +246,11 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
         : `Added ${successCount} match${successCount !== 1 ? "es" : ""} to library.`
     );
     router.refresh();
+
+    // Pre-cache thumbnails in background (fire-and-forget)
+    for (const matchId of createdMatchIds) {
+      fetch(`/api/thumbnail?id=${matchId}`).catch(() => {});
+    }
     if (defaultFolder) loadVideos(defaultFolder.id);
     else loadFoldersForBrowse();
   }
