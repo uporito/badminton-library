@@ -5,6 +5,8 @@ import { InputShotsPanel } from "./input_shots_panel";
 import { RallyShotGrid } from "./rally_shot_grid";
 import { MatchStatsCharts } from "./match_stats_charts";
 import { AnalyzeButton } from "./analyze_button";
+import { VideoPlayerWithOverlay } from "./video_player_with_overlay";
+import type { OverlayShot } from "./video_player_with_overlay";
 import type { ShotForStats } from "@/lib/shot_chart_utils";
 
 interface MatchPageProps {
@@ -36,6 +38,10 @@ export default async function MatchPage({ params }: MatchPageProps) {
       zoneToSide: s.zoneToSide,
     }))
   );
+  const overlayShots: OverlayShot[] = rallies
+    .flatMap((r) => r.shots)
+    .filter((s): s is typeof s & { timestamp: number } => s.timestamp != null)
+    .map((s) => ({ shotType: s.shotType, player: s.player, timestamp: s.timestamp }));
 
   return (
     <div className="min-h-screen font-sans">
@@ -49,16 +55,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
       {/* Top row: video (left 2/3) + analysis (right 1/3) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-[2fr_1fr]">
         <div className="min-w-0 space-y-4">
-          <div className="flex max-h-[60vh] items-center justify-center overflow-hidden rounded-lg bg-black shadow-lg">
-            <video
-              src={videoUrl}
-              controls
-              className="max-h-[60vh] w-full object-contain"
-              preload="metadata"
-            >
-              Your browser does not support the video tag.
-            </video>
-          </div>
+          <VideoPlayerWithOverlay videoUrl={videoUrl} shots={overlayShots} />
           <section className="frame rounded-xl p-4">
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>

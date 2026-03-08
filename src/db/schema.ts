@@ -1,5 +1,6 @@
 import {
   integer,
+  real,
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
@@ -109,6 +110,7 @@ export const matchShots = sqliteTable("match_shots", {
     .default(false),
   player: text("player", { enum: sideEnum }).notNull(),
   source: text("source", { enum: shotSourceEnum }).notNull().default("manual"),
+  timestamp: real("timestamp"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),

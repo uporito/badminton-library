@@ -28,6 +28,7 @@ const AnalysisShotSchema = z.object({
   zoneToSide: z.enum(sideEnum),
   zoneTo: z.enum(zoneEnum),
   outcome: z.enum(outcomeEnum),
+  timestamp: z.number(),
 });
 
 const AnalysisRallySchema = z.object({
@@ -81,6 +82,9 @@ const RESPONSE_JSON_SCHEMA = {
                   type: "string",
                   enum: [...outcomeEnum],
                 },
+                timestamp: {
+                  type: "number",
+                },
               },
               required: [
                 "shotType",
@@ -90,6 +94,7 @@ const RESPONSE_JSON_SCHEMA = {
                 "zoneToSide",
                 "zoneTo",
                 "outcome",
+                "timestamp",
               ],
             },
           },
@@ -272,6 +277,7 @@ export async function analyzeMatch(
           isLastShotOfRally: isLast && (shot.outcome === "winner" || shot.outcome === "error"),
           player: shot.player,
           source: "ai_suggested",
+          timestamp: shot.timestamp,
         });
         totalShots++;
       }

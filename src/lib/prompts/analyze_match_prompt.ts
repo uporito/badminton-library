@@ -56,6 +56,7 @@ Each shot object has:
 - **zoneToSide**: "me" or "opponent" — which side the shuttle lands on or is heading toward.
 - **zoneTo**: one of the 9 zone names — target zone of the shot.
 - **outcome**: "winner", "error", or "neither".
+- **timestamp**: approximate time in the video (in seconds, as a number) when this shot is played.
 
 ## Rules
 
@@ -64,5 +65,6 @@ Each shot object has:
 3. Be precise about zone mapping — watch where the player is standing and where the shuttle goes.
 4. If you cannot determine a zone with confidence, use "center_mid" as a default.
 5. Do not invent rallies — only report what you observe in the video.
-6. Skip time between rallies (warm-up, breaks, changeovers).`;
+6. Skip time between rallies (warm-up, breaks, changeovers).
+7. For each shot, provide the approximate timestamp (seconds from the start of the video) when the shot occurs.`;
 }
