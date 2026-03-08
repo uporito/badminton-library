@@ -5,6 +5,7 @@ import { InputShotsPanel } from "./input_shots_panel";
 import { RallyShotGrid } from "./rally_shot_grid";
 import { MatchStatsCharts } from "./match_stats_charts";
 import { AnalyzeButton } from "./analyze_button";
+import { PlayerDescriptions } from "./player_descriptions";
 import { VideoPlayerWithOverlay } from "./video_player_with_overlay";
 import type { OverlayShot } from "./video_player_with_overlay";
 import type { ShotForStats } from "@/lib/shot_chart_utils";
@@ -89,6 +90,13 @@ export default async function MatchPage({ params }: MatchPageProps) {
                 </dd>
               </div>
             </dl>
+            <div className="mt-3 border-t border-ui-elevated pt-3">
+              <PlayerDescriptions
+                matchId={match.id}
+                initialMyDescription={match.myDescription ?? ""}
+                initialOpponentDescription={match.opponentDescription ?? ""}
+              />
+            </div>
           </section>
         </div>
         <div className="min-w-0">
