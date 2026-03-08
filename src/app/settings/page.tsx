@@ -8,7 +8,7 @@ import {
   setStoredVideoFolderPath,
   type ThemeValue,
 } from "@/lib/settings";
-import { GoogleDriveLogo, CheckCircle, XCircle } from "@phosphor-icons/react";
+import { GoogleDriveLogo, CheckCircle, XCircle, Sparkle } from "@phosphor-icons/react";
 
 function applyTheme(value: ThemeValue) {
   const isDark =
@@ -24,10 +24,15 @@ interface GDriveStatus {
   serviceAccountEmail: string | null;
 }
 
+interface GeminiStatus {
+  configured: boolean;
+}
+
 export default function SettingsPage() {
   const [theme, setTheme] = useState<ThemeValue>("system");
   const [videoFolderPath, setVideoFolderPath] = useState("");
   const [gdriveStatus, setGdriveStatus] = useState<GDriveStatus | null>(null);
+  const [geminiStatus, setGeminiStatus] = useState<GeminiStatus | null>(null);
 
   useEffect(() => {
     setTheme(getStoredTheme());
@@ -36,6 +41,10 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((d) => setGdriveStatus(d))
       .catch(() => setGdriveStatus({ configured: false, serviceAccountEmail: null }));
+    fetch("/api/gemini/status")
+      .then((r) => r.json())
+      .then((d) => setGeminiStatus(d))
+      .catch(() => setGeminiStatus({ configured: false }));
   }, []);
 
   function handleThemeChange(value: ThemeValue) {
@@ -113,6 +122,58 @@ export default function SettingsPage() {
             Default path used when adding new matches. Server uses VIDEO_ROOT for
             actual file resolution.
           </p>
+        </div>
+      </section>
+
+      <section className="space-y-4 mb-8">
+        <h2 className="text-sm font-medium text-text-soft uppercase tracking-wide">
+          Analyze with AI
+        </h2>
+        <div className="frame rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 mb-3">
+            <Sparkle size={20} className="text-text-soft" weight="fill" />
+            <span className="text-sm font-medium text-text-main">
+              Gemini API (video analysis)
+            </span>
+            {geminiStatus && (
+              <span className="ml-auto flex items-center gap-1 text-xs">
+                {geminiStatus.configured ? (
+                  <>
+                    <CheckCircle size={14} className="text-ui-success" weight="fill" />
+                    <span className="text-ui-success">Configured</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={14} className="text-text-soft" weight="fill" />
+                    <span className="text-text-soft">Not configured</span>
+                  </>
+                )}
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-2 text-xs text-text-soft">
+            <p className="font-medium text-text-main text-sm">Setup</p>
+            <ol className="list-decimal list-inside space-y-1.5 pl-1">
+              <li>
+                Get a free API key from{" "}
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-text-main"
+                >
+                  Google AI Studio
+                </a>
+                .
+              </li>
+              <li>
+                Add <code className="rounded bg-ui-elevated px-1 py-0.5">GEMINI_API_KEY=your_key</code> to
+                your <code className="rounded bg-ui-elevated px-1 py-0.5">.env</code> file.
+              </li>
+              <li>Restart the dev server.</li>
+            </ol>
+          </div>
         </div>
       </section>
 
