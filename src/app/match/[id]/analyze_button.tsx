@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { SparkleIcon, CircleNotchIcon } from "@phosphor-icons/react";
 
@@ -8,36 +8,93 @@ interface AnalyzeButtonProps {
   matchId: number;
 }
 
+interface NdjsonEvent {
+  type: "progress" | "result" | "error";
+  message?: string;
+  error?: string;
+  detail?: string;
+  rallyCount?: number;
+  shotCount?: number;
+}
+
 export function AnalyzeButton({ matchId }: AnalyzeButtonProps) {
   const router = useRouter();
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
   );
+  const [progress, setProgress] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   async function handleAnalyze() {
     setState("loading");
+    setProgress(null);
     setMessage(null);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       const res = await fetch(`/api/matches/${matchId}/analyze`, {
         method: "POST",
+        signal: controller.signal,
       });
-      const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.body) {
+        const data = await res.json().catch(() => ({}));
         setState("error");
         setMessage(data.detail ?? data.error ?? "Analysis failed");
         return;
       }
 
-      setState("success");
-      setMessage(
-        `Analysis complete — ${data.rallyCount} rallies, ${data.shotCount} shots detected.`
-      );
-      router.refresh();
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finished = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event: NdjsonEvent = JSON.parse(line);
+            if (event.type === "progress" && event.message) {
+              setProgress(event.message);
+            } else if (event.type === "result") {
+              finished = true;
+              setState("success");
+              setProgress(null);
+              setMessage(
+                `Analysis complete — ${event.rallyCount} rallies, ${event.shotCount} shots detected.`
+              );
+              router.refresh();
+            } else if (event.type === "error") {
+              finished = true;
+              setState("error");
+              setProgress(null);
+              setMessage(event.detail ?? event.error ?? "Analysis failed");
+            }
+          } catch {
+            // skip malformed lines
+          }
+        }
+      }
+
+      if (!finished) {
+        setState("error");
+        setProgress(null);
+        setMessage("Stream ended without a result.");
+      }
     } catch (e) {
+      if (controller.signal.aborted) return;
       setState("error");
+      setProgress(null);
       const msg = e instanceof Error ? e.message : "Network error";
       const isFetchFailed =
         msg.toLowerCase().includes("fetch failed") ||
@@ -66,10 +123,8 @@ export function AnalyzeButton({ matchId }: AnalyzeButtonProps) {
         {state === "loading" ? "Analyzing video…" : "Analyze with AI"}
       </button>
 
-      {state === "loading" && (
-        <p className="text-xs text-text-soft">
-          Uploading video and running analysis. This may take 1–3 minutes.
-        </p>
+      {state === "loading" && progress && (
+        <p className="text-xs text-text-soft">{progress}</p>
       )}
 
       {state === "success" && message && (

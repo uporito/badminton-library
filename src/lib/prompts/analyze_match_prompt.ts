@@ -3,7 +3,28 @@
  *
  * Separated from logic so it can be iterated on independently.
  */
-export function buildAnalyzeMatchPrompt(): string {
+interface PromptOptions {
+  myDescription?: string | null;
+  opponentDescription?: string | null;
+}
+
+function buildPlayerSection(options?: PromptOptions): string {
+  const me = options?.myDescription?.trim();
+  const opp = options?.opponentDescription?.trim();
+  if (!me && !opp) return "";
+
+  const lines = ["## Player identification\n"];
+  if (me) lines.push(`- **"me"**: ${me}`);
+  if (opp) lines.push(`- **"opponent"**: ${opp}`);
+  lines.push(
+    "\nUse these descriptions to identify which player is \"me\" and which is \"opponent\" throughout the video, even when they switch sides. Ignore any other players that may appear in the video and any shots they play.\n\n"
+  );
+  return lines.join("\n");
+}
+
+export function buildAnalyzeMatchPrompt(options?: PromptOptions): string {
+  const playerSection = buildPlayerSection(options);
+
   return `You are an expert badminton analyst. You are watching a recorded badminton match video.
 Your task is to identify every rally and every shot within each rally, producing structured data.
 
@@ -58,7 +79,7 @@ Each shot object has:
 - **outcome**: "winner", "error", or "neither".
 - **timestamp**: approximate time in the video (in seconds, as a number) when this shot is played.
 
-## Rules
+${playerSection}## Rules
 
 1. Every rally starts with a serve.
 2. Players alternate shots (me, opponent, me, opponent, ...) unless there is an error on the serve itself.

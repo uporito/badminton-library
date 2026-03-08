@@ -20,6 +20,8 @@ const CreateMatchBodySchema = z.object({
   opponent: z.string().optional(),
   result: z.string().optional(),
   notes: z.string().optional(),
+  myDescription: z.string().optional(),
+  opponentDescription: z.string().optional(),
   category: z.enum(matchCategoryEnum).optional(),
 });
 
@@ -61,6 +63,8 @@ export async function POST(request: NextRequest) {
     opponent,
     result,
     notes,
+    myDescription,
+    opponentDescription,
     category,
   } = parsed.data;
   const titleToUse =
@@ -77,6 +81,8 @@ export async function POST(request: NextRequest) {
       opponent: opponent ?? null,
       result: result ?? null,
       notes: notes ?? null,
+      myDescription: myDescription ?? null,
+      opponentDescription: opponentDescription ?? null,
       category: category ?? "Uncategorized",
     })
     .returning();

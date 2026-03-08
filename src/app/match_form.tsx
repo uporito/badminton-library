@@ -25,6 +25,8 @@ function emptyValues(): Record<string, string | number | ""> {
     opponent: "",
     result: "",
     notes: "",
+    myDescription: "",
+    opponentDescription: "",
     category: "Uncategorized",
   };
 }
@@ -39,6 +41,8 @@ function matchToValues(m: MatchRow): Record<string, string | number | ""> {
     opponent: m.opponent ?? "",
     result: m.result ?? "",
     notes: m.notes ?? "",
+    myDescription: m.myDescription ?? "",
+    opponentDescription: m.opponentDescription ?? "",
     category: m.category ?? "Uncategorized",
   };
 }
@@ -103,6 +107,8 @@ export function MatchForm({
       opponent: String(values.opponent).trim() || undefined,
       result: String(values.result).trim() || undefined,
       notes: String(values.notes).trim() || undefined,
+      myDescription: String(values.myDescription).trim() || undefined,
+      opponentDescription: String(values.opponentDescription).trim() || undefined,
       category: String(values.category),
     };
 
@@ -340,6 +346,32 @@ export function MatchForm({
               </option>
             ))}
           </select>
+        </label>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-text-soft">
+            My description
+          </span>
+          <input
+            type="text"
+            value={values.myDescription}
+            onChange={(e) => setValue("myDescription", e.target.value)}
+            placeholder="e.g. wearing red shirt, left-handed"
+            className={inputClass}
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-text-soft">
+            Opponent description
+          </span>
+          <input
+            type="text"
+            value={values.opponentDescription}
+            onChange={(e) => setValue("opponentDescription", e.target.value)}
+            placeholder="e.g. taller, wearing blue shirt"
+            className={inputClass}
+          />
         </label>
       </div>
       <div className="flex items-center gap-3">

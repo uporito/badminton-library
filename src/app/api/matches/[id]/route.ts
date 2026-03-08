@@ -15,6 +15,8 @@ const UpdateMatchBodySchema = z.object({
   opponent: z.string().optional().nullable(),
   result: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  myDescription: z.string().optional().nullable(),
+  opponentDescription: z.string().optional().nullable(),
   category: z.enum(matchCategoryEnum).optional(),
 });
 
@@ -101,6 +103,8 @@ export async function PATCH(
   if (data.opponent !== undefined) setValues.opponent = data.opponent;
   if (data.result !== undefined) setValues.result = data.result;
   if (data.notes !== undefined) setValues.notes = data.notes;
+  if (data.myDescription !== undefined) setValues.myDescription = data.myDescription;
+  if (data.opponentDescription !== undefined) setValues.opponentDescription = data.opponentDescription;
   if (data.category !== undefined) setValues.category = data.category;
 
   const [updated] = await db

@@ -28,6 +28,8 @@ export const matches = sqliteTable("matches", {
   opponent: text("opponent"),
   result: text("result"),
   notes: text("notes"),
+  myDescription: text("my_description"),
+  opponentDescription: text("opponent_description"),
   category: text("category", { enum: matchCategoryEnum }).default(
     "Uncategorized"
   ),

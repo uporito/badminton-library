@@ -152,8 +152,14 @@ function computeWonByMe(
 }
 
 export async function analyzeMatch(
-  matchId: number
+  matchId: number,
+  onProgress?: (message: string) => void
 ): Promise<AnalyzeMatchResult> {
+  const emit = (msg: string) => {
+    console.log(`[analyze] ${msg}`);
+    onProgress?.(msg);
+  };
+
   const matchResult = getMatchById(matchId);
   if (!matchResult.ok) return { ok: false, error: "NOT_FOUND" };
 
@@ -163,7 +169,7 @@ export async function analyzeMatch(
 
   let uploadedFile;
   try {
-    console.log("[analyze] Uploading video to Gemini...");
+    emit("Uploading video to Gemini…");
     if (match.videoSource === "gdrive") {
       const dlResult = await downloadGDriveFileToBuffer(match.videoPath);
       if (!dlResult.ok) return { ok: false, error: "VIDEO_NOT_FOUND", detail: dlResult.error };
@@ -180,8 +186,9 @@ export async function analyzeMatch(
         config: { mimeType: getMimeType(videoResult.fullPath) },
       });
     }
-    console.log("[analyze] Upload complete.");
+    emit("Upload complete.");
   } catch (e) {
+    emit("Upload failed.");
     console.error("[analyze] Upload failed:", e);
     return {
       ok: false,
@@ -195,7 +202,7 @@ export async function analyzeMatch(
   }
 
   if (uploadedFile.state === FileState.PROCESSING) {
-    console.log("[analyze] Video uploaded; waiting for Gemini to finish processing...");
+    emit("Waiting for Gemini to finish processing the video…");
     const ready = await waitForFileActive(ai, uploadedFile.name);
     if (!ready) {
       return { ok: false, error: "PROCESSING_FAILED", detail: "Video processing timed out or failed" };
@@ -206,12 +213,15 @@ export async function analyzeMatch(
 
   let responseText: string;
   try {
-    console.log("[analyze] Generating rally/shot analysis (this can take several minutes for long videos)...");
+    emit("Generating rally/shot analysis (this can take several minutes for long videos)…");
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: createUserContent([
         createPartFromUri(uploadedFile.uri, uploadedFile.mimeType),
-        buildAnalyzeMatchPrompt(),
+        buildAnalyzeMatchPrompt({
+          myDescription: match.myDescription,
+          opponentDescription: match.opponentDescription,
+        }),
       ]),
       config: {
         responseMimeType: "application/json",
@@ -220,6 +230,7 @@ export async function analyzeMatch(
     });
     responseText = response.text ?? "";
   } catch (e) {
+    emit("Generation failed.");
     console.error("[analyze] Generation failed:", e);
     return {
       ok: false,
@@ -233,6 +244,7 @@ export async function analyzeMatch(
     const raw = JSON.parse(responseText);
     parsed = AnalysisResponseSchema.parse(raw);
   } catch (e) {
+    emit("Failed to parse AI response.");
     console.error("[analyze] Parse failed:", e);
     return {
       ok: false,
@@ -242,7 +254,7 @@ export async function analyzeMatch(
   }
 
   try {
-    console.log("[analyze] Writing rallies and shots to database...");
+    emit("Writing rallies and shots to database…");
     const db = getDb();
 
     let totalShots = 0;
@@ -283,7 +295,7 @@ export async function analyzeMatch(
       }
     }
 
-    console.log("[analyze] Done.");
+    emit("Done.");
     return {
       ok: true,
       data: { rallyCount: parsed.rallies.length, shotCount: totalShots },
