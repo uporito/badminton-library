@@ -59,6 +59,9 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
   const [folderPickerLoading, setFolderPickerLoading] = useState(false);
   const folderPickerRef = useRef<HTMLDivElement>(null);
 
+  // Collapse state
+  const [expanded, setExpanded] = useState(false);
+
   // Video checklist
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -254,12 +257,24 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
 
   return (
     <section className="frame rounded-xl p-4">
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <button
+        type="button"
+        onClick={() => setExpanded((p) => !p)}
+        className="flex w-full items-center justify-between gap-3"
+      >
         <div className="flex items-center gap-2">
           <GoogleDriveLogo size={18} className="text-text-soft" />
           <h2 className="text-sm font-semibold text-text-main">Import from Google Drive</h2>
         </div>
+        <CaretDown
+          size={14}
+          className={`text-text-soft transition-transform ${expanded ? "rotate-180" : ""}`}
+        />
+      </button>
 
+      {expanded && (
+      <div className="mt-3">
+      <div className="flex items-center justify-end gap-3 mb-3">
         {/* Default folder selector */}
         <div ref={folderPickerRef} className="relative">
           <button
@@ -539,6 +554,8 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
           <p className="text-xs text-text-soft">{importMessage}</p>
         )}
       </div>
+      </div>
+      )}
     </section>
   );
 }
