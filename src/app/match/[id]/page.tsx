@@ -6,6 +6,7 @@ import { RallyShotGrid } from "./rally_shot_grid";
 import { MatchStatsCharts } from "./match_stats_charts";
 import { AnalyzeButton } from "./analyze_button";
 import { PlayerDescriptions } from "./player_descriptions";
+import { CollapsibleSection } from "./collapsible_section";
 import { VideoPlayerWithOverlay } from "./video_player_with_overlay";
 import type { OverlayShot } from "./video_player_with_overlay";
 import type { ShotForStats } from "@/lib/shot_chart_utils";
@@ -46,17 +47,16 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
   return (
     <div className="min-h-screen font-sans">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold text-text-main">
-          {match.title}
-        </h1>
-        <AnalyzeButton matchId={match.id} />
-      </div>
+      <h1 className="mb-4 text-xl font-semibold text-text-main">
+        {match.title}
+      </h1>
 
-      {/* Top row: video (left 2/3) + analysis (right 1/3) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[2fr_1fr]">
-        <div className="min-w-0 space-y-4">
+      <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-[2fr_1fr]">
+        <div className="min-w-0">
           <VideoPlayerWithOverlay videoUrl={videoUrl} shots={overlayShots} />
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-3">
           <section className="frame rounded-xl p-4">
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
@@ -90,17 +90,23 @@ export default async function MatchPage({ params }: MatchPageProps) {
                 </dd>
               </div>
             </dl>
-            <div className="mt-3 border-t border-ui-elevated pt-3">
-              <PlayerDescriptions
-                matchId={match.id}
-                initialMyDescription={match.myDescription ?? ""}
-                initialOpponentDescription={match.opponentDescription ?? ""}
-              />
-            </div>
           </section>
-        </div>
-        <div className="min-w-0">
-          <InputShotsPanel matchId={match.id} initialRallies={rallies} />
+
+          <CollapsibleSection title="Manual shot input">
+            <InputShotsPanel matchId={match.id} initialRallies={rallies} />
+          </CollapsibleSection>
+
+          <section className="frame rounded-xl p-4">
+            <PlayerDescriptions
+              matchId={match.id}
+              initialMyDescription={match.myDescription ?? ""}
+              initialOpponentDescription={match.opponentDescription ?? ""}
+            />
+          </section>
+
+          <div className="flex justify-end">
+            <AnalyzeButton matchId={match.id} />
+          </div>
         </div>
       </div>
 

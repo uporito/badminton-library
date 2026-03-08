@@ -108,12 +108,12 @@ export function AnalyzeButton({ matchId }: AnalyzeButtonProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col items-end gap-2">
       <button
         type="button"
         onClick={handleAnalyze}
         disabled={state === "loading"}
-        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="inline-flex w-44 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
       >
         {state === "loading" ? (
           <CircleNotchIcon size={16} className="animate-spin" />
@@ -124,15 +124,15 @@ export function AnalyzeButton({ matchId }: AnalyzeButtonProps) {
       </button>
 
       {state === "loading" && progress && (
-        <p className="text-xs text-text-soft">{progress}</p>
+        <p className="text-right text-xs text-text-soft">{progress}</p>
       )}
 
       {state === "success" && message && (
-        <p className="text-xs text-ui-success">{message}</p>
+        <p className="text-right text-xs text-ui-success">{message}</p>
       )}
 
       {state === "error" && message && (
-        <p className="text-xs text-ui-error">{message}</p>
+        <p className="text-right text-xs text-ui-error">{message}</p>
       )}
     </div>
   );
