@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { PlayIcon, GoogleDriveLogo } from "@phosphor-icons/react/ssr";
 import { formatDuration } from "@/lib/format_duration";
 import type { MatchRow } from "@/lib/get_match_by_id";
@@ -62,12 +61,10 @@ export function MatchCard({ match }: MatchCardProps) {
     >
       {hasThumbnail ? (
         <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-          <Image
+          <img
             src={`/api/thumbnail?id=${match.id}`}
             alt={match.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="h-full w-full object-cover"
           />
         </div>
       ) : (
