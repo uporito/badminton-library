@@ -52,7 +52,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   const gdriveConfigured = isGDriveConfigured();
   const existingMatches = gdriveConfigured
-    ? matches.map((m) => ({ videoPath: m.videoPath, videoSource: m.videoSource ?? "local" }))
+    ? matches.map((m) => ({ id: m.id, videoPath: m.videoPath, videoSource: m.videoSource ?? "local" }))
     : [];
 
   return (

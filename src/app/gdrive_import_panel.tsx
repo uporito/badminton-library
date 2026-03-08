@@ -12,7 +12,7 @@ import {
   Check,
   CloudArrowDown,
   CircleNotch,
-  Plus,
+  ArrowsClockwise,
 } from "@phosphor-icons/react";
 
 interface GDriveFile {
@@ -40,6 +40,7 @@ function formatFileSize(bytes: string): string {
 }
 
 interface ExistingMatch {
+  id: number;
   videoPath: string;
   videoSource: string;
 }
@@ -51,7 +52,6 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Default folder selection
   const [defaultFolder, setDefaultFolder] = useState<{ id: string; name: string } | null>(null);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [folderPickerStack, setFolderPickerStack] = useState<{ id: string; name: string }[]>([]);
@@ -59,19 +59,36 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
   const [folderPickerLoading, setFolderPickerLoading] = useState(false);
   const folderPickerRef = useRef<HTMLDivElement>(null);
 
-  // Collapse state
   const [expanded, setExpanded] = useState(false);
 
-  // Video checklist
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Unified checklist: tracks which Drive file IDs should be in the library
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
-  const [importing, setImporting] = useState(false);
-  const [importMessage, setImportMessage] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
+
+  // Map Drive file ID -> match ID for existing imports
+  const gdriveMatchMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of existingMatches) {
+      if (m.videoSource === "gdrive") map.set(m.videoPath, m.id);
+    }
+    return map;
+  }, [existingMatches]);
 
   const existingGDriveIds = useMemo(
-    () => new Set(existingMatches.filter((m) => m.videoSource === "gdrive").map((m) => m.videoPath)),
-    [existingMatches]
+    () => new Set(gdriveMatchMap.keys()),
+    [gdriveMatchMap]
   );
+
+  // Initialize checked state from existing matches whenever files load
+  const initCheckedFromExisting = useCallback((driveFiles: GDriveFile[]) => {
+    const initial = new Set<string>();
+    for (const f of driveFiles) {
+      if (existingGDriveIds.has(f.id)) initial.add(f.id);
+    }
+    setCheckedIds(initial);
+  }, [existingGDriveIds]);
 
   const loadVideos = useCallback(async (folderId?: string) => {
     setLoading(true);
@@ -85,13 +102,15 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
         return;
       }
       const data = await res.json();
-      setFiles(data.files ?? []);
+      const loadedFiles = data.files ?? [];
+      setFiles(loadedFiles);
+      initCheckedFromExisting(loadedFiles);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initCheckedFromExisting]);
 
   const loadFoldersForBrowse = useCallback(async (folderId?: string) => {
     setLoading(true);
@@ -107,14 +126,16 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
       }
       if (vRes.ok) {
         const data = await vRes.json();
-        setFiles(data.files ?? []);
+        const loadedFiles = data.files ?? [];
+        setFiles(loadedFiles);
+        initCheckedFromExisting(loadedFiles);
       }
     } catch {
       // ignore
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initCheckedFromExisting]);
 
   useEffect(() => {
     if (defaultFolder) {
@@ -124,7 +145,7 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
     }
   }, [defaultFolder, loadVideos, loadFoldersForBrowse]);
 
-  // Folder picker: load contents when navigating
+  // Folder picker
   const folderPickerCurrentId = folderPickerStack.length > 0
     ? folderPickerStack[folderPickerStack.length - 1].id
     : undefined;
@@ -162,25 +183,15 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [showFolderPicker]);
 
-  const importableFiles = useMemo(
-    () => files.filter((f) => !existingGDriveIds.has(f.id)),
-    [files, existingGDriveIds]
-  );
-
   const filteredFiles = useMemo(
     () => search
-      ? importableFiles.filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
-      : importableFiles,
-    [importableFiles, search]
-  );
-
-  const alreadyImported = useMemo(
-    () => files.filter((f) => existingGDriveIds.has(f.id)),
-    [files, existingGDriveIds]
+      ? files.filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
+      : files,
+    [files, search]
   );
 
   function toggleFile(id: string) {
-    setSelectedIds((prev) => {
+    setCheckedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -189,31 +200,46 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
   }
 
   function toggleAll() {
-    if (selectedIds.size === filteredFiles.length && filteredFiles.length > 0) {
-      setSelectedIds(new Set());
+    const allChecked = filteredFiles.length > 0 && filteredFiles.every((f) => checkedIds.has(f.id));
+    if (allChecked) {
+      setCheckedIds((prev) => {
+        const next = new Set(prev);
+        for (const f of filteredFiles) next.delete(f.id);
+        return next;
+      });
     } else {
-      setSelectedIds(new Set(filteredFiles.map((f) => f.id)));
+      setCheckedIds((prev) => {
+        const next = new Set(prev);
+        for (const f of filteredFiles) next.add(f.id);
+        return next;
+      });
     }
   }
 
-  async function handleImport() {
-    if (selectedIds.size === 0) return;
-    setImporting(true);
-    setImportMessage("");
-    let successCount = 0;
-    let failCount = 0;
+  // Compute diff: what needs to be added vs removed
+  const toAdd = useMemo(
+    () => files.filter((f) => checkedIds.has(f.id) && !existingGDriveIds.has(f.id)),
+    [files, checkedIds, existingGDriveIds]
+  );
+  const toRemove = useMemo(
+    () => files.filter((f) => !checkedIds.has(f.id) && existingGDriveIds.has(f.id)),
+    [files, checkedIds, existingGDriveIds]
+  );
+  const hasChanges = toAdd.length > 0 || toRemove.length > 0;
 
-    const createdMatchIds: number[] = [];
+  async function handleSync() {
+    if (!hasChanges) return;
+    setSyncing(true);
+    setSyncMessage("");
+    let added = 0;
+    let removed = 0;
+    let failed = 0;
 
-    for (const fileId of selectedIds) {
-      const file = files.find((f) => f.id === fileId);
-      if (!file) continue;
+    for (const file of toAdd) {
       const durationSeconds = file.durationMs != null
         ? Math.round(file.durationMs / 1000)
         : undefined;
-      const date = file.createdTime
-        ? file.createdTime.slice(0, 10)
-        : undefined;
+      const date = file.createdTime ? file.createdTime.slice(0, 10) : undefined;
       try {
         const res = await fetch("/api/matches", {
           method: "POST",
@@ -227,37 +253,41 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
           }),
         });
         if (res.ok) {
-          successCount++;
+          added++;
           const data = await res.json();
-          if (data.id) createdMatchIds.push(data.id);
+          if (data.id) fetch(`/api/thumbnail?id=${data.id}`).catch(() => {});
         } else {
-          failCount++;
+          failed++;
         }
       } catch {
-        failCount++;
+        failed++;
       }
     }
 
-    setSelectedIds(new Set());
-    setImporting(false);
-    setImportMessage(
-      failCount > 0
-        ? `Added ${successCount} match${successCount !== 1 ? "es" : ""}. ${failCount} failed.`
-        : `Added ${successCount} match${successCount !== 1 ? "es" : ""} to library.`
-    );
-    router.refresh();
-
-    // Pre-cache thumbnails in background (fire-and-forget)
-    for (const matchId of createdMatchIds) {
-      fetch(`/api/thumbnail?id=${matchId}`).catch(() => {});
+    for (const file of toRemove) {
+      const matchId = gdriveMatchMap.get(file.id);
+      if (!matchId) { failed++; continue; }
+      try {
+        const res = await fetch(`/api/matches/${matchId}`, { method: "DELETE" });
+        if (res.ok) removed++;
+        else failed++;
+      } catch {
+        failed++;
+      }
     }
-    if (defaultFolder) loadVideos(defaultFolder.id);
-    else loadFoldersForBrowse();
+
+    setSyncing(false);
+    const parts: string[] = [];
+    if (added > 0) parts.push(`${added} added`);
+    if (removed > 0) parts.push(`${removed} removed`);
+    if (failed > 0) parts.push(`${failed} failed`);
+    setSyncMessage(parts.join(", ") + ".");
+    router.refresh();
   }
 
-  const allSelected = filteredFiles.length > 0 && selectedIds.size === filteredFiles.length;
+  const allFilteredChecked = filteredFiles.length > 0 && filteredFiles.every((f) => checkedIds.has(f.id));
 
-  // Browse mode: no default folder set, show folders + files
+  // Browse mode
   const [browseStack, setBrowseStack] = useState<{ id: string; name: string }[]>([]);
   const browseCurrentId = browseStack.length > 0 ? browseStack[browseStack.length - 1].id : undefined;
 
@@ -266,6 +296,16 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
       loadFoldersForBrowse(browseCurrentId);
     }
   }, [browseCurrentId, defaultFolder, loadFoldersForBrowse]);
+
+  // Action button label
+  const actionLabel = useMemo(() => {
+    if (syncing) return "Syncing…";
+    const parts: string[] = [];
+    if (toAdd.length > 0) parts.push(`add ${toAdd.length}`);
+    if (toRemove.length > 0) parts.push(`remove ${toRemove.length}`);
+    if (parts.length === 0) return "No changes";
+    return "Sync: " + parts.join(", ");
+  }, [syncing, toAdd, toRemove]);
 
   return (
     <section className="frame rounded-xl p-4">
@@ -287,7 +327,6 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
       {expanded && (
       <div className="mt-3">
       <div className="flex items-center justify-end gap-3 mb-3">
-        {/* Default folder selector */}
         <div ref={folderPickerRef} className="relative">
           <button
             type="button"
@@ -324,7 +363,6 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
               </div>
 
               <ul className="max-h-48 overflow-y-auto p-1.5 space-y-px">
-                {/* "All folders" option at root level */}
                 {folderPickerStack.length === 0 && (
                   <li>
                     <button
@@ -400,7 +438,6 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
 
       {error && <p className="mb-2 text-xs text-red-500">{error}</p>}
 
-      {/* Browse mode breadcrumb (when no default folder) */}
       {!defaultFolder && browseStack.length > 0 && (
         <div className="flex items-center gap-1.5 mb-2">
           <button
@@ -425,7 +462,6 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
         </div>
       )}
 
-      {/* Search */}
       <div className="relative mb-2">
         <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-soft" />
         <input
@@ -437,7 +473,6 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
         />
       </div>
 
-      {/* Video checklist */}
       <div className="max-h-[280px] overflow-y-auto rounded-lg border border-ui-elevated-more">
         {loading ? (
           <div className="flex items-center justify-center py-8 text-xs text-text-soft gap-2">
@@ -446,7 +481,6 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
           </div>
         ) : (
           <ul className="p-1.5 space-y-px">
-            {/* Folder entries (browse mode only) */}
             {!defaultFolder && folders.map((folder) => (
               <li key={`folder-${folder.id}`}>
                 <button
@@ -461,31 +495,30 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
               </li>
             ))}
 
-            {/* Select all */}
             {filteredFiles.length > 0 && (
               <li>
                 <button
                   type="button"
                   onClick={toggleAll}
                   className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                    allSelected ? "text-text-main" : "text-text-soft hover:bg-ui-elevated-more"
+                    allFilteredChecked ? "text-text-main" : "text-text-soft hover:bg-ui-elevated-more"
                   }`}
                 >
                   <span
                     className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] transition-colors ${
-                      allSelected ? "bg-accent" : "bg-ui-elevated"
+                      allFilteredChecked ? "bg-accent" : "bg-ui-elevated"
                     }`}
                   >
-                    {allSelected && <Check size={10} className="text-ui-bg" weight="bold" />}
+                    {allFilteredChecked && <Check size={10} className="text-ui-bg" weight="bold" />}
                   </span>
                   Select all ({filteredFiles.length})
                 </button>
               </li>
             )}
 
-            {/* Video files */}
             {filteredFiles.map((file) => {
-              const checked = selectedIds.has(file.id);
+              const checked = checkedIds.has(file.id);
+              const isExisting = existingGDriveIds.has(file.id);
               return (
                 <li key={file.id}>
                   <button
@@ -503,6 +536,12 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
                       {checked && <Check size={10} className="text-ui-bg" weight="bold" />}
                     </span>
                     <span className="truncate">{file.name}</span>
+                    {isExisting && !checked && (
+                      <span className="shrink-0 text-[10px] text-ui-error">will remove</span>
+                    )}
+                    {!isExisting && checked && (
+                      <span className="shrink-0 text-[10px] text-ui-success">will add</span>
+                    )}
                     <span className="ml-auto shrink-0 text-[10px] text-text-soft">
                       {formatFileSize(file.size)}
                     </span>
@@ -511,31 +550,7 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
               );
             })}
 
-            {/* Already imported */}
-            {alreadyImported.length > 0 && (
-              <>
-                <li className="px-2.5 pt-3 pb-1">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-text-soft">
-                    Already in library
-                  </span>
-                </li>
-                {alreadyImported.map((file) => (
-                  <li key={`imported-${file.id}`}>
-                    <div className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs text-text-soft opacity-50">
-                      <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] bg-accent">
-                        <Check size={10} className="text-ui-bg" weight="bold" />
-                      </span>
-                      <span className="truncate">{file.name}</span>
-                      <span className="ml-auto shrink-0 text-[10px]">
-                        {formatFileSize(file.size)}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </>
-            )}
-
-            {filteredFiles.length === 0 && alreadyImported.length === 0 && folders.length === 0 && (
+            {filteredFiles.length === 0 && folders.length === 0 && (
               <li className="flex flex-col items-center justify-center gap-1 py-8 text-text-soft">
                 <CloudArrowDown size={24} />
                 <span className="text-xs">No video files found</span>
@@ -545,25 +560,22 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
         )}
       </div>
 
-      {/* Import action */}
       <div className="mt-3 flex items-center gap-3">
         <button
           type="button"
-          disabled={selectedIds.size === 0 || importing}
-          onClick={handleImport}
+          disabled={!hasChanges || syncing}
+          onClick={handleSync}
           className="flex items-center gap-1.5 rounded-lg bg-ui-elevated-more px-4 py-2 text-xs font-medium text-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
         >
-          {importing ? (
+          {syncing ? (
             <CircleNotch size={12} className="animate-spin" />
           ) : (
-            <Plus size={12} weight="bold" />
+            <ArrowsClockwise size={12} weight="bold" />
           )}
-          {importing
-            ? "Importing…"
-            : `Add ${selectedIds.size > 0 ? selectedIds.size : ""} match${selectedIds.size !== 1 ? "es" : ""}`}
+          {actionLabel}
         </button>
-        {importMessage && (
-          <p className="text-xs text-text-soft">{importMessage}</p>
+        {syncMessage && (
+          <p className="text-xs text-text-soft">{syncMessage}</p>
         )}
       </div>
       </div>

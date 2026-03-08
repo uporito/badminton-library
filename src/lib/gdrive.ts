@@ -187,8 +187,6 @@ async function getAccessToken(): Promise<string | null> {
   return tokenRes?.token ?? null;
 }
 
-const DEFAULT_CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB chunks for range responses
-
 export async function streamGDriveFile(
   fileId: string,
   rangeHeader?: string | null
@@ -215,9 +213,7 @@ export async function streamGDriveFile(
     if (match) {
       const start = parseInt(match[1], 10);
       const reqEnd = match[2] ? parseInt(match[2], 10) : undefined;
-      const end = reqEnd !== undefined
-        ? Math.min(reqEnd, totalSize - 1)
-        : Math.min(start + DEFAULT_CHUNK_SIZE - 1, totalSize - 1);
+      const end = reqEnd !== undefined ? Math.min(reqEnd, totalSize - 1) : totalSize - 1;
       const chunkSize = end - start + 1;
 
       fetchHeaders["Range"] = `bytes=${start}-${end}`;
@@ -244,29 +240,25 @@ export async function streamGDriveFile(
     }
   }
 
-  // No range header: return first chunk with range info so the browser
-  // knows the total size and can make subsequent range requests
-  const end = Math.min(DEFAULT_CHUNK_SIZE - 1, totalSize - 1);
-  fetchHeaders["Range"] = `bytes=0-${end}`;
+  // No range header: stream the full file, but advertise range support
+  // so the browser can seek later
   const res = await fetch(driveUrl, { headers: fetchHeaders });
 
-  if (!res.ok && res.status !== 206) {
+  if (!res.ok) {
     return { ok: false, error: `Drive returned ${res.status}` };
   }
 
-  const chunkSize = end + 1;
   const resHeaders: Record<string, string> = {
     "Content-Type": contentType,
     "Accept-Ranges": "bytes",
-    "Content-Range": `bytes 0-${end}/${totalSize}`,
-    "Content-Length": String(chunkSize),
+    "Content-Length": String(totalSize),
   };
 
   return {
     ok: true,
     stream: res.body!,
     contentType,
-    status: 206,
+    status: 200,
     headers: resHeaders,
   };
 }
