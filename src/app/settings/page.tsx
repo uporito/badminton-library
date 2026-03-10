@@ -8,7 +8,7 @@ import {
   setStoredVideoFolderPath,
   type ThemeValue,
 } from "@/lib/settings";
-import { GoogleDriveLogo, CheckCircle, XCircle, Sparkle } from "@phosphor-icons/react";
+import { GoogleDriveLogo, YoutubeLogo, CheckCircle, XCircle, Sparkle } from "@phosphor-icons/react";
 
 function applyTheme(value: ThemeValue) {
   const isDark =
@@ -28,11 +28,16 @@ interface GeminiStatus {
   configured: boolean;
 }
 
+interface YouTubeStatus {
+  configured: boolean;
+}
+
 export default function SettingsPage() {
   const [theme, setTheme] = useState<ThemeValue>("system");
   const [videoFolderPath, setVideoFolderPath] = useState("");
   const [gdriveStatus, setGdriveStatus] = useState<GDriveStatus | null>(null);
   const [geminiStatus, setGeminiStatus] = useState<GeminiStatus | null>(null);
+  const [youtubeStatus, setYoutubeStatus] = useState<YouTubeStatus | null>(null);
 
   useEffect(() => {
     setTheme(getStoredTheme());
@@ -45,6 +50,10 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((d) => setGeminiStatus(d))
       .catch(() => setGeminiStatus({ configured: false }));
+    fetch("/api/youtube/status")
+      .then((r) => r.json())
+      .then((d) => setYoutubeStatus(d))
+      .catch(() => setYoutubeStatus({ configured: false }));
   }, []);
 
   function handleThemeChange(value: ThemeValue) {
@@ -169,6 +178,64 @@ export default function SettingsPage() {
               </li>
               <li>
                 Add <code className="rounded bg-ui-elevated px-1 py-0.5">GEMINI_API_KEY=your_key</code> to
+                your <code className="rounded bg-ui-elevated px-1 py-0.5">.env</code> file.
+              </li>
+              <li>Restart the dev server.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4 mb-8">
+        <h2 className="text-sm font-medium text-text-soft uppercase tracking-wide">
+          Video — YouTube
+        </h2>
+        <div className="frame rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 mb-3">
+            <YoutubeLogo size={20} className="text-text-soft" />
+            <span className="text-sm font-medium text-text-main">
+              YouTube import
+            </span>
+            {youtubeStatus && (
+              <span className="ml-auto flex items-center gap-1 text-xs">
+                {youtubeStatus.configured ? (
+                  <>
+                    <CheckCircle size={14} className="text-ui-success" weight="fill" />
+                    <span className="text-ui-success">Configured</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={14} className="text-text-soft" weight="fill" />
+                    <span className="text-text-soft">Not configured</span>
+                  </>
+                )}
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-2 text-xs text-text-soft">
+            <p className="font-medium text-text-main text-sm">Setup</p>
+            <ol className="list-decimal list-inside space-y-1.5 pl-1">
+              <li>
+                Create a Google Cloud project (or use existing) at{" "}
+                <a
+                  href="https://console.cloud.google.com/projectcreate"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-text-main"
+                >
+                  Google Cloud Console
+                </a>
+                .
+              </li>
+              <li>
+                Enable the <strong>YouTube Data API v3</strong> for your project (APIs &amp; Services → Library).
+              </li>
+              <li>
+                Create an API key (APIs &amp; Services → Credentials → Create credentials → API key).
+              </li>
+              <li>
+                Add <code className="rounded bg-ui-elevated px-1 py-0.5">YOUTUBE_API_KEY=your_key</code> to
                 your <code className="rounded bg-ui-elevated px-1 py-0.5">.env</code> file.
               </li>
               <li>Restart the dev server.</li>
