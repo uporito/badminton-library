@@ -3,8 +3,11 @@ import { listMatches } from "@/lib/list_matches";
 import { groupMatchesForLibrary } from "@/lib/group_matches_for_library";
 import type { ListMatchesCategoryFilter, ListMatchesSort } from "@/lib/list_matches";
 import { MatchCard } from "./match_card";
-import { GDriveImportPanel } from "./gdrive_import_panel";
+import { TagFilter } from "./tag_filter";
+import { ImportPanel } from "./import_panel";
 import { isGDriveConfigured } from "@/lib/gdrive";
+import { isYouTubeConfigured } from "@/lib/youtube";
+import { getAllUniqueTags, parseTags } from "@/lib/tags";
 import Link from "next/link";
 
 const CATEGORY_OPTIONS: { value: ListMatchesCategoryFilter; label: string }[] = [
@@ -31,7 +34,7 @@ function buildLibraryUrl(params: {
 }
 
 interface HomeProps {
-  searchParams: Promise<{ category?: string; sort?: string }>;
+  searchParams: Promise<{ category?: string; sort?: string; tags?: string }>;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
@@ -44,16 +47,31 @@ export default async function Home({ searchParams }: HomeProps) {
   const validSort: ListMatchesSort =
     SORT_OPTIONS.some((s) => s.value === sort) ? sort : "date";
 
-  const matches = listMatches({
+  const allMatches = listMatches({
     category: validCategory,
     sort: validSort,
   });
+
+  const allTags = getAllUniqueTags(allMatches);
+
+  const activeTags = params.tags?.split(",").filter(Boolean) ?? [];
+  const matches =
+    activeTags.length > 0
+      ? allMatches.filter((m) => {
+          const matchTags = parseTags(m.tags);
+          return activeTags.some((t) => matchTags.includes(t));
+        })
+      : allMatches;
+
   const sections = groupMatchesForLibrary(matches, validSort);
 
   const gdriveConfigured = isGDriveConfigured();
-  const existingMatches = gdriveConfigured
-    ? matches.map((m) => ({ id: m.id, videoPath: m.videoPath, videoSource: m.videoSource ?? "local" }))
-    : [];
+  const youtubeConfigured = isYouTubeConfigured();
+  const existingMatches = allMatches.map((m) => ({
+    id: m.id,
+    videoPath: m.videoPath,
+    videoSource: m.videoSource ?? "local",
+  }));
 
   return (
     <div className="min-h-screen font-sans">
@@ -62,11 +80,13 @@ export default async function Home({ searchParams }: HomeProps) {
           My Matches
         </h1>
 
-        {gdriveConfigured && (
-          <div className="mb-6">
-            <GDriveImportPanel existingMatches={existingMatches} />
-          </div>
-        )}
+        <div className="mb-6">
+          <ImportPanel
+            existingMatches={existingMatches}
+            gdriveConfigured={gdriveConfigured}
+            youtubeConfigured={youtubeConfigured}
+          />
+        </div>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="frame flex rounded-xl p-1">
@@ -107,6 +127,12 @@ export default async function Home({ searchParams }: HomeProps) {
           </div>
         </div>
 
+        {allTags.length > 0 && (
+          <div className="mb-4">
+            <TagFilter allTags={allTags} />
+          </div>
+        )}
+
         {matches.length === 0 ? (
           <div className="frame flex flex-col items-center gap-3 rounded-xl p-12 text-center">
             <TrayIcon
@@ -114,7 +140,9 @@ export default async function Home({ searchParams }: HomeProps) {
               aria-hidden
             />
             <p className="text-text-soft">
-              No matches yet. Add matches from the Database page.
+              {activeTags.length > 0
+                ? "No matches found with the selected tags."
+                : "No matches yet. Add matches from the Database page."}
             </p>
           </div>
         ) : (

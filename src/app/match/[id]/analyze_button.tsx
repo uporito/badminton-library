@@ -6,6 +6,7 @@ import { SparkleIcon, CircleNotchIcon } from "@phosphor-icons/react";
 
 interface AnalyzeButtonProps {
   matchId: number;
+  videoSource?: string;
 }
 
 interface NdjsonEvent {
@@ -17,7 +18,8 @@ interface NdjsonEvent {
   shotCount?: number;
 }
 
-export function AnalyzeButton({ matchId }: AnalyzeButtonProps) {
+export function AnalyzeButton({ matchId, videoSource = "local" }: AnalyzeButtonProps) {
+  const isYoutube = videoSource === "youtube";
   const router = useRouter();
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
@@ -112,7 +114,8 @@ export function AnalyzeButton({ matchId }: AnalyzeButtonProps) {
       <button
         type="button"
         onClick={handleAnalyze}
-        disabled={state === "loading"}
+        disabled={state === "loading" || isYoutube}
+        title={isYoutube ? "AI analysis is not available for YouTube videos" : undefined}
         className="inline-flex w-44 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
       >
         {state === "loading" ? (

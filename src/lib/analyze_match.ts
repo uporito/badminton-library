@@ -164,6 +164,13 @@ export async function analyzeMatch(
   if (!matchResult.ok) return { ok: false, error: "NOT_FOUND" };
 
   const match = matchResult.data;
+  if (match.videoSource === "youtube") {
+    return {
+      ok: false,
+      error: "YOUTUBE_NOT_SUPPORTED",
+      detail: "AI analysis is not available for YouTube videos. Use a local or Google Drive video.",
+    };
+  }
   const ai = getGeminiClient();
   if (!ai) return { ok: false, error: "API_KEY_MISSING" };
 

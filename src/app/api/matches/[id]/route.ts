@@ -5,6 +5,7 @@ import { getDb } from "@/db/client";
 import { matches } from "@/db/schema";
 import { matchCategoryEnum, videoSourceEnum } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { serializeTags } from "@/lib/tags";
 
 const UpdateMatchBodySchema = z.object({
   title: z.string().min(1).optional(),
@@ -18,6 +19,7 @@ const UpdateMatchBodySchema = z.object({
   myDescription: z.string().optional().nullable(),
   opponentDescription: z.string().optional().nullable(),
   category: z.enum(matchCategoryEnum).optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export async function GET(
@@ -106,6 +108,7 @@ export async function PATCH(
   if (data.myDescription !== undefined) setValues.myDescription = data.myDescription;
   if (data.opponentDescription !== undefined) setValues.opponentDescription = data.opponentDescription;
   if (data.category !== undefined) setValues.category = data.category;
+  if (data.tags !== undefined) setValues.tags = serializeTags(data.tags);
 
   const [updated] = await db
     .update(matches)

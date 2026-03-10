@@ -22,6 +22,7 @@ import {
   type CourtRow,
 } from "@/lib/shot_chart_utils";
 import type { ShotType, Zone, Side } from "@/db/schema";
+import { parseTags } from "@/lib/tags";
 
 /** Resolve shot-type hex from display label so tint always matches the card text */
 function hexForShotLabel(label: string | null): string | null {
@@ -40,10 +41,12 @@ type MatchRow = {
   opponent: string | null;
   result: string | null;
   category: string | null;
+  tags: string | null;
 };
 
 interface AnalysisDashboardProps {
   matches: MatchRow[];
+  allTags: string[];
 }
 
 const WEEKS_IN_YEAR = 52;
@@ -526,7 +529,7 @@ const CATEGORY_OPTIONS: FilterOption[] = [
 
 // ─── Main dashboard ───────────────────────────────────────────────────────────
 
-export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
+export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) {
   const [activeTab, setActiveTab] = useState<AnalysisTab>("global");
   const [shots, setShots] = useState<ShotForStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -538,7 +541,7 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
   const [selectedMatchIds, setSelectedMatchIds] = useState<Set<number>>(new Set());
   const [selectedOpponents, setSelectedOpponents] = useState<Set<string>>(new Set());
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  // Player filter: exclusive selection (radio-style). Default: "me".
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [selectedPlayer, setSelectedPlayer] = useState<string>("me");
 
   // Unique opponents derived from matches (sorted alphabetically)
@@ -553,7 +556,11 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
     return unique.map((o) => ({ value: o, label: o }));
   }, [matches]);
 
-  // Match options sorted newest → oldest (matches prop already is desc by date)
+  const tagOptions = useMemo<FilterOption[]>(
+    () => allTags.map((t) => ({ value: t, label: t })),
+    [allTags]
+  );
+
   const matchOptions = useMemo<FilterOption[]>(
     () => matches.map((m) => ({ value: String(m.id), label: m.title })),
     [matches]
@@ -569,7 +576,8 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
     const hasFilter =
       selectedMatchIds.size > 0 ||
       selectedOpponents.size > 0 ||
-      selectedCategories.size > 0;
+      selectedCategories.size > 0 ||
+      selectedTags.size > 0;
     if (!hasFilter) return "all";
 
     let filtered = matches;
@@ -586,12 +594,18 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
         (m) => m.category != null && selectedCategories.has(m.category)
       );
     }
+    if (selectedTags.size > 0) {
+      filtered = filtered.filter((m) => {
+        const mTags = parseTags(m.tags);
+        return [...selectedTags].some((t) => mTags.includes(t));
+      });
+    }
     const ids = filtered
       .map((m) => m.id)
       .sort((a, b) => a - b)
       .join(",");
     return ids === "" ? "empty" : ids;
-  }, [matches, selectedMatchIds, selectedOpponents, selectedCategories]);
+  }, [matches, selectedMatchIds, selectedOpponents, selectedCategories, selectedTags]);
 
   // Re-fetch shots whenever the effective match filter changes
   useEffect(() => {
@@ -757,6 +771,22 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
             isOpen={openDropdown === "category"}
             onToggleOpen={() => toggleDropdown("category")}
           />
+          {tagOptions.length > 0 && (
+            <FilterDropdown
+              dropdownId="tags"
+              label="Tags"
+              options={tagOptions}
+              selected={selectedTags}
+              onToggle={(val) =>
+                setSelectedTags(
+                  toggleSet(selectedTags, val) as Set<string>
+                )
+              }
+              searchable={tagOptions.length > 6}
+              isOpen={openDropdown === "tags"}
+              onToggleOpen={() => toggleDropdown("tags")}
+            />
+          )}
           <FilterDropdown
             dropdownId="player"
             label="Shots by"

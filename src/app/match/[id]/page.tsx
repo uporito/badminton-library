@@ -28,7 +28,11 @@ export default async function MatchPage({ params }: MatchPageProps) {
   const match = result.data;
   const ralliesResult = getRalliesByMatchId(numId);
   const rallies = ralliesResult.ok ? ralliesResult.data : [];
-  const videoUrl = `/api/video?path=${encodeURIComponent(match.videoPath)}&source=${match.videoSource ?? "local"}`;
+  const videoSource = match.videoSource ?? "local";
+  const videoUrl =
+    videoSource === "youtube"
+      ? `https://www.youtube.com/embed/${encodeURIComponent(match.videoPath)}`
+      : `/api/video?path=${encodeURIComponent(match.videoPath)}&source=${videoSource}`;
   const shotsForCharts: ShotForStats[] = rallies.flatMap((r) =>
     r.shots.map((s) => ({
       shotType: s.shotType,
@@ -53,7 +57,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
       <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-[2fr_1fr]">
         <div className="min-w-0">
-          <VideoPlayerWithOverlay videoUrl={videoUrl} shots={overlayShots} />
+          <VideoPlayerWithOverlay videoUrl={videoUrl} videoSource={videoSource} shots={overlayShots} />
         </div>
 
         <div className="flex min-w-0 flex-col gap-3">
@@ -105,7 +109,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
           </section>
 
           <div className="flex justify-end">
-            <AnalyzeButton matchId={match.id} />
+            <AnalyzeButton matchId={match.id} videoSource={videoSource} />
           </div>
         </div>
       </div>

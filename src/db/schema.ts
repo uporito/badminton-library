@@ -14,7 +14,7 @@ export const matchCategoryEnum = [
 
 export type MatchCategory = (typeof matchCategoryEnum)[number];
 
-export const videoSourceEnum = ["local", "gdrive"] as const;
+export const videoSourceEnum = ["local", "gdrive", "youtube"] as const;
 
 export type VideoSource = (typeof videoSourceEnum)[number];
 
@@ -30,6 +30,7 @@ export const matches = sqliteTable("matches", {
   notes: text("notes"),
   myDescription: text("my_description"),
   opponentDescription: text("opponent_description"),
+  tags: text("tags"),
   category: text("category", { enum: matchCategoryEnum }).default(
     "Uncategorized"
   ),
