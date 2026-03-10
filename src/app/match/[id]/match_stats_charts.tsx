@@ -32,9 +32,15 @@ import {
   type ShotForStats,
 } from "@/lib/shot_chart_utils";
 import { ZoneHeatmaps, type SelectedZone } from "./zone_heatmap_grid";
-import type { Side, Zone } from "@/db/schema";
+import type { Side, Zone, ShotPlayer } from "@/db/schema";
 
-export type PlayerFilter = "me" | "opponent" | "both";
+export type PlayerFilterSet = Set<ShotPlayer>;
+
+const ALL_PLAYER_OPTIONS: { value: ShotPlayer; label: string }[] = [
+  { value: "me", label: "Me" },
+  { value: "partner", label: "Partner" },
+  { value: "opponent", label: "Opponent" },
+];
 
 const barCategories = ["Winner", "Error", "Neither"];
 
@@ -59,33 +65,48 @@ function ShotTypeLegend() {
 
 interface MatchStatsChartsProps {
   shots: ShotForStats[];
-  playerFilter?: PlayerFilter;
-  onPlayerFilterChange?: (value: PlayerFilter) => void;
+  playerFilter?: PlayerFilterSet;
+  onPlayerFilterChange?: (value: PlayerFilterSet) => void;
   selectedZone?: SelectedZone;
   onZoneClick?: (side: Side, zone: Zone) => void;
   className?: string;
 }
 
-function PlayerFilterSelect({
-  value,
+function PlayerFilterToggles({
+  selected,
   onChange,
-  className,
 }: {
-  value: PlayerFilter;
-  onChange: (value: PlayerFilter) => void;
-  className?: string;
+  selected: PlayerFilterSet;
+  onChange: (next: PlayerFilterSet) => void;
 }) {
+  function toggle(val: ShotPlayer) {
+    const next = new Set(selected);
+    if (next.has(val)) {
+      if (next.size > 1) next.delete(val);
+    } else {
+      next.add(val);
+    }
+    onChange(next);
+  }
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value as PlayerFilter)}
-      className={`rounded border border-ui-elevated-more bg-ui-elevated px-2 py-1.5 text-sm text-foreground shadow-sm focus:border-ui-elevated-more focus:outline-none focus:ring-1 focus:ring-ui-elevated-more ${className ?? ""}`}
-      aria-label="Filter by player"
-    >
-      <option value="both">Both</option>
-      <option value="me">Shots by me</option>
-      <option value="opponent">Shots by opponent</option>
-    </select>
+    <div className="flex gap-1 rounded-lg bg-ui-elevated p-0.5" role="group" aria-label="Filter by player">
+      {ALL_PLAYER_OPTIONS.map(({ value, label }) => (
+        <button
+          key={value}
+          type="button"
+          onClick={() => toggle(value)}
+          className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+            selected.has(value)
+              ? "bg-ui-elevated-more text-text-main shadow-sm"
+              : "text-text-soft hover:text-text-main"
+          }`}
+          aria-pressed={selected.has(value)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -98,14 +119,15 @@ export function MatchStatsCharts({
   className,
 }: MatchStatsChartsProps) {
   const isDark = useIsDark();
-  const [internalFilter, setInternalFilter] = useState<PlayerFilter>("me");
+  const [internalFilter, setInternalFilter] = useState<PlayerFilterSet>(
+    new Set(["me"]),
+  );
   const playerFilter = controlledFilter ?? internalFilter;
   const setPlayerFilter = onPlayerFilterChange ?? setInternalFilter;
 
-  const filteredShots =
-    playerFilter === "both"
-      ? shots
-      : shots.filter((s) => s.player === playerFilter);
+  const filteredShots = shots.filter((s) =>
+    playerFilter.has(s.player as ShotPlayer),
+  );
 
   const distribution = aggregateShotDistribution(filteredShots);
   const outcomesByType = aggregateOutcomesByShotType(filteredShots);
@@ -144,7 +166,7 @@ export function MatchStatsCharts({
         <h2 className="text-sm font-semibold text-text-main">
           Shot stats
         </h2>
-        <PlayerFilterSelect value={playerFilter} onChange={setPlayerFilter} />
+        <PlayerFilterToggles selected={playerFilter} onChange={setPlayerFilter} />
       </div>
 
       <ShotTypeLegend />

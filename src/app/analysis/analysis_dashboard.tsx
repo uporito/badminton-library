@@ -38,7 +38,8 @@ type MatchRow = {
   id: number;
   title: string;
   date: string | null;
-  opponent: string | null;
+  opponents: { id: number; name: string }[];
+  partner: { id: number; name: string } | null;
   result: string | null;
   category: string | null;
   tags: string | null;
@@ -203,7 +204,7 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
                               className="hover:underline"
                             >
                               {m.title}
-                              {m.opponent ? ` vs ${m.opponent}` : ""}
+                              {m.opponents.length > 0 ? ` vs ${m.opponents.map((o) => o.name).join(", ")}` : ""}
                               {m.result ? ` ${m.result}` : ""}
                             </a>
                           </li>
@@ -516,8 +517,8 @@ function FilterDropdown({
 // ─── Player filter options ────────────────────────────────────────────────────
 
 const PLAYER_OPTIONS: FilterOption[] = [
-  { value: "both", label: "Shots by Both" },
   { value: "me", label: "Shots by Me" },
+  { value: "partner", label: "Shots by Partner" },
   { value: "opponent", label: "Shots by Opponent" },
 ];
 
@@ -542,15 +543,12 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
   const [selectedOpponents, setSelectedOpponents] = useState<Set<string>>(new Set());
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-  const [selectedPlayer, setSelectedPlayer] = useState<string>("me");
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set(["me"]));
 
-  // Unique opponents derived from matches (sorted alphabetically)
   const opponentOptions = useMemo<FilterOption[]>(() => {
     const unique = [
       ...new Set(
-        matches
-          .map((m) => m.opponent)
-          .filter((o): o is string => o != null && o.trim() !== "")
+        matches.flatMap((m) => m.opponents.map((o) => o.name)).filter((n) => n.trim() !== ""),
       ),
     ].sort();
     return unique.map((o) => ({ value: o, label: o }));
@@ -585,8 +583,8 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
       filtered = filtered.filter((m) => selectedMatchIds.has(m.id));
     }
     if (selectedOpponents.size > 0) {
-      filtered = filtered.filter(
-        (m) => m.opponent != null && selectedOpponents.has(m.opponent)
+      filtered = filtered.filter((m) =>
+        m.opponents.some((o) => selectedOpponents.has(o.name)),
       );
     }
     if (selectedCategories.size > 0) {
@@ -650,11 +648,10 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
       .finally(() => setLoading(false));
   }, [shotsQueryKey]);
 
-  // Apply player filter client-side
   const playerFilteredShots = useMemo(() => {
-    if (selectedPlayer === "both") return shots;
-    return shots.filter((s) => s.player === selectedPlayer);
-  }, [shots, selectedPlayer]);
+    if (selectedPlayers.size === PLAYER_OPTIONS.length) return shots;
+    return shots.filter((s) => selectedPlayers.has(s.player));
+  }, [shots, selectedPlayers]);
 
   const filteredShots = useMemo(() => {
     if (selectedZone != null)
@@ -791,9 +788,18 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
             dropdownId="player"
             label="Shots by"
             options={PLAYER_OPTIONS}
-            selected={new Set([selectedPlayer])}
-            onToggle={(val) => setSelectedPlayer(val)}
-            showSelectionLabel
+            selected={selectedPlayers}
+            onToggle={(val) =>
+              setSelectedPlayers((prev) => {
+                const next = new Set(prev);
+                if (next.has(val)) {
+                  if (next.size > 1) next.delete(val);
+                } else {
+                  next.add(val);
+                }
+                return next;
+              })
+            }
             minWidthText="Shots by Opponent"
             isOpen={openDropdown === "player"}
             onToggleOpen={() => toggleDropdown("player")}

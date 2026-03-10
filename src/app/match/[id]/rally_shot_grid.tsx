@@ -4,7 +4,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import type { RallyWithShots } from "@/lib/get_rallies_by_match_id";
 import type { ShotRow } from "@/lib/get_rallies_by_match_id";
-import { shotTypeEnum, outcomeEnum, sideEnum } from "@/db/schema";
+import { shotTypeEnum, outcomeEnum, shotPlayerEnum } from "@/db/schema";
+import type { ShotPlayer } from "@/db/schema";
 
 const SHOT_TYPE_LABELS: Record<(typeof shotTypeEnum)[number], string> = {
   serve: "Serve",
@@ -23,8 +24,9 @@ const OUTCOME_LABELS: Record<(typeof outcomeEnum)[number], string> = {
   neither: "Neither",
 };
 
-const SIDE_LABELS: Record<(typeof sideEnum)[number], string> = {
+const SIDE_LABELS: Record<ShotPlayer, string> = {
   me: "Me",
+  partner: "Partner",
   opponent: "Opponent",
 };
 
@@ -98,7 +100,7 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
               const { rally, shot } = completedRallies[hoveredCell.index];
               const shotTypeLabel = SHOT_TYPE_LABELS[shot.shotType];
               const outcomeLabel = OUTCOME_LABELS[shot.outcome];
-              const playerLabel = SIDE_LABELS[shot.player];
+              const playerLabel = SIDE_LABELS[shot.player as ShotPlayer];
               const isAi = hasAiShots(rally);
               return (
                 <div

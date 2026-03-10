@@ -11,6 +11,7 @@ import {
   matchRally,
   matchShots,
   shotTypeEnum,
+  shotPlayerEnum,
   sideEnum,
   zoneEnum,
   outcomeEnum,
@@ -22,7 +23,7 @@ import { buildAnalyzeMatchPrompt } from "./prompts/analyze_match_prompt";
 
 const AnalysisShotSchema = z.object({
   shotType: z.enum(shotTypeEnum),
-  player: z.enum(sideEnum),
+  player: z.enum(shotPlayerEnum),
   zoneFromSide: z.enum(sideEnum),
   zoneFrom: z.enum(zoneEnum),
   zoneToSide: z.enum(sideEnum),
@@ -144,11 +145,12 @@ async function waitForFileActive(
 
 function computeWonByMe(
   outcome: (typeof outcomeEnum)[number],
-  player: (typeof sideEnum)[number]
+  player: (typeof shotPlayerEnum)[number],
 ): boolean | null {
   if (outcome === "neither") return null;
-  if (outcome === "winner") return player === "me";
-  return player === "opponent";
+  const isMyTeam = player === "me" || player === "partner";
+  if (outcome === "winner") return isMyTeam;
+  return !isMyTeam;
 }
 
 export async function analyzeMatch(

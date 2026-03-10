@@ -8,8 +8,9 @@ import {
   shotTypeEnum,
   outcomeEnum,
   sideEnum,
+  shotPlayerEnum,
 } from "@/db/schema";
-import type { Zone, Side } from "@/db/schema";
+import type { Zone, Side, ShotPlayer } from "@/db/schema";
 import { CourtZoneGrid } from "./court_zone_grid";
 
 const SHOT_TYPE_LABELS: Record<(typeof shotTypeEnum)[number], string> = {
@@ -29,8 +30,9 @@ const OUTCOME_LABELS: Record<(typeof outcomeEnum)[number], string> = {
   neither: "Neither",
 };
 
-const SIDE_LABELS: Record<(typeof sideEnum)[number], string> = {
+const PLAYER_LABELS: Record<ShotPlayer, string> = {
   me: "Me",
+  partner: "Partner",
   opponent: "Opponent",
 };
 
@@ -58,7 +60,7 @@ export function InputShotsPanel({
   const [outcome, setOutcome] = useState<(typeof outcomeEnum)[number]>(
     "winner"
   );
-  const [player, setPlayer] = useState<(typeof sideEnum)[number]>("me");
+  const [player, setPlayer] = useState<ShotPlayer>("me");
   const [error, setError] = useState<string | null>(null);
 
   async function handleStartNewRally() {
@@ -299,7 +301,7 @@ export function InputShotsPanel({
             Player
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {sideEnum.map((s) => (
+            {shotPlayerEnum.map((s) => (
               <button
                 key={s}
                 type="button"
@@ -310,7 +312,7 @@ export function InputShotsPanel({
                     : "bg-ui-elevated text-foreground hover:bg-ui-elevated-more"
                 }`}
               >
-                {SIDE_LABELS[s]}
+                {PLAYER_LABELS[s]}
               </button>
             ))}
           </div>

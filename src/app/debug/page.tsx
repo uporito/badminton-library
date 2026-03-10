@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import { getDb } from "@/db/client";
 import { matches, matchShots } from "@/db/schema";
+import { enrichMatch } from "@/lib/get_match_by_id";
 import { DebugMatchList } from "./debug_match_list";
 
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov"];
@@ -41,7 +42,7 @@ export default async function DebugPage() {
     shotsByMatchId.set(s.matchId, list);
   }
   const matchesWithShots = allMatches.map((m) => ({
-    ...m,
+    ...enrichMatch(m),
     shots: shotsByMatchId.get(m.id) ?? [],
   }));
 

@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getMatchById } from "@/lib/get_match_by_id";
 import { getDb } from "@/db/client";
-import { matches } from "@/db/schema";
-import { matchCategoryEnum, videoSourceEnum } from "@/db/schema";
+import {
+  matches,
+  matchCategoryEnum,
+  videoSourceEnum,
+  matchPlayers,
+  partnerStatusEnum,
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { serializeTags } from "@/lib/tags";
 import { deleteThumbnail } from "@/lib/thumbnails";
+import { recomputePlayerStats } from "@/lib/recompute_player_stats";
 
 const UpdateMatchBodySchema = z.object({
   title: z.string().min(1).optional(),
@@ -14,18 +20,21 @@ const UpdateMatchBodySchema = z.object({
   videoSource: z.enum(videoSourceEnum).optional(),
   durationSeconds: z.number().int().nonnegative().optional().nullable(),
   date: z.string().optional().nullable(),
-  opponent: z.string().optional().nullable(),
   result: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   myDescription: z.string().optional().nullable(),
   opponentDescription: z.string().optional().nullable(),
   category: z.enum(matchCategoryEnum).optional(),
   tags: z.array(z.string()).optional(),
+  opponentIds: z.array(z.number().int().positive()).max(2).optional(),
+  partnerId: z.number().int().positive().nullable().optional(),
+  partnerStatus: z.enum(partnerStatusEnum).optional(),
+  wonByMe: z.boolean().nullable().optional(),
 });
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const numId = Number(id);
@@ -41,7 +50,7 @@ export async function GET(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -56,10 +65,25 @@ export async function DELETE(
       .where(eq(matches.id, matchId))
       .limit(1);
     if (!existing) {
-      return NextResponse.json({ error: "Match not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Match not found" },
+        { status: 404 },
+      );
     }
+
+    const oldPlayers = await db
+      .select({ playerId: matchPlayers.playerId })
+      .from(matchPlayers)
+      .where(eq(matchPlayers.matchId, matchId));
+    const oldPlayerIds = oldPlayers.map((r) => r.playerId);
+
     await db.delete(matches).where(eq(matches.id, matchId));
     deleteThumbnail(existing.videoSource, existing.videoPath);
+
+    if (oldPlayerIds.length > 0) {
+      recomputePlayerStats(oldPlayerIds);
+    }
+
     return NextResponse.json({ deleted: matchId }, { status: 200 });
   } catch (e) {
     console.error(e);
@@ -69,7 +93,7 @@ export async function DELETE(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const matchId = parseInt(id, 10);
@@ -86,7 +110,7 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400 },
     );
   }
   const result = getMatchById(matchId);
@@ -104,13 +128,48 @@ export async function PATCH(
   if (data.durationSeconds !== undefined)
     setValues.durationSeconds = data.durationSeconds;
   if (data.date !== undefined) setValues.date = data.date;
-  if (data.opponent !== undefined) setValues.opponent = data.opponent;
   if (data.result !== undefined) setValues.result = data.result;
   if (data.notes !== undefined) setValues.notes = data.notes;
-  if (data.myDescription !== undefined) setValues.myDescription = data.myDescription;
-  if (data.opponentDescription !== undefined) setValues.opponentDescription = data.opponentDescription;
+  if (data.myDescription !== undefined)
+    setValues.myDescription = data.myDescription;
+  if (data.opponentDescription !== undefined)
+    setValues.opponentDescription = data.opponentDescription;
   if (data.category !== undefined) setValues.category = data.category;
   if (data.tags !== undefined) setValues.tags = serializeTags(data.tags);
+  if (data.wonByMe !== undefined) setValues.wonByMe = data.wonByMe;
+  if (data.partnerStatus !== undefined)
+    setValues.partnerStatus = data.partnerStatus;
+
+  const affectedPlayerIds: number[] = [];
+
+  const oldMatchData = result.data;
+  const oldOpponentIds = oldMatchData.opponents.map((o) => o.id);
+  const oldPartnerId = oldMatchData.partner?.id ?? null;
+  for (const id of oldOpponentIds) affectedPlayerIds.push(id);
+  if (oldPartnerId) affectedPlayerIds.push(oldPartnerId);
+
+  if (data.opponentIds !== undefined || data.partnerId !== undefined || data.partnerStatus !== undefined) {
+    await db
+      .delete(matchPlayers)
+      .where(eq(matchPlayers.matchId, matchId));
+
+    const newOpponentIds = data.opponentIds ?? oldOpponentIds;
+    for (const pid of newOpponentIds) {
+      await db
+        .insert(matchPlayers)
+        .values({ matchId, playerId: pid, role: "opponent" });
+      affectedPlayerIds.push(pid);
+    }
+
+    const pStatus = data.partnerStatus ?? oldMatchData.partnerStatus;
+    const newPartnerId = data.partnerId !== undefined ? data.partnerId : oldPartnerId;
+    if (pStatus === "player" && newPartnerId) {
+      await db
+        .insert(matchPlayers)
+        .values({ matchId, playerId: newPartnerId, role: "partner" });
+      affectedPlayerIds.push(newPartnerId);
+    }
+  }
 
   const [updated] = await db
     .update(matches)
@@ -120,5 +179,15 @@ export async function PATCH(
   if (!updated) {
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
-  return NextResponse.json(updated, { status: 200 });
+
+  const uniquePlayerIds = [...new Set(affectedPlayerIds)];
+  if (uniquePlayerIds.length > 0) {
+    recomputePlayerStats(uniquePlayerIds);
+  }
+
+  const freshResult = getMatchById(matchId);
+  if (!freshResult.ok) {
+    return NextResponse.json(updated, { status: 200 });
+  }
+  return NextResponse.json(freshResult.data, { status: 200 });
 }

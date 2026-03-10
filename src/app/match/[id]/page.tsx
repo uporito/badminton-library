@@ -90,11 +90,29 @@ export default async function MatchPage({ params }: MatchPageProps) {
                 </dd>
               </div>
               <div>
-                <dt className="text-text-soft">Opponent</dt>
+                <dt className="text-text-soft">
+                  {match.opponents.length > 1 ? "Opponents" : "Opponent"}
+                </dt>
                 <dd className="font-medium text-text-main">
-                  {match.opponent ?? "—"}
+                  {match.opponents.length > 0
+                    ? match.opponents.map((o) => o.name).join(", ")
+                    : "—"}
                 </dd>
               </div>
+              {match.partner && (
+                <div>
+                  <dt className="text-text-soft">Partner</dt>
+                  <dd className="font-medium text-text-main">
+                    {match.partner.name}
+                  </dd>
+                </div>
+              )}
+              {match.partnerStatus === "unknown" && (
+                <div>
+                  <dt className="text-text-soft">Partner</dt>
+                  <dd className="font-medium text-text-soft">Unknown</dd>
+                </div>
+              )}
               <div>
                 <dt className="text-text-soft">Result</dt>
                 <dd className="font-medium text-text-main">

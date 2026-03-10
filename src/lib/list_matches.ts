@@ -1,8 +1,9 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db, matches } from "@/db";
 import type { MatchCategory } from "@/db/schema";
+import { enrichMatch, type MatchRow } from "./get_match_by_id";
 
-export type MatchRow = typeof matches.$inferSelect;
+export type { MatchRow };
 
 export type ListMatchesSort = "date" | "opponent";
 export type ListMatchesCategoryFilter =
@@ -22,25 +23,31 @@ export function listMatches(options?: {
       ? eq(matches.category, category)
       : undefined;
 
+  let baseRows;
   if (categoryFilter) {
-    if (sort === "date") {
-      return db
-        .select()
-        .from(matches)
-        .where(categoryFilter)
-        .orderBy(desc(matches.date))
-        .all();
-    }
-    return db
+    baseRows = db
       .select()
       .from(matches)
       .where(categoryFilter)
-      .orderBy(asc(matches.opponent))
+      .orderBy(desc(matches.date))
+      .all();
+  } else {
+    baseRows = db
+      .select()
+      .from(matches)
+      .orderBy(desc(matches.date))
       .all();
   }
 
-  if (sort === "date") {
-    return db.select().from(matches).orderBy(desc(matches.date)).all();
+  const enriched = baseRows.map(enrichMatch);
+
+  if (sort === "opponent") {
+    enriched.sort((a, b) => {
+      const nameA = a.opponents[0]?.name ?? "";
+      const nameB = b.opponents[0]?.name ?? "";
+      return nameA.localeCompare(nameB);
+    });
   }
-  return db.select().from(matches).orderBy(asc(matches.opponent)).all();
+
+  return enriched;
 }

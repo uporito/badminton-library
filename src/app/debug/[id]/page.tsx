@@ -79,8 +79,12 @@ export default async function DebugMatchPage({ params }: DebugMatchPageProps) {
                 <td className="px-3 py-2 font-mono">{match.date ?? "null"}</td>
               </tr>
               <tr>
-                <td className="px-3 py-2 font-medium">opponent</td>
-                <td className="px-3 py-2 font-mono">{match.opponent ?? "null"}</td>
+                <td className="px-3 py-2 font-medium">opponents</td>
+                <td className="px-3 py-2 font-mono">{match.opponents.map((o) => o.name).join(", ") || "null"}</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2 font-medium">partner</td>
+                <td className="px-3 py-2 font-mono">{match.partner?.name ?? match.partnerStatus}</td>
               </tr>
               <tr>
                 <td className="px-3 py-2 font-medium">result</td>

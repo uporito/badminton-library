@@ -49,7 +49,8 @@ export function groupMatchesForLibrary(
 
   const byOpponent = new Map<string, MatchRow[]>();
   for (const m of matches) {
-    const key = m.opponent?.trim() ? m.opponent : NO_OPPONENT_LABEL;
+    const oppName = m.opponents[0]?.name?.trim();
+    const key = oppName ? oppName : NO_OPPONENT_LABEL;
     const list = byOpponent.get(key) ?? [];
     list.push(m);
     byOpponent.set(key, list);
