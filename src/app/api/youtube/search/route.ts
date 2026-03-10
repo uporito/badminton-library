@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isYouTubeConfigured } from "@/lib/youtube";
+import { google } from "googleapis";
 
 export const dynamic = "force-dynamic";
 
@@ -26,43 +26,38 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const url = new URL("https://www.googleapis.com/youtube/v3/search");
-  url.searchParams.set("key", apiKey);
-  url.searchParams.set("part", "snippet");
-  url.searchParams.set("type", "video");
-  url.searchParams.set("maxResults", String(maxResults));
-  url.searchParams.set("q", q);
+  try {
+    const youtube = google.youtube({ version: "v3", auth: apiKey });
+    const res = await youtube.search.list({
+      part: ["snippet"],
+      type: ["video"],
+      q,
+      maxResults,
+    });
 
-  const res = await fetch(url.toString());
-  if (!res.ok) {
-    const text = await res.text();
+    const items = (res.data.items ?? [])
+      .filter((i): i is typeof i & { id: { videoId: string } } => !!i.id?.videoId)
+      .map((i) => ({
+        id: i.id.videoId,
+        title: i.snippet?.title ?? "",
+        publishedAt: i.snippet?.publishedAt ?? null,
+        channelTitle: i.snippet?.channelTitle ?? null,
+        thumbnailUrl:
+          i.snippet?.thumbnails?.medium?.url ??
+          i.snippet?.thumbnails?.default?.url ??
+          null,
+      }));
+
+    return NextResponse.json({ items });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const details =
+      err && typeof err === "object" && "response" in err
+        ? String((err as { response?: { data?: unknown } }).response?.data)
+        : message;
     return NextResponse.json(
-      { error: "YouTube API error", details: text },
+      { error: "YouTube API error", details },
       { status: 502 }
     );
   }
-
-  const data = (await res.json()) as {
-    items?: Array<{
-      id?: { videoId?: string };
-      snippet?: {
-        title?: string;
-        publishedAt?: string;
-        channelTitle?: string;
-        thumbnails?: { default?: { url?: string }; medium?: { url?: string } };
-      };
-    }>;
-  };
-
-  const items = (data.items ?? [])
-    .filter((i) => i.id?.videoId)
-    .map((i) => ({
-      id: i.id!.videoId!,
-      title: i.snippet?.title ?? "",
-      publishedAt: i.snippet?.publishedAt ?? null,
-      channelTitle: i.snippet?.channelTitle ?? null,
-      thumbnailUrl: i.snippet?.thumbnails?.medium?.url ?? i.snippet?.thumbnails?.default?.url ?? null,
-    }));
-
-  return NextResponse.json({ items });
 }

@@ -240,6 +240,9 @@ export default function SettingsPage() {
               </li>
               <li>Restart the dev server.</li>
             </ol>
+            <p className="mt-2 pt-2 border-t border-ui-elevated-more text-text-soft">
+              If you see &quot;API keys are not supported&quot;, set the key’s <strong>Application restriction</strong> to <strong>None</strong> (APIs &amp; Services → Credentials → your key). Server-side calls do not send HTTP referrers, so &quot;HTTP referrers&quot; restriction will block the key.
+            </p>
           </div>
         </div>
       </section>

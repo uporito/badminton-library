@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { google } from "googleapis";
 import { parseYouTubeVideoId } from "@/lib/youtube";
 
 export const dynamic = "force-dynamic";
@@ -39,42 +40,38 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const url = new URL("https://www.googleapis.com/youtube/v3/videos");
-  url.searchParams.set("key", apiKey);
-  url.searchParams.set("part", "snippet,contentDetails");
-  url.searchParams.set("id", videoId);
+  try {
+    const youtube = google.youtube({ version: "v3", auth: apiKey });
+    const res = await youtube.videos.list({
+      part: ["snippet", "contentDetails"],
+      id: [videoId],
+    });
 
-  const res = await fetch(url.toString());
-  if (!res.ok) {
-    const text = await res.text();
+    const item = res.data.items?.[0];
+    if (!item) {
+      return NextResponse.json({ error: "Video not found" }, { status: 404 });
+    }
+
+    const rawDuration = item.contentDetails?.duration;
+    const durationSeconds = rawDuration
+      ? parseDurationISO8601(rawDuration)
+      : null;
+
+    return NextResponse.json({
+      id: item.id,
+      title: item.snippet?.title ?? "Untitled",
+      publishedAt: item.snippet?.publishedAt ?? null,
+      durationSeconds,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const details =
+      err && typeof err === "object" && "response" in err
+        ? String((err as { response?: { data?: unknown } }).response?.data)
+        : message;
     return NextResponse.json(
-      { error: "YouTube API error", details: text },
+      { error: "YouTube API error", details },
       { status: 502 }
     );
   }
-
-  const data = (await res.json()) as {
-    items?: Array<{
-      id?: string;
-      snippet?: { title?: string; publishedAt?: string };
-      contentDetails?: { duration?: string };
-    }>;
-  };
-
-  const item = data.items?.[0];
-  if (!item) {
-    return NextResponse.json({ error: "Video not found" }, { status: 404 });
-  }
-
-  const rawDuration = item.contentDetails?.duration;
-  const durationSeconds = rawDuration
-    ? parseDurationISO8601(rawDuration)
-    : null;
-
-  return NextResponse.json({
-    id: item.id,
-    title: item.snippet?.title ?? "Untitled",
-    publishedAt: item.snippet?.publishedAt ?? null,
-    durationSeconds,
-  });
 }
