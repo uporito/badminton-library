@@ -6,6 +6,7 @@ import {
   getThumbnailPath,
   fetchAndCacheGDriveThumbnail,
 } from "@/lib/gdrive";
+import { fetchAndCacheYouTubeThumbnail } from "@/lib/youtube";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -34,11 +35,17 @@ export async function GET(request: NextRequest) {
   }
 
   const match = matchResult.data;
-  if (match.videoSource !== "gdrive") {
+
+  let result: { ok: true; filePath: string } | { ok: false; error: string };
+
+  if (match.videoSource === "gdrive") {
+    result = await fetchAndCacheGDriveThumbnail(match.videoPath, matchId);
+  } else if (match.videoSource === "youtube") {
+    result = await fetchAndCacheYouTubeThumbnail(match.videoPath, matchId);
+  } else {
     return Response.json({ error: "No thumbnail available" }, { status: 404 });
   }
 
-  const result = await fetchAndCacheGDriveThumbnail(match.videoPath, matchId);
   if (!result.ok) {
     return Response.json({ error: result.error }, { status: 404 });
   }

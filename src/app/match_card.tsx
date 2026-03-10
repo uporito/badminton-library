@@ -93,9 +93,9 @@ export interface MatchCardProps {
 export function MatchCard({ match }: MatchCardProps) {
   const category = match.category ?? "Uncategorized";
   const accentClass = getCategoryAccentClass(category);
-  const hasGDriveThumbnail = match.videoSource === "gdrive" && thumbnailExists(match.id);
-  const hasYoutubeThumbnail = match.videoSource === "youtube";
-  const hasThumbnail = hasGDriveThumbnail || hasYoutubeThumbnail;
+  const hasThumbnail =
+    (match.videoSource === "gdrive" || match.videoSource === "youtube") &&
+    thumbnailExists(match.id);
   const tags = parseTags(match.tags);
 
   return (
@@ -115,11 +115,7 @@ export function MatchCard({ match }: MatchCardProps) {
       {hasThumbnail ? (
         <div className="relative aspect-video w-full overflow-hidden rounded-lg">
           <img
-            src={
-              hasYoutubeThumbnail
-                ? `https://img.youtube.com/vi/${encodeURIComponent(match.videoPath)}/mqdefault.jpg`
-                : `/api/thumbnail?id=${match.id}`
-            }
+            src={`/api/thumbnail?id=${match.id}`}
             alt={match.title}
             className="h-full w-full object-cover"
           />

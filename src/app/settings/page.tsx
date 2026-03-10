@@ -24,11 +24,11 @@ interface GDriveStatus {
   serviceAccountEmail: string | null;
 }
 
-interface GeminiStatus {
+interface YouTubeStatus {
   configured: boolean;
 }
 
-interface YouTubeStatus {
+interface GeminiStatus {
   configured: boolean;
 }
 
@@ -36,8 +36,8 @@ export default function SettingsPage() {
   const [theme, setTheme] = useState<ThemeValue>("system");
   const [videoFolderPath, setVideoFolderPath] = useState("");
   const [gdriveStatus, setGdriveStatus] = useState<GDriveStatus | null>(null);
-  const [geminiStatus, setGeminiStatus] = useState<GeminiStatus | null>(null);
   const [youtubeStatus, setYoutubeStatus] = useState<YouTubeStatus | null>(null);
+  const [geminiStatus, setGeminiStatus] = useState<GeminiStatus | null>(null);
 
   useEffect(() => {
     setTheme(getStoredTheme());
@@ -46,14 +46,14 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((d) => setGdriveStatus(d))
       .catch(() => setGdriveStatus({ configured: false, serviceAccountEmail: null }));
-    fetch("/api/gemini/status")
-      .then((r) => r.json())
-      .then((d) => setGeminiStatus(d))
-      .catch(() => setGeminiStatus({ configured: false }));
     fetch("/api/youtube/status")
       .then((r) => r.json())
       .then((d) => setYoutubeStatus(d))
       .catch(() => setYoutubeStatus({ configured: false }));
+    fetch("/api/gemini/status")
+      .then((r) => r.json())
+      .then((d) => setGeminiStatus(d))
+      .catch(() => setGeminiStatus({ configured: false }));
   }, []);
 
   function handleThemeChange(value: ThemeValue) {
@@ -192,9 +192,9 @@ export default function SettingsPage() {
         </h2>
         <div className="frame rounded-xl px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
-            <YoutubeLogo size={20} className="text-text-soft" />
+            <YoutubeLogo size={20} className="text-text-soft" weight="fill" />
             <span className="text-sm font-medium text-text-main">
-              YouTube import
+              YouTube integration
             </span>
             {youtubeStatus && (
               <span className="ml-auto flex items-center gap-1 text-xs">
@@ -214,10 +214,10 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-2 text-xs text-text-soft">
-            <p className="font-medium text-text-main text-sm">Setup</p>
+            <p className="font-medium text-text-main text-sm">Setup instructions</p>
             <ol className="list-decimal list-inside space-y-1.5 pl-1">
               <li>
-                Create a Google Cloud project (or use existing) at{" "}
+                Use your existing Google Cloud project (or create one) at{" "}
                 <a
                   href="https://console.cloud.google.com/projectcreate"
                   target="_blank"
@@ -229,10 +229,28 @@ export default function SettingsPage() {
                 .
               </li>
               <li>
-                Enable the <strong>YouTube Data API v3</strong> for your project (APIs &amp; Services → Library).
+                Enable the{" "}
+                <a
+                  href="https://console.cloud.google.com/apis/library/youtube.googleapis.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-text-main"
+                >
+                  YouTube Data API v3
+                </a>
+                {" "}for your project.
               </li>
               <li>
-                Create an API key (APIs &amp; Services → Credentials → Create credentials → API key).
+                Go to{" "}
+                <a
+                  href="https://console.cloud.google.com/apis/credentials"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-text-main"
+                >
+                  APIs & Services &gt; Credentials
+                </a>
+                {" "}and create an <strong>API key</strong>.
               </li>
               <li>
                 Add <code className="rounded bg-ui-elevated px-1 py-0.5">YOUTUBE_API_KEY=your_key</code> to
@@ -240,9 +258,6 @@ export default function SettingsPage() {
               </li>
               <li>Restart the dev server.</li>
             </ol>
-            <p className="mt-2 pt-2 border-t border-ui-elevated-more text-text-soft">
-              If you see &quot;API keys are not supported&quot;, set the key’s <strong>Application restriction</strong> to <strong>None</strong> (APIs &amp; Services → Credentials → your key). Server-side calls do not send HTTP referrers, so &quot;HTTP referrers&quot; restriction will block the key.
-            </p>
           </div>
         </div>
       </section>

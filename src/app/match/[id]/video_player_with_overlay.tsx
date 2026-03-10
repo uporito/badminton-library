@@ -10,7 +10,6 @@ export interface OverlayShot {
 
 interface VideoPlayerWithOverlayProps {
   videoUrl: string;
-  videoSource?: string;
   shots: OverlayShot[];
 }
 
@@ -57,7 +56,6 @@ function generateVTT(shots: OverlayShot[]): string {
 
 export function VideoPlayerWithOverlay({
   videoUrl,
-  videoSource = "local",
   shots,
 }: VideoPlayerWithOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -66,8 +64,6 @@ export function VideoPlayerWithOverlay({
   const [visible, setVisible] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const isYoutube = videoSource === "youtube";
 
   const sortedShots = useRef(
     [...shots].sort((a, b) => a.timestamp - b.timestamp)
@@ -155,36 +151,26 @@ export function VideoPlayerWithOverlay({
 
   return (
     <div className="relative flex max-h-[60vh] items-center justify-center overflow-hidden rounded-lg bg-black shadow-lg">
-      {isYoutube ? (
-        <iframe
-          src={videoUrl}
-          title="YouTube video"
-          className="aspect-video max-h-[60vh] w-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
-      ) : (
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          controls
-          className="max-h-[60vh] w-full object-contain"
-          preload="metadata"
-        >
-          {vttUrl && (
-            <track
-              ref={trackRef}
-              kind="subtitles"
-              src={vttUrl}
-              label="Shots"
-              default
-            />
-          )}
-          Your browser does not support the video tag.
-        </video>
-      )}
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        controls
+        className="max-h-[60vh] w-full object-contain"
+        preload="metadata"
+      >
+        {vttUrl && (
+          <track
+            ref={trackRef}
+            kind="subtitles"
+            src={vttUrl}
+            label="Shots"
+            default
+          />
+        )}
+        Your browser does not support the video tag.
+      </video>
 
-      {!isYoutube && !isFullscreen && activeShot && (
+      {!isFullscreen && activeShot && (
         <div
           className={`pointer-events-none absolute top-3 right-3 rounded-md bg-black/70 px-3 py-1.5 text-sm font-semibold text-white transition-opacity duration-500 ${
             visible ? "opacity-100" : "opacity-0"

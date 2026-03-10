@@ -28,11 +28,10 @@ export default async function MatchPage({ params }: MatchPageProps) {
   const match = result.data;
   const ralliesResult = getRalliesByMatchId(numId);
   const rallies = ralliesResult.ok ? ralliesResult.data : [];
-  const videoSource = match.videoSource ?? "local";
-  const videoUrl =
-    videoSource === "youtube"
-      ? `https://www.youtube.com/embed/${encodeURIComponent(match.videoPath)}`
-      : `/api/video?path=${encodeURIComponent(match.videoPath)}&source=${videoSource}`;
+  const isYouTube = match.videoSource === "youtube";
+  const videoUrl = isYouTube
+    ? `https://www.youtube.com/embed/${encodeURIComponent(match.videoPath)}`
+    : `/api/video?path=${encodeURIComponent(match.videoPath)}&source=${match.videoSource ?? "local"}`;
   const shotsForCharts: ShotForStats[] = rallies.flatMap((r) =>
     r.shots.map((s) => ({
       shotType: s.shotType,
@@ -57,7 +56,19 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
       <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-[2fr_1fr]">
         <div className="min-w-0">
-          <VideoPlayerWithOverlay videoUrl={videoUrl} videoSource={videoSource} shots={overlayShots} />
+          {isYouTube ? (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black shadow-lg">
+              <iframe
+                src={videoUrl}
+                title={match.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            </div>
+          ) : (
+            <VideoPlayerWithOverlay videoUrl={videoUrl} shots={overlayShots} />
+          )}
         </div>
 
         <div className="flex min-w-0 flex-col gap-3">
@@ -109,7 +120,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
           </section>
 
           <div className="flex justify-end">
-            <AnalyzeButton matchId={match.id} videoSource={videoSource} />
+            <AnalyzeButton matchId={match.id} />
           </div>
         </div>
       </div>

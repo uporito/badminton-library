@@ -1,38 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { CaretDown, CloudArrowDown, GoogleDriveLogo, YoutubeLogo } from "@phosphor-icons/react";
+import {
+  GoogleDriveLogo,
+  YoutubeLogo,
+  CaretDown,
+  CloudArrowDown,
+} from "@phosphor-icons/react";
 import { GDriveImportPanel } from "./gdrive_import_panel";
-import { YouTubeImportSource } from "./youtube_import_source";
+import { YouTubeImportPanel } from "./youtube_import_panel";
 
-interface ExistingMatch {
-  id: number;
-  videoPath: string;
-  videoSource: string;
-}
+type SourceTab = "gdrive" | "youtube";
 
 interface ImportPanelProps {
-  existingMatches: ExistingMatch[];
   gdriveConfigured: boolean;
   youtubeConfigured: boolean;
+  existingMatches: { id: number; videoPath: string; videoSource: string }[];
 }
 
-type ImportSource = "gdrive" | "youtube";
+const TAB_CONFIG: Record<
+  SourceTab,
+  { label: string; icon: typeof GoogleDriveLogo }
+> = {
+  gdrive: { label: "Google Drive", icon: GoogleDriveLogo },
+  youtube: { label: "YouTube", icon: YoutubeLogo },
+};
 
 export function ImportPanel({
-  existingMatches,
   gdriveConfigured,
   youtubeConfigured,
+  existingMatches,
 }: ImportPanelProps) {
+  const availableTabs: SourceTab[] = [];
+  if (gdriveConfigured) availableTabs.push("gdrive");
+  if (youtubeConfigured) availableTabs.push("youtube");
+
   const [expanded, setExpanded] = useState(false);
-  const [activeSource, setActiveSource] = useState<ImportSource>(
-    gdriveConfigured ? "gdrive" : "youtube"
+  const [activeTab, setActiveTab] = useState<SourceTab>(
+    availableTabs[0] ?? "gdrive"
   );
 
-  const hasMultipleSources = gdriveConfigured && youtubeConfigured;
-  const hasAnySource = gdriveConfigured || youtubeConfigured;
-  const gdriveMatches = existingMatches.filter((m) => m.videoSource === "gdrive");
-  const youtubeMatches = existingMatches.filter((m) => m.videoSource === "youtube");
+  if (availableTabs.length === 0) return null;
 
   return (
     <section className="frame rounded-xl p-4">
@@ -43,7 +51,9 @@ export function ImportPanel({
       >
         <div className="flex items-center gap-2">
           <CloudArrowDown size={18} className="text-text-soft" />
-          <h2 className="text-sm font-semibold text-text-main">Import</h2>
+          <h2 className="text-sm font-semibold text-text-main">
+            Import videos
+          </h2>
         </div>
         <CaretDown
           size={14}
@@ -52,51 +62,39 @@ export function ImportPanel({
       </button>
 
       {expanded && (
-        <>
-          {!hasAnySource ? (
-            <p className="mt-3 text-xs text-text-soft">
-              Configure Google Drive (<code className="rounded bg-ui-elevated px-1">GOOGLE_SERVICE_ACCOUNT_KEY</code>) or
-              YouTube (<code className="rounded bg-ui-elevated px-1">YOUTUBE_API_KEY</code>) in your environment to import videos.
-            </p>
-          ) : (
-            <>
-              {hasMultipleSources && (
-                <div className="mt-3 flex rounded-lg border border-ui-elevated-more p-1">
+        <div className="mt-3">
+          {availableTabs.length > 1 && (
+            <div className="mb-3 flex rounded-lg bg-ui-elevated p-0.5">
+              {availableTabs.map((tab) => {
+                const cfg = TAB_CONFIG[tab];
+                const Icon = cfg.icon;
+                const isActive = activeTab === tab;
+                return (
                   <button
+                    key={tab}
                     type="button"
-                    onClick={() => setActiveSource("gdrive")}
-                    className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors ${
-                      activeSource === "gdrive"
-                        ? "bg-ui-elevated-more text-foreground"
-                        : "text-text-soft hover:bg-ui-elevated"
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isActive
+                        ? "bg-ui-elevated-more text-text-main"
+                        : "text-text-soft hover:text-text-main"
                     }`}
                   >
-                    <GoogleDriveLogo size={16} />
-                    Google Drive
+                    <Icon size={14} />
+                    {cfg.label}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSource("youtube")}
-                    className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors ${
-                      activeSource === "youtube"
-                        ? "bg-ui-elevated-more text-foreground"
-                        : "text-text-soft hover:bg-ui-elevated"
-                    }`}
-                  >
-                    <YoutubeLogo size={16} />
-                    YouTube
-                  </button>
-                </div>
-              )}
-
-              {(!hasMultipleSources && gdriveConfigured) || activeSource === "gdrive" ? (
-                <GDriveImportPanel existingMatches={gdriveMatches} />
-              ) : (
-                <YouTubeImportSource existingMatches={youtubeMatches} />
-              )}
-            </>
+                );
+              })}
+            </div>
           )}
-        </>
+
+          {activeTab === "gdrive" && gdriveConfigured && (
+            <GDriveImportPanel existingMatches={existingMatches} />
+          )}
+          {activeTab === "youtube" && youtubeConfigured && (
+            <YouTubeImportPanel existingMatches={existingMatches} />
+          )}
+        </div>
       )}
     </section>
   );

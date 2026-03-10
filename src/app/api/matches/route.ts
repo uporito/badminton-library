@@ -68,9 +68,7 @@ export async function POST(request: NextRequest) {
     category,
   } = parsed.data;
   const titleToUse =
-    title?.trim() ||
-    (videoSource === "gdrive" ? videoPath : videoSource === "youtube" ? "YouTube video" : path.basename(videoPath)) ||
-    "Untitled";
+    title?.trim() || (videoSource === "gdrive" ? videoPath : path.basename(videoPath)) || "Untitled";
   const db = getDb();
   const [created] = await db
     .insert(matches)

@@ -305,7 +305,7 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
   }, [syncing, toAdd, toRemove]);
 
   return (
-    <div className="mt-3">
+    <div>
       <div className="flex items-center justify-end gap-3 mb-3">
         <div ref={folderPickerRef} className="relative">
           <button
@@ -558,6 +558,6 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
           <p className="text-xs text-text-soft">{syncMessage}</p>
         )}
       </div>
-      </div>
+    </div>
   );
 }
