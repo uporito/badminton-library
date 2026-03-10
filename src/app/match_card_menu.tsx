@@ -107,7 +107,7 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
           e.stopPropagation();
           setOpen(!open);
         }}
-        className="flex h-7 w-7 items-center justify-center rounded-md bg-ui-bg/70 text-text-soft backdrop-blur-sm transition-colors hover:bg-ui-elevated hover:text-text-main cursor-pointer"
+        className="flex h-7 w-7 items-center justify-center rounded-md bg-ui-bg/70 text-text-soft backdrop-blur-sm transition-colors hover:bg-ui-elevated hover:text-text-main"
         aria-label="Match options"
       >
         <DotsThreeIcon weight="bold" className="h-4 w-4" />
@@ -125,7 +125,7 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
             type="button"
             onClick={handleRemoveFromLibrary}
             disabled={removing}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-ui-error hover:bg-ui-elevated transition-colors disabled:opacity-50 cursor-pointer rounded-t-lg"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-ui-error hover:bg-ui-elevated transition-colors disabled:opacity-50 rounded-t-lg"
             aria-label="Remove from library"
           >
             <Trash className="h-3.5 w-3.5 shrink-0" weight="bold" />
@@ -152,7 +152,7 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
                       type="button"
                       onClick={() => handleRemoveTag(tag)}
                       disabled={saving}
-                      className="text-text-soft hover:text-ui-error transition-colors cursor-pointer"
+                      className="text-text-soft hover:text-ui-error transition-colors"
                       aria-label={`Remove tag ${tag}`}
                     >
                       <XIcon weight="bold" className="h-2.5 w-2.5" />
@@ -177,7 +177,7 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
                 type="button"
                 onClick={handleAdd}
                 disabled={!input.trim() || saving}
-                className="flex h-5 w-5 items-center justify-center rounded bg-accent text-ui-bg transition-opacity disabled:opacity-30 cursor-pointer"
+                className="flex h-5 w-5 items-center justify-center rounded bg-accent text-ui-bg transition-opacity disabled:opacity-30"
                 aria-label="Add tag"
               >
                 <PlusIcon weight="bold" className="h-3 w-3" />

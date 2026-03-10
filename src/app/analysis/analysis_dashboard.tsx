@@ -335,7 +335,7 @@ function MostPlayedShotCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative cursor-pointer rounded-lg px-4 py-3 flex flex-row items-center justify-between gap-4 min-h-0 text-left transition-colors outline-none hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent ${className ?? ""}`}
+      className={`relative rounded-lg px-4 py-3 flex flex-row items-center justify-between gap-4 min-h-0 text-left transition-colors outline-none hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent ${className ?? ""}`}
     >
       {/* Background layer so .frame box-shadow does not override the button's hover ring */}
       <div
@@ -437,7 +437,7 @@ function FilterDropdown({
       <button
         type="button"
         onClick={onToggleOpen}
-        className="flex items-center gap-1.5 rounded-lg bg-ui-frame px-3 py-1.5 text-xs text-text-main hover:bg-ui-elevated transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 rounded-lg bg-ui-frame px-3 py-1.5 text-xs text-text-main hover:bg-ui-elevated transition-colors"
       >
         {/* Invisible spacer fixes the button width */}
         <span className="relative inline-flex items-center">

@@ -115,6 +115,12 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Button class: cursor and shared button styling. Applied to all <button> elements. */
+.btn,
+button {
+  cursor: pointer;
+}
+
 /* Frame: panels/cards using UI frame color + drop shadow. Use this for all frames. */
 .frame {
   background-color: color-mix(in srgb, var(--ui-frame) calc(var(--ui-frame-opacity) * 100%), transparent);

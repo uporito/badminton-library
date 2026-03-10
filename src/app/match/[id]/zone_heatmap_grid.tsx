@@ -132,7 +132,7 @@ export function ZoneHeatmaps({
                 <button
                   type="button"
                   key={`opp-${displayRow}-${displayCol}`}
-                  className={`flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-ui-bg" : ""} ${count === 0 ? "bg-ui-elevated text-foreground" : ""}`}
+                  className={`flex aspect-square min-w-0 items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-ui-bg" : ""} ${count === 0 ? "bg-ui-elevated text-foreground" : ""}`}
                   style={{
                     ...(bg != null && { backgroundColor: bg }),
                     ...(fg != null && { color: fg }),
@@ -165,7 +165,7 @@ export function ZoneHeatmaps({
                 <button
                   type="button"
                   key={`me-${displayRow}-${displayCol}`}
-                  className={`flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-ui-bg" : ""} ${count === 0 ? "bg-ui-elevated text-foreground" : ""}`}
+                  className={`flex aspect-square min-w-0 items-center justify-center rounded-[2px] text-xs font-medium drop-shadow-sm hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-500 ${isSelected ? "ring-2 ring-amber-500 ring-offset-1 dark:ring-amber-400 dark:ring-offset-ui-bg" : ""} ${count === 0 ? "bg-ui-elevated text-foreground" : ""}`}
                   style={{
                     ...(bg != null && { backgroundColor: bg }),
                     ...(fg != null && { color: fg }),

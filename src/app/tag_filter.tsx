@@ -42,7 +42,7 @@ export function TagFilter({ allTags }: TagFilterProps) {
             key={tag}
             type="button"
             onClick={() => toggleTag(tag)}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
+            className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
               active
                 ? "bg-accent text-ui-bg"
                 : "text-text-soft hover:bg-ui-elevated"
@@ -61,7 +61,7 @@ export function TagFilter({ allTags }: TagFilterProps) {
             const q = sp.toString();
             router.push(q ? `/?${q}` : "/");
           }}
-          className="ml-1 rounded-md px-2 py-1 text-xs text-text-soft hover:text-text-main transition-colors cursor-pointer"
+          className="ml-1 rounded-md px-2 py-1 text-xs text-text-soft hover:text-text-main transition-colors"
         >
           Clear
         </button>
