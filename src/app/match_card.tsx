@@ -1,11 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { PlayIcon, GoogleDriveLogo, YoutubeLogo } from "@phosphor-icons/react/ssr";
 import { formatDuration } from "@/lib/format_duration";
 import type { MatchRow } from "@/lib/get_match_by_id";
 import type { MatchCategory } from "@/db/schema";
-import { thumbnailExists } from "@/lib/gdrive";
 import { parseTags } from "@/lib/tags";
 import { MatchCardMenu } from "./match_card_menu";
+import { clsx } from "clsx";
 
 function getCategoryAccentClass(category: MatchCategory | null | undefined): string {
   switch (category) {
@@ -88,14 +91,14 @@ function TagsDisplay({ tags }: { tags: string[] }) {
 
 export interface MatchCardProps {
   match: MatchRow;
+  /** Whether a cached thumbnail exists (computed on server to avoid pulling gdrive into client bundle). */
+  hasThumbnail: boolean;
 }
 
-export function MatchCard({ match }: MatchCardProps) {
+export function MatchCard({ match, hasThumbnail }: MatchCardProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const category = match.category ?? "Uncategorized";
   const accentClass = getCategoryAccentClass(category);
-  const hasThumbnail =
-    (match.videoSource === "gdrive" || match.videoSource === "youtube") &&
-    thumbnailExists(match.id);
   const tags = parseTags(match.tags);
 
   return (
@@ -107,9 +110,18 @@ export function MatchCard({ match }: MatchCardProps) {
         aria-label={match.title}
       />
 
-      {/* Menu button (above the link) */}
-      <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity group-hover/card:opacity-100">
-        <MatchCardMenu matchId={match.id} initialTags={tags} />
+      {/* Menu button: visible on card hover or when menu is open */}
+      <div
+        className={clsx(
+          "absolute right-2 top-2 z-10 transition-opacity",
+          menuOpen ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
+        )}
+      >
+        <MatchCardMenu
+          matchId={match.id}
+          initialTags={tags}
+          onOpenChange={setMenuOpen}
+        />
       </div>
 
       {hasThumbnail ? (

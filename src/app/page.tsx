@@ -5,7 +5,7 @@ import type { ListMatchesCategoryFilter, ListMatchesSort } from "@/lib/list_matc
 import { MatchCard } from "./match_card";
 import { TagFilter } from "./tag_filter";
 import { ImportPanel } from "./import_panel";
-import { isGDriveConfigured } from "@/lib/gdrive";
+import { isGDriveConfigured, thumbnailExists } from "@/lib/gdrive";
 import { isYouTubeConfigured } from "@/lib/youtube";
 import { getAllUniqueTags, parseTags } from "@/lib/tags";
 import Link from "next/link";
@@ -156,7 +156,14 @@ export default async function Home({ searchParams }: HomeProps) {
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {section.matches.map((match) => (
                     <li key={match.id}>
-                      <MatchCard match={match} />
+                      <MatchCard
+                        match={match}
+                        hasThumbnail={
+                          (match.videoSource === "gdrive" ||
+                            match.videoSource === "youtube") &&
+                          thumbnailExists(match.id)
+                        }
+                      />
                     </li>
                   ))}
                 </ul>
