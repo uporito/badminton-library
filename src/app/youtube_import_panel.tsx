@@ -114,7 +114,7 @@ export function YouTubeImportPanel({
         if (res.ok) {
           added++;
           const data = await res.json();
-          if (data.id) fetch(`/api/thumbnail?id=${data.id}`).catch(() => {});
+          fetch(`/api/thumbnail?source=youtube&video=${encodeURIComponent(video.videoId)}`).catch(() => {});
         } else {
           failed++;
         }

@@ -252,7 +252,7 @@ export function GDriveImportPanel({ existingMatches }: { existingMatches: Existi
         if (res.ok) {
           added++;
           const data = await res.json();
-          if (data.id) fetch(`/api/thumbnail?id=${data.id}`).catch(() => {});
+          fetch(`/api/thumbnail?source=gdrive&video=${encodeURIComponent(file.id)}`).catch(() => {});
         } else {
           failed++;
         }

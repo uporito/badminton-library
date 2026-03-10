@@ -5,7 +5,8 @@ import type { ListMatchesCategoryFilter, ListMatchesSort } from "@/lib/list_matc
 import { MatchCard } from "./match_card";
 import { TagFilter } from "./tag_filter";
 import { ImportPanel } from "./import_panel";
-import { isGDriveConfigured, thumbnailExists } from "@/lib/gdrive";
+import { isGDriveConfigured } from "@/lib/gdrive";
+import { thumbnailExists } from "@/lib/thumbnails";
 import { isYouTubeConfigured } from "@/lib/youtube";
 import { getAllUniqueTags, parseTags } from "@/lib/tags";
 import Link from "next/link";
@@ -161,7 +162,7 @@ export default async function Home({ searchParams }: HomeProps) {
                         hasThumbnail={
                           (match.videoSource === "gdrive" ||
                             match.videoSource === "youtube") &&
-                          thumbnailExists(match.id)
+                          thumbnailExists(match.videoSource, match.videoPath)
                         }
                       />
                     </li>

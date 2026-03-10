@@ -1,7 +1,6 @@
 import { google, type drive_v3 } from "googleapis";
 import { Readable } from "stream";
 import fs from "fs";
-import path from "path";
 
 let driveClient: drive_v3.Drive | null = null;
 
@@ -291,27 +290,10 @@ export async function downloadGDriveFileToBuffer(
   }
 }
 
-const THUMBNAILS_DIR = path.resolve("data", "thumbnails");
-
-export function getThumbnailPath(matchId: number): string {
-  return path.join(THUMBNAILS_DIR, `${matchId}.jpg`);
-}
-
-export function thumbnailExists(matchId: number): boolean {
-  return fs.existsSync(getThumbnailPath(matchId));
-}
-
-export function deleteThumbnail(matchId: number): void {
-  const p = getThumbnailPath(matchId);
-  if (fs.existsSync(p)) {
-    try { fs.unlinkSync(p); } catch { /* ignore */ }
-  }
-}
-
 export async function fetchAndCacheGDriveThumbnail(
-  fileId: string,
-  matchId: number
+  fileId: string
 ): Promise<{ ok: true; filePath: string } | { ok: false; error: string }> {
+  const { getThumbnailPath, ensureThumbnailsDir } = await import("@/lib/thumbnails");
   const drive = getGDriveClient();
   if (!drive) return { ok: false, error: "GDRIVE_NOT_CONFIGURED" };
 
@@ -325,7 +307,6 @@ export async function fetchAndCacheGDriveThumbnail(
     const thumbnailLink = res.data.thumbnailLink;
     if (!thumbnailLink) return { ok: false, error: "NO_THUMBNAIL" };
 
-    // thumbnailLink requires auth; fetch via the authenticated client's token
     const auth = drive.context._options.auth;
     const client = await (auth as { getClient(): Promise<{ request(opts: { url: string; responseType: string }): Promise<{ data: ArrayBuffer }> }> }).getClient();
     const imgRes = await client.request({
@@ -333,8 +314,8 @@ export async function fetchAndCacheGDriveThumbnail(
       responseType: "arraybuffer",
     });
 
-    fs.mkdirSync(THUMBNAILS_DIR, { recursive: true });
-    const filePath = getThumbnailPath(matchId);
+    ensureThumbnailsDir();
+    const filePath = getThumbnailPath("gdrive", fileId);
     fs.writeFileSync(filePath, Buffer.from(imgRes.data as ArrayBuffer));
     return { ok: true, filePath };
   } catch (e) {

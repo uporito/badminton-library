@@ -1,6 +1,5 @@
 import { google, type youtube_v3 } from "googleapis";
 import fs from "fs";
-import path from "path";
 
 let youtubeClient: youtube_v3.Youtube | null = null;
 
@@ -177,12 +176,10 @@ export async function getYouTubeVideoDetails(
   }
 }
 
-const THUMBNAILS_DIR = path.resolve("data", "thumbnails");
-
 export async function fetchAndCacheYouTubeThumbnail(
-  videoId: string,
-  matchId: number
+  videoId: string
 ): Promise<{ ok: true; filePath: string } | { ok: false; error: string }> {
+  const { getThumbnailPath, ensureThumbnailsDir } = await import("@/lib/thumbnails");
   const url = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
 
   try {
@@ -190,8 +187,8 @@ export async function fetchAndCacheYouTubeThumbnail(
     if (!res.ok) return { ok: false, error: `Thumbnail fetch returned ${res.status}` };
 
     const buffer = Buffer.from(await res.arrayBuffer());
-    fs.mkdirSync(THUMBNAILS_DIR, { recursive: true });
-    const filePath = path.join(THUMBNAILS_DIR, `${matchId}.jpg`);
+    ensureThumbnailsDir();
+    const filePath = getThumbnailPath("youtube", videoId);
     fs.writeFileSync(filePath, buffer);
     return { ok: true, filePath };
   } catch (e) {

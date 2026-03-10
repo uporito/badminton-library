@@ -6,7 +6,7 @@ import { matches } from "@/db/schema";
 import { matchCategoryEnum, videoSourceEnum } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { serializeTags } from "@/lib/tags";
-import { deleteThumbnail } from "@/lib/gdrive";
+import { deleteThumbnail } from "@/lib/thumbnails";
 
 const UpdateMatchBodySchema = z.object({
   title: z.string().min(1).optional(),
@@ -59,7 +59,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
     await db.delete(matches).where(eq(matches.id, matchId));
-    deleteThumbnail(matchId);
+    deleteThumbnail(existing.videoSource, existing.videoPath);
     return NextResponse.json({ deleted: matchId }, { status: 200 });
   } catch (e) {
     console.error(e);

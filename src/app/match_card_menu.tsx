@@ -30,6 +30,9 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
   const [removing, setRemoving] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [expandLeft, setExpandLeft] = useState(false);
+
+  const DROPDOWN_WIDTH = 240;
 
   useEffect(() => {
     if (!open) return;
@@ -44,6 +47,15 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const spaceRight = typeof window !== "undefined" ? window.innerWidth - rect.right : 0;
+    setExpandLeft(spaceRight < DROPDOWN_WIDTH);
   }, [open]);
 
   async function saveTags(nextTags: string[]) {
@@ -99,7 +111,7 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
   }
 
   return (
-    <div ref={containerRef} className="relative z-10">
+    <div ref={containerRef} className="relative z-[100]">
       <button
         type="button"
         onClick={(e) => {
@@ -115,7 +127,7 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
 
       {open && (
         <div
-          className="filter-dropdown-panel absolute left-0 top-full mt-1 z-50 w-60"
+          className={`filter-dropdown-panel absolute top-full mt-1 z-[100] w-60 ${expandLeft ? "right-0" : "left-0"}`}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

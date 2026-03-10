@@ -102,7 +102,13 @@ export function MatchCard({ match, hasThumbnail }: MatchCardProps) {
   const tags = parseTags(match.tags);
 
   return (
-    <div className={`group/card frame relative rounded-xl border-l-4 p-0 ${accentClass}`}>
+    <div
+      className={clsx(
+        "group/card frame relative rounded-xl border-l-4 p-0",
+        accentClass,
+        menuOpen && "z-[100]"
+      )}
+    >
       {/* Stretched link for navigation */}
       <Link
         href={`/match/${match.id}`}
@@ -125,9 +131,9 @@ export function MatchCard({ match, hasThumbnail }: MatchCardProps) {
       </div>
 
       {hasThumbnail ? (
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+        <div className="pointer-events-none relative aspect-video w-full overflow-hidden rounded-lg">
           <img
-            src={`/api/thumbnail?id=${match.id}`}
+            src={`/api/thumbnail?source=${match.videoSource}&video=${encodeURIComponent(match.videoPath)}`}
             alt={match.title}
             className="h-full w-full object-cover"
           />
