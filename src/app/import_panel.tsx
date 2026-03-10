@@ -43,11 +43,11 @@ export function ImportPanel({
   if (availableTabs.length === 0) return null;
 
   return (
-    <section className="frame rounded-xl p-4">
+    <section className="relative">
       <button
         type="button"
         onClick={() => setExpanded((p) => !p)}
-        className="flex w-full items-center justify-between gap-3"
+        className="frame flex w-full items-center justify-between gap-3 rounded-xl p-4"
       >
         <div className="flex items-center gap-2">
           <CloudArrowDown size={18} className="text-text-soft" />
@@ -62,7 +62,7 @@ export function ImportPanel({
       </button>
 
       {expanded && (
-        <div className="mt-3">
+        <div className="absolute left-0 right-0 top-full z-30 mt-1.5 frame rounded-xl p-4 shadow-lg">
           {availableTabs.length > 1 && (
             <div className="mb-3 flex rounded-lg bg-ui-elevated p-0.5">
               {availableTabs.map((tab) => {
