@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getMatchById } from "@/lib/get_match_by_id";
 import { getRalliesByMatchId } from "@/lib/get_rallies_by_match_id";
 import { InputShotsPanel } from "./input_shots_panel";
@@ -8,6 +9,7 @@ import { AnalyzeButton } from "./analyze_button";
 import { PlayerDescriptions } from "./player_descriptions";
 import { CollapsibleSection } from "./collapsible_section";
 import { VideoPlayerWithOverlay } from "./video_player_with_overlay";
+import { PencilSimple } from "@phosphor-icons/react/ssr";
 import type { OverlayShot } from "./video_player_with_overlay";
 import type { ShotForStats } from "@/lib/shot_chart_utils";
 
@@ -72,7 +74,14 @@ export default async function MatchPage({ params }: MatchPageProps) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3">
-          <section className="frame rounded-xl p-4">
+          <section className="frame relative rounded-xl p-4">
+            <Link
+              href={`/match/${match.id}/edit`}
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-md text-text-soft transition-colors hover:bg-ui-elevated hover:text-text-main"
+              aria-label="Edit match"
+            >
+              <PencilSimple className="h-4 w-4" weight="bold" />
+            </Link>
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-text-soft">Date</dt>

@@ -72,7 +72,7 @@ export function DebugMatchList({
 
   return (
     <div className="space-y-8">
-      <section>
+      <section className="relative z-20">
         <h2 className="mb-4 text-xl font-semibold text-text-main">
           Add match
         </h2>
@@ -80,7 +80,7 @@ export function DebugMatchList({
       </section>
 
       {editingId !== null && (
-        <section>
+        <section className="relative z-20">
           <h2 className="mb-4 text-xl font-semibold text-text-main">
             Edit match
           </h2>

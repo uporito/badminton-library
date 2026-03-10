@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { MatchRow } from "@/lib/get_match_by_id";
 import { matchCategoryEnum, type VideoSource } from "@/db/schema";
 import { GDrivePicker } from "./gdrive_picker";
-import { HardDrive, GoogleDriveLogo } from "@phosphor-icons/react";
+import { DatePicker } from "@/components/date_picker";
+import { HardDrive, GoogleDriveLogo, CaretDown } from "@phosphor-icons/react";
 
 const CATEGORY_OPTIONS = matchCategoryEnum;
 
@@ -62,6 +63,22 @@ export function MatchForm({
   const [message, setMessage] = useState("");
   const [showGDrivePicker, setShowGDrivePicker] = useState(false);
   const [gdriveAvailable, setGdriveAvailable] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!categoryDropdownOpen) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(e.target as Node)
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [categoryDropdownOpen]);
 
   useEffect(() => {
     fetch("/api/gdrive/status")
@@ -156,8 +173,8 @@ export function MatchForm({
     }
   }
 
-  const inputClass =
-    "rounded border border-ui-elevated-more bg-ui-elevated px-3 py-2 text-sm text-foreground";
+  const textInputClass =
+    "rounded-md bg-ui-elevated px-2.5 py-1.5 text-sm font-medium text-text-main placeholder:text-text-soft/50 focus:outline-none focus:ring-1 focus:ring-ui-elevated-more";
 
   const selectedGDriveFileName = videoSource === "gdrive" && values.videoPath
     ? String(values.videoPath)
@@ -203,57 +220,57 @@ export function MatchForm({
       )}
 
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            Title (required)
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">
+            Title <span className="text-text-soft/60">(required)</span>
           </span>
           <input
             type="text"
             value={values.title}
             onChange={(e) => setValue("title", e.target.value)}
             required
-            className={inputClass}
+            className={textInputClass}
             placeholder="e.g. My match"
           />
         </label>
 
         {videoSource === "local" ? (
-          <label className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-text-soft">
-              Video path (required)
+          <label className="flex flex-col gap-0.5">
+            <span className="text-text-soft text-sm">
+              Video path <span className="text-text-soft/60">(required)</span>
             </span>
             <input
               type="text"
               value={values.videoPath}
               onChange={(e) => setValue("videoPath", e.target.value)}
               required
-              className={inputClass}
+              className={textInputClass}
               placeholder="e.g. my_video.mp4"
             />
           </label>
         ) : (
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-text-soft">
-              Google Drive video (required)
+          <div className="flex flex-col gap-0.5">
+            <span className="text-text-soft text-sm">
+              Google Drive video <span className="text-text-soft/60">(required)</span>
             </span>
             {selectedGDriveFileName && !showGDrivePicker ? (
               <div className="flex items-center gap-2">
-                <span className="truncate rounded border border-ui-elevated-more bg-ui-elevated px-3 py-2 text-sm text-text-main flex-1">
+                <span className="truncate rounded-md bg-ui-elevated px-2.5 py-1.5 text-sm font-medium text-text-main flex-1">
                   {values.title || selectedGDriveFileName}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setShowGDrivePicker(true)}
-                  className="shrink-0 rounded bg-ui-elevated-more px-2 py-2 text-xs text-text-soft hover:text-text-main"
-                >
-                  Change
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowGDrivePicker(true)}
+                className="shrink-0 rounded-md bg-ui-elevated-more px-2 py-1.5 text-xs text-text-soft hover:text-text-main"
+              >
+                Change
+              </button>
+            </div>
             ) : (
               <button
                 type="button"
                 onClick={() => setShowGDrivePicker(true)}
-                className="rounded border border-dashed border-ui-elevated-more bg-ui-elevated px-3 py-2 text-sm text-text-soft hover:text-text-main hover:border-text-soft transition-colors"
+                className="rounded-md border border-dashed border-ui-elevated-more bg-ui-elevated px-2.5 py-1.5 text-sm text-text-soft hover:text-text-main hover:border-text-soft transition-colors"
               >
                 Browse Google Drive…
               </button>
@@ -270,10 +287,8 @@ export function MatchForm({
       )}
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            Duration (s)
-          </span>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">Duration (s)</span>
           <input
             type="number"
             min={0}
@@ -281,96 +296,122 @@ export function MatchForm({
             onChange={(e) =>
               setValue("durationSeconds", e.target.value ? e.target.valueAsNumber : "")
             }
-            className={inputClass}
+            className={textInputClass}
           />
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            Date
-          </span>
-          <input
-            type="date"
-            value={values.date}
-            onChange={(e) => setValue("date", e.target.value)}
-            className={inputClass}
+        <div className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">Date</span>
+          <DatePicker
+            value={String(values.date)}
+            onChange={(iso) => setValue("date", iso)}
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            Opponent
-          </span>
+        </div>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">Opponent</span>
           <input
             type="text"
             value={values.opponent}
             onChange={(e) => setValue("opponent", e.target.value)}
-            className={inputClass}
+            className={textInputClass}
           />
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            Result
-          </span>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">Result</span>
           <input
             type="text"
             value={values.result}
             onChange={(e) => setValue("result", e.target.value)}
             placeholder="e.g. 21-19 21-17"
-            className={inputClass}
+            className={textInputClass}
           />
         </label>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            Notes
-          </span>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">Notes</span>
           <input
             type="text"
             value={values.notes}
             onChange={(e) => setValue("notes", e.target.value)}
-            className={inputClass}
+            className={textInputClass}
           />
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            Category
-          </span>
-          <select
-            value={values.category}
-            onChange={(e) => setValue("category", e.target.value)}
-            className={inputClass}
-          >
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">Category</span>
+          <div ref={categoryDropdownRef} className="relative w-full">
+            <button
+              type="button"
+              onClick={() => setCategoryDropdownOpen((o) => !o)}
+              className="flex w-full items-center justify-between gap-1.5 rounded-md bg-ui-elevated px-2.5 py-1.5 text-sm font-medium text-text-main hover:bg-ui-elevated-more transition-colors focus:outline-none focus:ring-1 focus:ring-ui-elevated-more"
+              aria-haspopup="listbox"
+              aria-expanded={categoryDropdownOpen}
+              aria-label="Category"
+            >
+              <span className="truncate">{String(values.category)}</span>
+              <CaretDown
+                className={`h-3 w-3 shrink-0 text-text-soft transition-transform ${categoryDropdownOpen ? "rotate-180" : ""}`}
+                weight="bold"
+                aria-hidden
+              />
+            </button>
+            {categoryDropdownOpen && (
+              <div
+                className="absolute left-0 top-full z-50 mt-1.5 w-full min-w-0 overflow-hidden rounded-xl bg-ui-elevated p-1.5 shadow-[0_8px_24px_-4px_rgb(0_0_0_/0.15),0_4px_12px_-2px_rgb(0_0_0_/0.10)] dark:shadow-[0_12px_32px_-4px_rgb(0_0_0_/0.45),0_6px_16px_-4px_rgb(0_0_0_/0.30)]"
+                role="listbox"
+              >
+                <ul className="space-y-px">
+                  {CATEGORY_OPTIONS.map((c) => {
+                    const selected = values.category === c;
+                    return (
+                      <li key={c}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={selected}
+                          onClick={() => {
+                            setValue("category", c);
+                            setCategoryDropdownOpen(false);
+                          }}
+                          className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
+                            selected
+                              ? "bg-ui-elevated-more text-text-main"
+                              : "text-text-soft hover:bg-ui-elevated-more"
+                          }`}
+                        >
+                          {c}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
         </label>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            My description
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">
+            My description <span className="text-text-soft/60">(optional)</span>
           </span>
           <input
             type="text"
             value={values.myDescription}
             onChange={(e) => setValue("myDescription", e.target.value)}
             placeholder="e.g. wearing red shirt, left-handed"
-            className={inputClass}
+            className={textInputClass}
           />
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-soft">
-            Opponent description
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">
+            Opponent description <span className="text-text-soft/60">(optional)</span>
           </span>
           <input
             type="text"
             value={values.opponentDescription}
             onChange={(e) => setValue("opponentDescription", e.target.value)}
             placeholder="e.g. taller, wearing blue shirt"
-            className={inputClass}
+            className={textInputClass}
           />
         </label>
       </div>

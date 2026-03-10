@@ -8,7 +8,9 @@ import {
   PlusIcon,
   TagIcon,
   Trash,
+  PencilSimple,
 } from "@phosphor-icons/react";
+import Link from "next/link";
 
 interface MatchCardMenuProps {
   matchId: number;
@@ -133,6 +135,20 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
             e.stopPropagation();
           }}
         >
+          <Link
+            href={`/match/${matchId}/edit`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+              router.push(`/match/${matchId}/edit`);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-text-main hover:bg-ui-elevated transition-colors rounded-t-lg"
+            aria-label="Edit match"
+          >
+            <PencilSimple className="h-3.5 w-3.5 shrink-0" weight="bold" />
+            <span>Edit match</span>
+          </Link>
           <button
             type="button"
             onClick={handleRemoveFromLibrary}
@@ -147,7 +163,7 @@ export function MatchCardMenu({ matchId, initialTags, onOpenChange }: MatchCardM
           <div className="border-t border-ui-elevated-more px-3 py-2">
             <div className="mb-2 flex items-center gap-2">
               <TagIcon className="h-3.5 w-3.5 shrink-0 text-text-soft" aria-hidden />
-              <span className="text-xs font-medium text-text-soft uppercase tracking-wide">
+              <span className="text-xs font-medium text-text-soft tracking-wide">
                 Tags
               </span>
             </div>
