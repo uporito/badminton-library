@@ -72,13 +72,6 @@ export function DebugMatchList({
 
   return (
     <div className="space-y-8">
-      <section className="relative z-20">
-        <h2 className="mb-4 text-xl font-semibold text-text-main">
-          Add match
-        </h2>
-        <MatchForm mode="create" onSuccess={() => startTransition(() => router.refresh())} />
-      </section>
-
       {editingId !== null && (
         <section className="relative z-20">
           <h2 className="mb-4 text-xl font-semibold text-text-main">

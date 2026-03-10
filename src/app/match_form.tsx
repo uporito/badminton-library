@@ -189,8 +189,8 @@ export function MatchForm({
         {mode === "create" ? "Add match" : "Edit match"}
       </h2>
 
-      {/* Video source tabs */}
-      {gdriveAvailable && (
+      {/* Video source tabs (create only) */}
+      {mode === "create" && gdriveAvailable && (
         <div className="flex gap-1 rounded-lg bg-ui-elevated p-0.5">
           <button
             type="button"
@@ -234,7 +234,14 @@ export function MatchForm({
           />
         </label>
 
-        {videoSource === "local" ? (
+        {mode === "edit" ? (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-text-soft text-sm">Video</span>
+            <span className="truncate rounded-md bg-ui-elevated px-2.5 py-1.5 text-sm font-medium text-text-main">
+              {videoSource === "gdrive" ? "Google Drive" : ""} {String(values.videoPath) || "—"}
+            </span>
+          </div>
+        ) : videoSource === "local" ? (
           <label className="flex flex-col gap-0.5">
             <span className="text-text-soft text-sm">
               Video path <span className="text-text-soft/60">(required)</span>
@@ -279,7 +286,7 @@ export function MatchForm({
         )}
       </div>
 
-      {showGDrivePicker && videoSource === "gdrive" && (
+      {mode === "create" && showGDrivePicker && videoSource === "gdrive" && (
         <GDrivePicker
           onSelect={handleGDriveSelect}
           onCancel={() => setShowGDrivePicker(false)}

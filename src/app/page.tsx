@@ -68,10 +68,11 @@ export default async function Home({ searchParams }: HomeProps) {
 
   const gdriveConfigured = isGDriveConfigured();
   const youtubeConfigured = isYouTubeConfigured();
-  const anyImportConfigured = gdriveConfigured || youtubeConfigured;
-  const existingMatches = anyImportConfigured
-    ? allMatches.map((m) => ({ id: m.id, videoPath: m.videoPath, videoSource: m.videoSource ?? "local" }))
-    : [];
+  const existingMatches = allMatches.map((m) => ({
+    id: m.id,
+    videoPath: m.videoPath,
+    videoSource: m.videoSource ?? "local",
+  }));
 
   return (
     <div className="min-h-screen font-sans">
@@ -80,15 +81,13 @@ export default async function Home({ searchParams }: HomeProps) {
           My Matches
         </h1>
 
-        {anyImportConfigured && (
-          <div className="mb-6">
-            <ImportPanel
-              gdriveConfigured={gdriveConfigured}
-              youtubeConfigured={youtubeConfigured}
-              existingMatches={existingMatches}
-            />
-          </div>
-        )}
+        <div className="mb-6">
+          <ImportPanel
+            gdriveConfigured={gdriveConfigured}
+            youtubeConfigured={youtubeConfigured}
+            existingMatches={existingMatches}
+          />
+        </div>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="frame flex rounded-xl p-1">

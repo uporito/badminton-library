@@ -4,13 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import {
   GoogleDriveLogo,
   YoutubeLogo,
+  HardDrive,
   CaretDown,
   CloudArrowDown,
 } from "@phosphor-icons/react";
 import { GDriveImportPanel } from "./gdrive_import_panel";
 import { YouTubeImportPanel } from "./youtube_import_panel";
+import { LocalImportPanel } from "./local_import_panel";
 
-type SourceTab = "gdrive" | "youtube";
+type SourceTab = "local" | "gdrive" | "youtube";
 
 interface ImportPanelProps {
   gdriveConfigured: boolean;
@@ -22,6 +24,7 @@ const TAB_CONFIG: Record<
   SourceTab,
   { label: string; icon: typeof GoogleDriveLogo }
 > = {
+  local: { label: "Local", icon: HardDrive },
   gdrive: { label: "Google Drive", icon: GoogleDriveLogo },
   youtube: { label: "YouTube", icon: YoutubeLogo },
 };
@@ -31,14 +34,12 @@ export function ImportPanel({
   youtubeConfigured,
   existingMatches,
 }: ImportPanelProps) {
-  const availableTabs: SourceTab[] = [];
+  const availableTabs: SourceTab[] = ["local"];
   if (gdriveConfigured) availableTabs.push("gdrive");
   if (youtubeConfigured) availableTabs.push("youtube");
 
   const [expanded, setExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<SourceTab>(
-    availableTabs[0] ?? "gdrive"
-  );
+  const [activeTab, setActiveTab] = useState<SourceTab>("local");
   const containerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -54,8 +55,6 @@ export function ImportPanel({
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [expanded]);
-
-  if (availableTabs.length === 0) return null;
 
   return (
     <section ref={containerRef} className="relative cursor-pointer">
@@ -103,6 +102,9 @@ export function ImportPanel({
             </div>
           )}
 
+          {activeTab === "local" && (
+            <LocalImportPanel existingMatches={existingMatches} />
+          )}
           {activeTab === "gdrive" && gdriveConfigured && (
             <GDriveImportPanel existingMatches={existingMatches} />
           )}
