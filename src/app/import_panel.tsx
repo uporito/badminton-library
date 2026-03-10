@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   GoogleDriveLogo,
   YoutubeLogo,
@@ -39,11 +39,26 @@ export function ImportPanel({
   const [activeTab, setActiveTab] = useState<SourceTab>(
     availableTabs[0] ?? "gdrive"
   );
+  const containerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!expanded) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setExpanded(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [expanded]);
 
   if (availableTabs.length === 0) return null;
 
   return (
-    <section className="relative">
+    <section ref={containerRef} className="relative cursor-pointer">
       <button
         type="button"
         onClick={() => setExpanded((p) => !p)}

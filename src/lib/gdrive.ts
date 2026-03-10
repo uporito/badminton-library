@@ -301,6 +301,13 @@ export function thumbnailExists(matchId: number): boolean {
   return fs.existsSync(getThumbnailPath(matchId));
 }
 
+export function deleteThumbnail(matchId: number): void {
+  const p = getThumbnailPath(matchId);
+  if (fs.existsSync(p)) {
+    try { fs.unlinkSync(p); } catch { /* ignore */ }
+  }
+}
+
 export async function fetchAndCacheGDriveThumbnail(
   fileId: string,
   matchId: number
