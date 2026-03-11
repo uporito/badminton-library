@@ -1,5 +1,6 @@
 import {
   integer,
+  real,
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
@@ -13,9 +14,13 @@ export const matchCategoryEnum = [
 
 export type MatchCategory = (typeof matchCategoryEnum)[number];
 
-export const videoSourceEnum = ["local", "gdrive"] as const;
+export const videoSourceEnum = ["local", "gdrive", "youtube"] as const;
 
 export type VideoSource = (typeof videoSourceEnum)[number];
+
+export const partnerStatusEnum = ["none", "unknown", "player"] as const;
+
+export type PartnerStatus = (typeof partnerStatusEnum)[number];
 
 export const matches = sqliteTable("matches", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -24,18 +29,54 @@ export const matches = sqliteTable("matches", {
   videoSource: text("video_source", { enum: videoSourceEnum }).notNull().default("local"),
   durationSeconds: integer("duration_seconds"),
   date: text("date"),
-  opponent: text("opponent"),
   result: text("result"),
   notes: text("notes"),
+  myDescription: text("my_description"),
+  opponentDescription: text("opponent_description"),
+  tags: text("tags"),
   category: text("category", { enum: matchCategoryEnum }).default(
     "Uncategorized"
   ),
+  wonByMe: integer("won_by_me", { mode: "boolean" }),
+  partnerStatus: text("partner_status", { enum: partnerStatusEnum })
+    .notNull()
+    .default("none"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
+});
+
+export const players = sqliteTable("players", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull().unique(),
+  winsWith: integer("wins_with").notNull().default(0),
+  winsAgainst: integer("wins_against").notNull().default(0),
+  lossesWith: integer("losses_with").notNull().default(0),
+  lossesAgainst: integer("losses_against").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const matchPlayerRoleEnum = ["opponent", "partner"] as const;
+
+export type MatchPlayerRole = (typeof matchPlayerRoleEnum)[number];
+
+export const matchPlayers = sqliteTable("match_players", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  matchId: integer("match_id")
+    .notNull()
+    .references(() => matches.id, { onDelete: "cascade" }),
+  playerId: integer("player_id")
+    .notNull()
+    .references(() => players.id, { onDelete: "cascade" }),
+  role: text("role", { enum: matchPlayerRoleEnum }).notNull(),
 });
 
 export const matchRally = sqliteTable("match_rallies", {
@@ -67,6 +108,10 @@ export type Zone = (typeof zoneEnum)[number];
 export const sideEnum = ["me", "opponent"] as const;
 
 export type Side = (typeof sideEnum)[number];
+
+export const shotPlayerEnum = ["me", "partner", "opponent"] as const;
+
+export type ShotPlayer = (typeof shotPlayerEnum)[number];
 
 export const shotTypeEnum = [
   "serve",
@@ -107,8 +152,9 @@ export const matchShots = sqliteTable("match_shots", {
   isLastShotOfRally: integer("is_last_shot_of_rally", { mode: "boolean" })
     .notNull()
     .default(false),
-  player: text("player", { enum: sideEnum }).notNull(),
+  player: text("player", { enum: shotPlayerEnum }).notNull(),
   source: text("source", { enum: shotSourceEnum }).notNull().default("manual"),
+  timestamp: real("timestamp"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),

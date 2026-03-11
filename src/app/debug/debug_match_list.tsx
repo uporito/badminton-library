@@ -29,7 +29,8 @@ type Match = {
   videoPath: string;
   durationSeconds: number | null;
   date: string | null;
-  opponent: string | null;
+  opponents: { id: number; name: string }[];
+  partner: { id: number; name: string } | null;
   result: string | null;
   notes: string | null;
   category: MatchCategory | null;
@@ -72,15 +73,8 @@ export function DebugMatchList({
 
   return (
     <div className="space-y-8">
-      <section>
-        <h2 className="mb-4 text-xl font-semibold text-text-main">
-          Add match
-        </h2>
-        <MatchForm mode="create" onSuccess={() => startTransition(() => router.refresh())} />
-      </section>
-
       {editingId !== null && (
-        <section>
+        <section className="relative z-20">
           <h2 className="mb-4 text-xl font-semibold text-text-main">
             Edit match
           </h2>
@@ -130,7 +124,7 @@ export function DebugMatchList({
                   <td className="px-3 py-2 font-mono text-xs">{m.videoPath}</td>
                   <td className="px-3 py-2">{m.durationSeconds ?? "—"}</td>
                   <td className="px-3 py-2">{m.date ?? "—"}</td>
-                  <td className="px-3 py-2">{m.opponent ?? "—"}</td>
+                  <td className="px-3 py-2">{m.opponents.map((o) => o.name).join(", ") || "—"}</td>
                   <td className="px-3 py-2">{m.result ?? "—"}</td>
                   <td className="px-3 py-2">{m.category ?? "—"}</td>
                   <td className="px-3 py-2">

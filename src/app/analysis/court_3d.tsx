@@ -132,7 +132,7 @@ export function Court3D({
                   key={`opponent-${zone}`}
                   className={`h-14 w-14 cursor-pointer transition-colors sm:h-16 sm:w-16 md:h-20 md:w-20 ${
                     isSelected
-                      ? "bg-amber-400 ring-2 ring-amber-600 dark:bg-amber-500 dark:ring-amber-400"
+                      ? "bg-accent ring-2 ring-accent ring-inset"
                       : "bg-emerald-100 dark:bg-emerald-900/50 hover:bg-accent/40 dark:hover:bg-accent/50"
                   }`}
                   style={{ transformStyle: "preserve-3d" }}
@@ -165,9 +165,9 @@ export function Court3D({
                   key={`me-${zone}`}
                   className={`h-14 w-14 cursor-pointer transition-colors sm:h-16 sm:w-16 md:h-20 md:w-20 ${
                     isSelected
-                      ? "bg-amber-400 ring-2 ring-amber-600 dark:bg-amber-500 dark:ring-amber-400"
+                      ? "bg-accent ring-2 ring-accent ring-inset"
                       : isRowHighlighted
-                        ? "bg-accent/60 ring-2 ring-accent dark:bg-accent/50 dark:ring-accent"
+                        ? "bg-accent"
                         : "bg-emerald-100 dark:bg-emerald-900/50 hover:bg-accent/40 dark:hover:bg-accent/50"
                   }`}
                   style={{ transformStyle: "preserve-3d" }}

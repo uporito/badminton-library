@@ -3,6 +3,12 @@ import { listMatches } from "@/lib/list_matches";
 import { groupMatchesForLibrary } from "@/lib/group_matches_for_library";
 import type { ListMatchesCategoryFilter, ListMatchesSort } from "@/lib/list_matches";
 import { MatchCard } from "./match_card";
+import { TagFilter } from "./tag_filter";
+import { ImportPanel } from "./import_panel";
+import { isGDriveConfigured } from "@/lib/gdrive";
+import { thumbnailExists } from "@/lib/thumbnails";
+import { isYouTubeConfigured } from "@/lib/youtube";
+import { getAllUniqueTags, parseTags } from "@/lib/tags";
 import Link from "next/link";
 
 const CATEGORY_OPTIONS: { value: ListMatchesCategoryFilter; label: string }[] = [
@@ -29,7 +35,7 @@ function buildLibraryUrl(params: {
 }
 
 interface HomeProps {
-  searchParams: Promise<{ category?: string; sort?: string }>;
+  searchParams: Promise<{ category?: string; sort?: string; tags?: string }>;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
@@ -42,11 +48,31 @@ export default async function Home({ searchParams }: HomeProps) {
   const validSort: ListMatchesSort =
     SORT_OPTIONS.some((s) => s.value === sort) ? sort : "date";
 
-  const matches = listMatches({
+  const allMatches = listMatches({
     category: validCategory,
     sort: validSort,
   });
+
+  const allTags = getAllUniqueTags(allMatches);
+
+  const activeTags = params.tags?.split(",").filter(Boolean) ?? [];
+  const matches =
+    activeTags.length > 0
+      ? allMatches.filter((m) => {
+          const matchTags = parseTags(m.tags);
+          return activeTags.some((t) => matchTags.includes(t));
+        })
+      : allMatches;
+
   const sections = groupMatchesForLibrary(matches, validSort);
+
+  const gdriveConfigured = isGDriveConfigured();
+  const youtubeConfigured = isYouTubeConfigured();
+  const existingMatches = allMatches.map((m) => ({
+    id: m.id,
+    videoPath: m.videoPath,
+    videoSource: m.videoSource ?? "local",
+  }));
 
   return (
     <div className="min-h-screen font-sans">
@@ -54,6 +80,14 @@ export default async function Home({ searchParams }: HomeProps) {
           <FilmStripIcon className="h-7 w-7 shrink-0" aria-hidden />
           My Matches
         </h1>
+
+        <div className="mb-6">
+          <ImportPanel
+            gdriveConfigured={gdriveConfigured}
+            youtubeConfigured={youtubeConfigured}
+            existingMatches={existingMatches}
+          />
+        </div>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="frame flex rounded-xl p-1">
@@ -94,6 +128,12 @@ export default async function Home({ searchParams }: HomeProps) {
           </div>
         </div>
 
+        {allTags.length > 0 && (
+          <div className="mb-4">
+            <TagFilter allTags={allTags} />
+          </div>
+        )}
+
         {matches.length === 0 ? (
           <div className="frame flex flex-col items-center gap-3 rounded-xl p-12 text-center">
             <TrayIcon
@@ -101,7 +141,9 @@ export default async function Home({ searchParams }: HomeProps) {
               aria-hidden
             />
             <p className="text-text-soft">
-              No matches yet. Add matches from the Database page.
+              {activeTags.length > 0
+                ? "No matches found with the selected tags."
+                : "No matches yet. Add matches from the Database page."}
             </p>
           </div>
         ) : (
@@ -114,7 +156,14 @@ export default async function Home({ searchParams }: HomeProps) {
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {section.matches.map((match) => (
                     <li key={match.id}>
-                      <MatchCard match={match} />
+                      <MatchCard
+                        match={match}
+                        hasThumbnail={
+                          (match.videoSource === "gdrive" ||
+                            match.videoSource === "youtube") &&
+                          thumbnailExists(match.videoSource, match.videoPath)
+                        }
+                      />
                     </li>
                   ))}
                 </ul>

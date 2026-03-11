@@ -11,10 +11,24 @@ export {
   matches,
   matchRally,
   matchShots,
+  players,
+  matchPlayers,
   zoneEnum,
   sideEnum,
+  shotPlayerEnum,
   shotTypeEnum,
   outcomeEnum,
   shotSourceEnum,
+  partnerStatusEnum,
+  matchPlayerRoleEnum,
 } from "./schema";
-export type { Zone, Side, ShotType, Outcome, ShotSource } from "./schema";
+export type {
+  Zone,
+  Side,
+  ShotPlayer,
+  ShotType,
+  Outcome,
+  ShotSource,
+  PartnerStatus,
+  MatchPlayerRole,
+} from "./schema";

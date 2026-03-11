@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { RallyWithShots } from "@/lib/get_rallies_by_match_id";
 import type { ShotRow } from "@/lib/get_rallies_by_match_id";
-import { shotTypeEnum, outcomeEnum, sideEnum } from "@/db/schema";
+import { shotTypeEnum, outcomeEnum, shotPlayerEnum } from "@/db/schema";
+import type { ShotPlayer } from "@/db/schema";
 
 const SHOT_TYPE_LABELS: Record<(typeof shotTypeEnum)[number], string> = {
   serve: "Serve",
@@ -22,8 +24,9 @@ const OUTCOME_LABELS: Record<(typeof outcomeEnum)[number], string> = {
   neither: "Neither",
 };
 
-const SIDE_LABELS: Record<(typeof sideEnum)[number], string> = {
+const SIDE_LABELS: Record<ShotPlayer, string> = {
   me: "Me",
+  partner: "Partner",
   opponent: "Opponent",
 };
 
@@ -90,42 +93,54 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
         className="min-w-0 overflow-x-auto p-1"
         onMouseLeave={() => setHoveredCell(null)}
       >
-        {hoveredCell != null && (() => {
-          const { rally, shot } = completedRallies[hoveredCell.index];
-          const shotTypeLabel = SHOT_TYPE_LABELS[shot.shotType];
-          const outcomeLabel = OUTCOME_LABELS[shot.outcome];
-          const playerLabel = SIDE_LABELS[shot.player];
-          const isAi = hasAiShots(rally);
-          return (
-            <div
-              className="frame-glass pointer-events-none fixed z-50 max-w-sm rounded-xl px-4 py-3 text-xs shadow-lg transition-[left_0.15s_ease-out,top_0.15s_ease-out]"
-              style={{
-                left: hoveredCell.x + 12,
-                top: hoveredCell.y + 12,
-              }}
-            >
-              <p className="font-medium text-text-main">
-                Rally {hoveredCell.index + 1}
-                {isAi && (
-                  <span className="ml-2 rounded bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
-                    AI
-                  </span>
-                )}
-              </p>
-              <p className="mt-0.5 text-text-soft">
-                {rally.shots.length} shots
-              </p>
-              <p className="mt-2 border-t border-ui-elevated-more pt-2 text-text-main">
-                {shotTypeLabel} {outcomeLabel} ({playerLabel})
-              </p>
-            </div>
-          );
-        })()}
+        {hoveredCell != null &&
+          typeof document !== "undefined" &&
+          createPortal(
+            (() => {
+              const { rally, shot } = completedRallies[hoveredCell.index];
+              const shotTypeLabel = SHOT_TYPE_LABELS[shot.shotType];
+              const outcomeLabel = OUTCOME_LABELS[shot.outcome];
+              const playerLabel = SIDE_LABELS[shot.player as ShotPlayer];
+              const isAi = hasAiShots(rally);
+              return (
+                <div
+                  className="frame-glass pointer-events-none fixed z-[100] max-w-sm rounded-xl px-4 py-3 text-xs shadow-lg transition-[left_0.15s_ease-out,top_0.15s_ease-out]"
+                  style={{
+                    left: hoveredCell.x + 12,
+                    top: hoveredCell.y + 12,
+                  }}
+                >
+                  <p className="font-medium text-text-main">
+                    Rally {hoveredCell.index + 1}
+                    {isAi && (
+                      <span className="ml-2 rounded bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                        AI
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-text-soft">
+                    {rally.shots.length} shots
+                  </p>
+                  <p className="mt-2 border-t border-ui-elevated-more pt-2 text-text-main">
+                    {shotTypeLabel} {outcomeLabel} ({playerLabel})
+                  </p>
+                </div>
+              );
+            })(),
+            document.body
+          )}
         <div
           className="inline-grid gap-1 text-xs text-text-soft"
           style={{
             gridTemplateColumns: `auto repeat(${completedRallies.length}, minmax(1.25rem, 1.25rem))`,
             gridTemplateRows: "auto auto",
+          }}
+          onMouseMove={(e) => {
+            if (hoveredCell != null) {
+              setHoveredCell((prev) =>
+                prev ? { ...prev, x: e.clientX, y: e.clientY } : null
+              );
+            }
           }}
         >
           <div className="flex items-center pr-2 font-medium">Me</div>

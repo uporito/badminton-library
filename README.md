@@ -53,3 +53,4 @@ A web app to store, label, and analyze badminton match videos. Add matches from 
 ## More
 
 - API and data model: see `docs/prd.md`.
+- **Analyze with AI** (Gemini): setup and testing steps in `docs/analyze_with_ai_setup.md`.

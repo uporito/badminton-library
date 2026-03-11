@@ -22,6 +22,7 @@ import {
   type CourtRow,
 } from "@/lib/shot_chart_utils";
 import type { ShotType, Zone, Side } from "@/db/schema";
+import { parseTags } from "@/lib/tags";
 
 /** Resolve shot-type hex from display label so tint always matches the card text */
 function hexForShotLabel(label: string | null): string | null {
@@ -37,13 +38,16 @@ type MatchRow = {
   id: number;
   title: string;
   date: string | null;
-  opponent: string | null;
+  opponents: { id: number; name: string }[];
+  partner: { id: number; name: string } | null;
   result: string | null;
   category: string | null;
+  tags: string | null;
 };
 
 interface AnalysisDashboardProps {
   matches: MatchRow[];
+  allTags: string[];
 }
 
 const WEEKS_IN_YEAR = 52;
@@ -200,7 +204,7 @@ function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
                               className="hover:underline"
                             >
                               {m.title}
-                              {m.opponent ? ` vs ${m.opponent}` : ""}
+                              {m.opponents.length > 0 ? ` vs ${m.opponents.map((o) => o.name).join(", ")}` : ""}
                               {m.result ? ` ${m.result}` : ""}
                             </a>
                           </li>
@@ -332,7 +336,7 @@ function MostPlayedShotCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative cursor-pointer rounded-lg px-4 py-3 flex flex-row items-center justify-between gap-4 min-h-0 text-left transition-colors outline-none hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent ${className ?? ""}`}
+      className={`relative rounded-lg px-4 py-3 flex flex-row items-center justify-between gap-4 min-h-0 text-left transition-colors outline-none hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent ${className ?? ""}`}
     >
       {/* Background layer so .frame box-shadow does not override the button's hover ring */}
       <div
@@ -434,7 +438,7 @@ function FilterDropdown({
       <button
         type="button"
         onClick={onToggleOpen}
-        className="flex items-center gap-1.5 rounded-lg bg-ui-frame px-3 py-1.5 text-xs text-text-main hover:bg-ui-elevated transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 rounded-lg bg-ui-frame px-3 py-1.5 text-xs text-text-main hover:bg-ui-elevated transition-colors"
       >
         {/* Invisible spacer fixes the button width */}
         <span className="relative inline-flex items-center">
@@ -513,8 +517,8 @@ function FilterDropdown({
 // ─── Player filter options ────────────────────────────────────────────────────
 
 const PLAYER_OPTIONS: FilterOption[] = [
-  { value: "both", label: "Shots by Both" },
   { value: "me", label: "Shots by Me" },
+  { value: "partner", label: "Shots by Partner" },
   { value: "opponent", label: "Shots by Opponent" },
 ];
 
@@ -526,7 +530,7 @@ const CATEGORY_OPTIONS: FilterOption[] = [
 
 // ─── Main dashboard ───────────────────────────────────────────────────────────
 
-export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
+export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) {
   const [activeTab, setActiveTab] = useState<AnalysisTab>("global");
   const [shots, setShots] = useState<ShotForStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -538,22 +542,23 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
   const [selectedMatchIds, setSelectedMatchIds] = useState<Set<number>>(new Set());
   const [selectedOpponents, setSelectedOpponents] = useState<Set<string>>(new Set());
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  // Player filter: exclusive selection (radio-style). Default: "me".
-  const [selectedPlayer, setSelectedPlayer] = useState<string>("me");
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set(["me"]));
 
-  // Unique opponents derived from matches (sorted alphabetically)
   const opponentOptions = useMemo<FilterOption[]>(() => {
     const unique = [
       ...new Set(
-        matches
-          .map((m) => m.opponent)
-          .filter((o): o is string => o != null && o.trim() !== "")
+        matches.flatMap((m) => m.opponents.map((o) => o.name)).filter((n) => n.trim() !== ""),
       ),
     ].sort();
     return unique.map((o) => ({ value: o, label: o }));
   }, [matches]);
 
-  // Match options sorted newest → oldest (matches prop already is desc by date)
+  const tagOptions = useMemo<FilterOption[]>(
+    () => allTags.map((t) => ({ value: t, label: t })),
+    [allTags]
+  );
+
   const matchOptions = useMemo<FilterOption[]>(
     () => matches.map((m) => ({ value: String(m.id), label: m.title })),
     [matches]
@@ -569,7 +574,8 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
     const hasFilter =
       selectedMatchIds.size > 0 ||
       selectedOpponents.size > 0 ||
-      selectedCategories.size > 0;
+      selectedCategories.size > 0 ||
+      selectedTags.size > 0;
     if (!hasFilter) return "all";
 
     let filtered = matches;
@@ -577,8 +583,8 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
       filtered = filtered.filter((m) => selectedMatchIds.has(m.id));
     }
     if (selectedOpponents.size > 0) {
-      filtered = filtered.filter(
-        (m) => m.opponent != null && selectedOpponents.has(m.opponent)
+      filtered = filtered.filter((m) =>
+        m.opponents.some((o) => selectedOpponents.has(o.name)),
       );
     }
     if (selectedCategories.size > 0) {
@@ -586,12 +592,18 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
         (m) => m.category != null && selectedCategories.has(m.category)
       );
     }
+    if (selectedTags.size > 0) {
+      filtered = filtered.filter((m) => {
+        const mTags = parseTags(m.tags);
+        return [...selectedTags].some((t) => mTags.includes(t));
+      });
+    }
     const ids = filtered
       .map((m) => m.id)
       .sort((a, b) => a - b)
       .join(",");
     return ids === "" ? "empty" : ids;
-  }, [matches, selectedMatchIds, selectedOpponents, selectedCategories]);
+  }, [matches, selectedMatchIds, selectedOpponents, selectedCategories, selectedTags]);
 
   // Re-fetch shots whenever the effective match filter changes
   useEffect(() => {
@@ -636,11 +648,10 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
       .finally(() => setLoading(false));
   }, [shotsQueryKey]);
 
-  // Apply player filter client-side
   const playerFilteredShots = useMemo(() => {
-    if (selectedPlayer === "both") return shots;
-    return shots.filter((s) => s.player === selectedPlayer);
-  }, [shots, selectedPlayer]);
+    if (selectedPlayers.size === PLAYER_OPTIONS.length) return shots;
+    return shots.filter((s) => selectedPlayers.has(s.player));
+  }, [shots, selectedPlayers]);
 
   const filteredShots = useMemo(() => {
     if (selectedZone != null)
@@ -757,13 +768,38 @@ export function AnalysisDashboard({ matches }: AnalysisDashboardProps) {
             isOpen={openDropdown === "category"}
             onToggleOpen={() => toggleDropdown("category")}
           />
+          {tagOptions.length > 0 && (
+            <FilterDropdown
+              dropdownId="tags"
+              label="Tags"
+              options={tagOptions}
+              selected={selectedTags}
+              onToggle={(val) =>
+                setSelectedTags(
+                  toggleSet(selectedTags, val) as Set<string>
+                )
+              }
+              searchable={tagOptions.length > 6}
+              isOpen={openDropdown === "tags"}
+              onToggleOpen={() => toggleDropdown("tags")}
+            />
+          )}
           <FilterDropdown
             dropdownId="player"
             label="Shots by"
             options={PLAYER_OPTIONS}
-            selected={new Set([selectedPlayer])}
-            onToggle={(val) => setSelectedPlayer(val)}
-            showSelectionLabel
+            selected={selectedPlayers}
+            onToggle={(val) =>
+              setSelectedPlayers((prev) => {
+                const next = new Set(prev);
+                if (next.has(val)) {
+                  if (next.size > 1) next.delete(val);
+                } else {
+                  next.add(val);
+                }
+                return next;
+              })
+            }
             minWidthText="Shots by Opponent"
             isOpen={openDropdown === "player"}
             onToggleOpen={() => toggleDropdown("player")}

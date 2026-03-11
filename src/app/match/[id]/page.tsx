@@ -1,10 +1,16 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getMatchById } from "@/lib/get_match_by_id";
 import { getRalliesByMatchId } from "@/lib/get_rallies_by_match_id";
 import { InputShotsPanel } from "./input_shots_panel";
 import { RallyShotGrid } from "./rally_shot_grid";
 import { MatchStatsCharts } from "./match_stats_charts";
 import { AnalyzeButton } from "./analyze_button";
+import { PlayerDescriptions } from "./player_descriptions";
+import { CollapsibleSection } from "./collapsible_section";
+import { VideoPlayerWithOverlay } from "./video_player_with_overlay";
+import { PencilSimple } from "@phosphor-icons/react/ssr";
+import type { OverlayShot } from "./video_player_with_overlay";
 import type { ShotForStats } from "@/lib/shot_chart_utils";
 
 interface MatchPageProps {
@@ -24,7 +30,10 @@ export default async function MatchPage({ params }: MatchPageProps) {
   const match = result.data;
   const ralliesResult = getRalliesByMatchId(numId);
   const rallies = ralliesResult.ok ? ralliesResult.data : [];
-  const videoUrl = `/api/video?path=${encodeURIComponent(match.videoPath)}&source=${match.videoSource ?? "local"}`;
+  const isYouTube = match.videoSource === "youtube";
+  const videoUrl = isYouTube
+    ? `https://www.youtube.com/embed/${encodeURIComponent(match.videoPath)}`
+    : `/api/video?path=${encodeURIComponent(match.videoPath)}&source=${match.videoSource ?? "local"}`;
   const shotsForCharts: ShotForStats[] = rallies.flatMap((r) =>
     r.shots.map((s) => ({
       shotType: s.shotType,
@@ -36,30 +45,43 @@ export default async function MatchPage({ params }: MatchPageProps) {
       zoneToSide: s.zoneToSide,
     }))
   );
+  const overlayShots: OverlayShot[] = rallies
+    .flatMap((r) => r.shots)
+    .filter((s): s is typeof s & { timestamp: number } => s.timestamp != null)
+    .map((s) => ({ shotType: s.shotType, player: s.player, timestamp: s.timestamp }));
 
   return (
     <div className="min-h-screen font-sans">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold text-text-main">
-          {match.title}
-        </h1>
-        <AnalyzeButton matchId={match.id} />
-      </div>
+      <h1 className="mb-4 text-xl font-semibold text-text-main">
+        {match.title}
+      </h1>
 
-      {/* Top row: video (left 2/3) + analysis (right 1/3) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[2fr_1fr]">
-        <div className="min-w-0 space-y-4">
-          <div className="flex max-h-[60vh] items-center justify-center overflow-hidden rounded-lg bg-black shadow-lg">
-            <video
-              src={videoUrl}
-              controls
-              className="max-h-[60vh] w-full object-contain"
-              preload="metadata"
+      <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-[2fr_1fr]">
+        <div className="min-w-0">
+          {isYouTube ? (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black shadow-lg">
+              <iframe
+                src={videoUrl}
+                title={match.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            </div>
+          ) : (
+            <VideoPlayerWithOverlay videoUrl={videoUrl} shots={overlayShots} />
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-3">
+          <section className="frame relative rounded-xl p-4">
+            <Link
+              href={`/match/${match.id}/edit`}
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-md text-text-soft transition-colors hover:bg-ui-elevated hover:text-text-main"
+              aria-label="Edit match"
             >
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <section className="frame rounded-xl p-4">
+              <PencilSimple className="h-4 w-4" weight="bold" />
+            </Link>
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-text-soft">Date</dt>
@@ -68,11 +90,29 @@ export default async function MatchPage({ params }: MatchPageProps) {
                 </dd>
               </div>
               <div>
-                <dt className="text-text-soft">Opponent</dt>
+                <dt className="text-text-soft">
+                  {match.opponents.length > 1 ? "Opponents" : "Opponent"}
+                </dt>
                 <dd className="font-medium text-text-main">
-                  {match.opponent ?? "—"}
+                  {match.opponents.length > 0
+                    ? match.opponents.map((o) => o.name).join(", ")
+                    : "—"}
                 </dd>
               </div>
+              {match.partner && (
+                <div>
+                  <dt className="text-text-soft">Partner</dt>
+                  <dd className="font-medium text-text-main">
+                    {match.partner.name}
+                  </dd>
+                </div>
+              )}
+              {match.partnerStatus === "unknown" && (
+                <div>
+                  <dt className="text-text-soft">Partner</dt>
+                  <dd className="font-medium text-text-soft">Unknown</dd>
+                </div>
+              )}
               <div>
                 <dt className="text-text-soft">Result</dt>
                 <dd className="font-medium text-text-main">
@@ -93,9 +133,22 @@ export default async function MatchPage({ params }: MatchPageProps) {
               </div>
             </dl>
           </section>
-        </div>
-        <div className="min-w-0">
-          <InputShotsPanel matchId={match.id} initialRallies={rallies} />
+
+          <CollapsibleSection title="Manual shot input">
+            <InputShotsPanel matchId={match.id} initialRallies={rallies} />
+          </CollapsibleSection>
+
+          <section className="frame rounded-xl p-4">
+            <PlayerDescriptions
+              matchId={match.id}
+              initialMyDescription={match.myDescription ?? ""}
+              initialOpponentDescription={match.opponentDescription ?? ""}
+            />
+          </section>
+
+          <div className="flex justify-end">
+            <AnalyzeButton matchId={match.id} />
+          </div>
         </div>
       </div>
 

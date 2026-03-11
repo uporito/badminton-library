@@ -1,5 +1,5 @@
 import { shotTypeEnum, outcomeEnum, zoneEnum } from "@/db/schema";
-import type { ShotType, Outcome, Side, Zone } from "@/db/schema";
+import type { ShotType, Outcome, Side, Zone, ShotPlayer } from "@/db/schema";
 
 /** Consistent display labels for shot types (used in legends and tooltips) */
 export const SHOT_TYPE_LABELS: Record<ShotType, string> = {
@@ -60,7 +60,7 @@ export const OUTCOME_LABELS: Record<Outcome, string> = {
 export interface ShotForStats {
   shotType: ShotType;
   outcome: Outcome;
-  player: Side;
+  player: ShotPlayer;
   zoneFrom: string;
   zoneTo: string;
   zoneFromSide: Side;
@@ -127,7 +127,7 @@ zoneEnum.forEach((z, i) => {
 /** Count shots per zone (zoneFrom) for a given player. Returns 3x3 grid counts [row][col]. */
 export function aggregateZoneCounts(
   shots: ShotForStats[],
-  player: Side
+  player: ShotPlayer
 ): number[][] {
   const grid = [
     [0, 0, 0],

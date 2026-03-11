@@ -6,6 +6,7 @@ import {
   matchRally,
   matchShots,
   shotTypeEnum,
+  shotPlayerEnum,
   sideEnum,
   zoneEnum,
   outcomeEnum,
@@ -20,16 +21,17 @@ const CreateShotBodySchema = z.object({
   zoneToSide: z.enum(sideEnum),
   zoneTo: z.enum(zoneEnum),
   outcome: z.enum(outcomeEnum),
-  player: z.enum(sideEnum),
+  player: z.enum(shotPlayerEnum),
 });
 
 function computeWonByMe(
   outcome: (typeof outcomeEnum)[number],
-  player: (typeof sideEnum)[number]
+  player: (typeof shotPlayerEnum)[number],
 ): boolean | null {
   if (outcome === "neither") return null;
-  if (outcome === "winner") return player === "me";
-  return player === "opponent"; // error: I win if opponent erred
+  const isMyTeam = player === "me" || player === "partner";
+  if (outcome === "winner") return isMyTeam;
+  return !isMyTeam;
 }
 
 export async function GET(

@@ -13,7 +13,6 @@ function seed() {
       videoPath: "videos/training_alex_2024.mp4",
       durationSeconds: 3600,
       date: "2024-01-15",
-      opponent: "Alex",
       result: "21-19 21-17",
       notes: "Good net play.",
     })
@@ -27,7 +26,6 @@ function seed() {
       videoPath: "videos/club_sam_2024.mp4",
       durationSeconds: 3300,
       date: "2024-02-01",
-      opponent: "Sam",
       result: "21-14 18-21 21-16",
       notes: "",
     })

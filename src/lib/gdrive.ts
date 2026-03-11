@@ -1,5 +1,6 @@
 import { google, type drive_v3 } from "googleapis";
 import { Readable } from "stream";
+import fs from "fs";
 
 let driveClient: drive_v3.Drive | null = null;
 
@@ -41,6 +42,8 @@ export interface GDriveFile {
   mimeType: string;
   size: string;
   modifiedTime: string;
+  createdTime: string;
+  durationMs: number | null;
   thumbnailLink?: string;
 }
 
@@ -71,7 +74,7 @@ export async function listGDriveVideos(
     do {
       const res = await drive.files.list({
         q: query,
-        fields: "nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink)",
+        fields: "nextPageToken, files(id, name, mimeType, size, modifiedTime, createdTime, videoMediaMetadata/durationMillis, thumbnailLink)",
         pageSize: 100,
         orderBy: "modifiedTime desc",
         pageToken,
@@ -81,12 +84,15 @@ export async function listGDriveVideos(
 
       for (const f of res.data.files ?? []) {
         if (f.id && f.name && f.mimeType) {
+          const rawDuration = f.videoMediaMetadata?.durationMillis;
           files.push({
             id: f.id,
             name: f.name,
             mimeType: f.mimeType,
             size: f.size ?? "0",
             modifiedTime: f.modifiedTime ?? "",
+            createdTime: f.createdTime ?? "",
+            durationMs: rawDuration ? Number(rawDuration) : null,
             thumbnailLink: f.thumbnailLink ?? undefined,
           });
         }
@@ -168,60 +174,92 @@ export async function getGDriveFileMetadata(
   }
 }
 
+async function getAccessToken(): Promise<string | null> {
+  const creds = getServiceAccountCredentials();
+  if (!creds) return null;
+  const auth = new google.auth.GoogleAuth({
+    credentials: creds as Record<string, string>,
+    scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+  });
+  const client = await auth.getClient();
+  const tokenRes = await client.getAccessToken();
+  return tokenRes?.token ?? null;
+}
+
 export async function streamGDriveFile(
   fileId: string,
   rangeHeader?: string | null
 ): Promise<
-  | { ok: true; stream: Readable; contentType: string; contentLength: number; status: number; headers: Record<string, string> }
+  | { ok: true; stream: ReadableStream; contentType: string; status: number; headers: Record<string, string> }
   | { ok: false; error: string }
 > {
-  const drive = getGDriveClient();
-  if (!drive) return { ok: false, error: "GDRIVE_NOT_CONFIGURED" };
-
   const meta = await getGDriveFileMetadata(fileId);
   if (!meta.ok) return meta;
 
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: "GDRIVE_NOT_CONFIGURED" };
+
   const totalSize = meta.size;
   const contentType = meta.mimeType;
+  const driveUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`;
 
-  try {
-    const options: { fileId: string; alt: string; supportsAllDrives: boolean; headers?: Record<string, string> } = {
-      fileId,
-      alt: "media",
-      supportsAllDrives: true,
-    };
+  const fetchHeaders: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
 
-    if (rangeHeader) {
-      options.headers = { Range: rangeHeader };
+  if (rangeHeader) {
+    const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+    if (match) {
+      const start = parseInt(match[1], 10);
+      const reqEnd = match[2] ? parseInt(match[2], 10) : undefined;
+      const end = reqEnd !== undefined ? Math.min(reqEnd, totalSize - 1) : totalSize - 1;
+      const chunkSize = end - start + 1;
+
+      fetchHeaders["Range"] = `bytes=${start}-${end}`;
+      const res = await fetch(driveUrl, { headers: fetchHeaders });
+
+      if (!res.ok && res.status !== 206) {
+        return { ok: false, error: `Drive returned ${res.status}` };
+      }
+
+      const resHeaders: Record<string, string> = {
+        "Content-Type": contentType,
+        "Accept-Ranges": "bytes",
+        "Content-Range": `bytes ${start}-${end}/${totalSize}`,
+        "Content-Length": String(chunkSize),
+      };
+
+      return {
+        ok: true,
+        stream: res.body!,
+        contentType,
+        status: 206,
+        headers: resHeaders,
+      };
     }
-
-    const res = await drive.files.get(options, {
-      responseType: "stream",
-      headers: rangeHeader ? { Range: rangeHeader } : undefined,
-    });
-
-    const stream = res.data as unknown as Readable;
-    const resHeaders: Record<string, string> = {
-      "Content-Type": contentType,
-      "Accept-Ranges": "bytes",
-    };
-
-    if (rangeHeader && res.status === 206) {
-      const contentRange = (res.headers?.["content-range"] as string) ?? "";
-      const contentLength = (res.headers?.["content-length"] as string) ?? String(totalSize);
-      resHeaders["Content-Range"] = contentRange;
-      resHeaders["Content-Length"] = contentLength;
-      return { ok: true, stream, contentType, contentLength: Number(contentLength), status: 206, headers: resHeaders };
-    }
-
-    resHeaders["Content-Length"] = String(totalSize);
-    return { ok: true, stream, contentType, contentLength: totalSize, status: 200, headers: resHeaders };
-  } catch (e) {
-    return {
-      ok: false,
-      error: e instanceof Error ? e.message : String(e),
-    };
   }
+
+  // No range header: stream the full file, but advertise range support
+  // so the browser can seek later
+  const res = await fetch(driveUrl, { headers: fetchHeaders });
+
+  if (!res.ok) {
+    return { ok: false, error: `Drive returned ${res.status}` };
+  }
+
+  const resHeaders: Record<string, string> = {
+    "Content-Type": contentType,
+    "Accept-Ranges": "bytes",
+    "Content-Length": String(totalSize),
+  };
+
+  return {
+    ok: true,
+    stream: res.body!,
+    contentType,
+    status: 200,
+    headers: resHeaders,
+  };
 }
 
 export async function downloadGDriveFileToBuffer(
@@ -244,6 +282,42 @@ export async function downloadGDriveFileToBuffer(
       mimeType: meta.mimeType,
       name: meta.name,
     };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
+export async function fetchAndCacheGDriveThumbnail(
+  fileId: string
+): Promise<{ ok: true; filePath: string } | { ok: false; error: string }> {
+  const { getThumbnailPath, ensureThumbnailsDir } = await import("@/lib/thumbnails");
+  const drive = getGDriveClient();
+  if (!drive) return { ok: false, error: "GDRIVE_NOT_CONFIGURED" };
+
+  try {
+    const res = await drive.files.get({
+      fileId,
+      fields: "thumbnailLink",
+      supportsAllDrives: true,
+    });
+
+    const thumbnailLink = res.data.thumbnailLink;
+    if (!thumbnailLink) return { ok: false, error: "NO_THUMBNAIL" };
+
+    const auth = drive.context._options.auth;
+    const client = await (auth as { getClient(): Promise<{ request(opts: { url: string; responseType: string }): Promise<{ data: ArrayBuffer }> }> }).getClient();
+    const imgRes = await client.request({
+      url: thumbnailLink.replace(/=s\d+$/, "=s400"),
+      responseType: "arraybuffer",
+    });
+
+    ensureThumbnailsDir();
+    const filePath = getThumbnailPath("gdrive", fileId);
+    fs.writeFileSync(filePath, Buffer.from(imgRes.data as ArrayBuffer));
+    return { ok: true, filePath };
   } catch (e) {
     return {
       ok: false,
