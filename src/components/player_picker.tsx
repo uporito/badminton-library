@@ -8,12 +8,19 @@ interface PlayerOption {
   name: string;
 }
 
+export interface SpecialOption {
+  key: string;
+  label: string;
+}
+
 interface PlayerPickerProps {
-  /** Selected player id (null = nothing selected) */
-  value: number | null;
-  onChange: (playerId: number | null, playerName: string) => void;
+  /** Selected value: player id (number), special option key (string), or null */
+  value: number | string | null;
+  onChange: (value: number | string | null, displayName: string) => void;
   /** Player IDs to exclude from the list (e.g. already picked in another slot) */
   exclude?: number[];
+  /** Non-player options shown at the top of the dropdown (e.g. "None", "Unknown") */
+  specialOptions?: SpecialOption[];
   placeholder?: string;
   label?: string;
   clearable?: boolean;
@@ -24,6 +31,7 @@ export function PlayerPicker({
   value,
   onChange,
   exclude = [],
+  specialOptions = [],
   placeholder = "Select player",
   label = "Player",
   clearable = false,
@@ -67,15 +75,32 @@ export function PlayerPicker({
   const filtered = available.filter((p) =>
     p.name.toLowerCase().includes(trimmedQuery.toLowerCase()),
   );
-  const exactMatch = available.some(
-    (p) => p.name.toLowerCase() === trimmedQuery.toLowerCase(),
+  const filteredSpecial = specialOptions.filter((s) =>
+    s.label.toLowerCase().includes(trimmedQuery.toLowerCase()),
   );
+  const allNames = [
+    ...available.map((p) => p.name.toLowerCase()),
+    ...specialOptions.map((s) => s.label.toLowerCase()),
+  ];
+  const exactMatch = allNames.includes(trimmedQuery.toLowerCase());
   const showAddOption = trimmedQuery.length > 0 && !exactMatch;
 
-  const selectedPlayer = allPlayers.find((p) => p.id === value);
+  const selectedSpecial = typeof value === "string"
+    ? specialOptions.find((s) => s.key === value)
+    : undefined;
+  const selectedPlayer = typeof value === "number"
+    ? allPlayers.find((p) => p.id === value)
+    : undefined;
+  const displayName = selectedSpecial?.label ?? selectedPlayer?.name ?? null;
 
-  function select(player: PlayerOption) {
+  function selectPlayer(player: PlayerOption) {
     onChange(player.id, player.name);
+    setQuery("");
+    setOpen(false);
+  }
+
+  function selectSpecial(opt: SpecialOption) {
+    onChange(opt.key, opt.label);
     setQuery("");
     setOpen(false);
   }
@@ -109,6 +134,8 @@ export function PlayerPicker({
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
+  const hasValue = value != null;
+
   return (
     <div ref={containerRef} className={`relative ${className ?? ""}`}>
       <button
@@ -120,12 +147,12 @@ export function PlayerPicker({
         aria-label={label}
       >
         <span
-          className={`truncate ${selectedPlayer ? "" : "text-text-soft/50"}`}
+          className={`truncate ${displayName ? "" : "text-text-soft/50"}`}
         >
-          {selectedPlayer?.name ?? placeholder}
+          {displayName ?? placeholder}
         </span>
         <span className="flex items-center gap-1">
-          {clearable && value != null && (
+          {clearable && hasValue && (
             <span
               role="button"
               tabIndex={-1}
@@ -161,8 +188,10 @@ export function PlayerPicker({
                 e.preventDefault();
                 if (showAddOption) {
                   addAndSelect(trimmedQuery);
-                } else if (filtered.length === 1) {
-                  select(filtered[0]);
+                } else if (filteredSpecial.length === 1 && filtered.length === 0) {
+                  selectSpecial(filteredSpecial[0]);
+                } else if (filtered.length === 1 && filteredSpecial.length === 0) {
+                  selectPlayer(filtered[0]);
                 }
               }
               if (e.key === "Escape") {
@@ -174,6 +203,29 @@ export function PlayerPicker({
           />
 
           <ul className="max-h-48 space-y-px overflow-y-auto">
+            {filteredSpecial.map((s) => {
+              const isSelected = value === s.key;
+              return (
+                <li key={s.key}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => selectSpecial(s)}
+                    className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm italic transition-colors ${
+                      isSelected
+                        ? "bg-ui-elevated-more text-text-main"
+                        : "text-text-soft hover:bg-ui-elevated-more"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                </li>
+              );
+            })}
+            {filteredSpecial.length > 0 && filtered.length > 0 && (
+              <li className="mx-1.5 my-1 border-t border-ui-elevated-more" aria-hidden />
+            )}
             {showAddOption && (
               <li>
                 <button
@@ -196,7 +248,7 @@ export function PlayerPicker({
                     type="button"
                     role="option"
                     aria-selected={isSelected}
-                    onClick={() => select(p)}
+                    onClick={() => selectPlayer(p)}
                     className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
                       isSelected
                         ? "bg-ui-elevated-more text-text-main"
@@ -208,7 +260,7 @@ export function PlayerPicker({
                 </li>
               );
             })}
-            {filtered.length === 0 && !showAddOption && (
+            {filtered.length === 0 && filteredSpecial.length === 0 && !showAddOption && (
               <li className="px-2.5 py-1.5 text-sm text-text-soft/60">
                 No players found
               </li>

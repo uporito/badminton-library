@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { MatchRow } from "@/lib/get_match_by_id";
-import { matchCategoryEnum, type VideoSource, type PartnerStatus } from "@/db/schema";
+import { matchCategoryEnum, type VideoSource } from "@/db/schema";
 import { GDrivePicker } from "./gdrive_picker";
 import { DatePicker } from "@/components/date_picker";
 import { PlayerPicker } from "@/components/player_picker";
@@ -21,6 +21,10 @@ function isDoublesCategory(cat: string) {
   return cat === "Doubles" || cat === "Mixed";
 }
 
+const PARTNER_SPECIAL_OPTIONS = [
+  { key: "unknown", label: "Unknown" },
+];
+
 interface FormValues {
   title: string;
   videoPath: string;
@@ -34,8 +38,8 @@ interface FormValues {
   category: string;
   opponent1Id: number | null;
   opponent2Id: number | null;
-  partnerId: number | null;
-  partnerStatus: PartnerStatus;
+  /** number = player id, "unknown" = special, null = no partner */
+  partnerValue: number | string | null;
   wonByMe: boolean | null;
 }
 
@@ -53,13 +57,16 @@ function emptyValues(): FormValues {
     category: "Uncategorized",
     opponent1Id: null,
     opponent2Id: null,
-    partnerId: null,
-    partnerStatus: "none",
+    partnerValue: null,
     wonByMe: null,
   };
 }
 
 function matchToValues(m: MatchRow): FormValues {
+  let partnerValue: number | string | null = null;
+  if (m.partnerStatus === "unknown") partnerValue = "unknown";
+  else if (m.partnerStatus === "player" && m.partner) partnerValue = m.partner.id;
+
   return {
     title: m.title ?? "",
     videoPath: m.videoPath ?? "",
@@ -73,10 +80,19 @@ function matchToValues(m: MatchRow): FormValues {
     category: m.category ?? "Uncategorized",
     opponent1Id: m.opponents[0]?.id ?? null,
     opponent2Id: m.opponents[1]?.id ?? null,
-    partnerId: m.partner?.id ?? null,
-    partnerStatus: m.partnerStatus ?? "none",
+    partnerValue,
     wonByMe: m.wonByMe ?? null,
   };
+}
+
+function derivePartnerFields(partnerValue: number | string | null) {
+  if (typeof partnerValue === "number") {
+    return { partnerStatus: "player" as const, partnerId: partnerValue };
+  }
+  if (partnerValue === "unknown") {
+    return { partnerStatus: "unknown" as const, partnerId: null };
+  }
+  return { partnerStatus: "none" as const, partnerId: null };
 }
 
 export function MatchForm({
@@ -126,8 +142,7 @@ export function MatchForm({
       const next = { ...prev, [name]: value };
       if (name === "category" && !isDoublesCategory(String(value))) {
         next.opponent2Id = null;
-        next.partnerId = null;
-        next.partnerStatus = "none";
+        next.partnerValue = null;
       }
       return next;
     });
@@ -157,6 +172,8 @@ export function MatchForm({
     if (values.opponent1Id) opponentIds.push(values.opponent1Id);
     if (values.opponent2Id) opponentIds.push(values.opponent2Id);
 
+    const { partnerStatus, partnerId } = derivePartnerFields(values.partnerValue);
+
     const body = {
       title: values.title.trim() || undefined,
       videoPath: values.videoPath.trim(),
@@ -165,8 +182,8 @@ export function MatchForm({
         values.durationSeconds === "" ? undefined : Number(values.durationSeconds),
       date: values.date.trim() || undefined,
       opponentIds,
-      partnerId: values.partnerStatus === "player" ? values.partnerId : null,
-      partnerStatus: values.partnerStatus,
+      partnerId,
+      partnerStatus,
       wonByMe: values.wonByMe,
       result: values.result.trim() || undefined,
       notes: values.notes.trim() || undefined,
@@ -225,10 +242,11 @@ export function MatchForm({
   const selectedGDriveFileName =
     videoSource === "gdrive" && values.videoPath ? values.videoPath : "";
 
+  const partnerIdNum = typeof values.partnerValue === "number" ? values.partnerValue : null;
   const allPickedPlayerIds = [
     values.opponent1Id,
     values.opponent2Id,
-    values.partnerId,
+    partnerIdNum,
   ].filter((id): id is number => id != null);
 
   return (
@@ -240,7 +258,7 @@ export function MatchForm({
         {mode === "create" ? "Add match" : "Edit match"}
       </h2>
 
-      {/* Video source tabs (create only) */}
+      {/* ── Create-only: video source tabs ──────────────────────────── */}
       {mode === "create" && gdriveAvailable && (
         <div className="flex gap-1 rounded-lg bg-ui-elevated p-0.5">
           <button
@@ -270,11 +288,84 @@ export function MatchForm({
         </div>
       )}
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      {/* ── Create-only: title + video path ─────────────────────────── */}
+      {mode === "create" && (
+        <>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="flex flex-col gap-0.5">
+              <span className="text-text-soft text-sm">
+                Title <span className="text-text-soft/60">(required)</span>
+              </span>
+              <input
+                type="text"
+                value={values.title}
+                onChange={(e) => setField("title", e.target.value)}
+                required
+                className={textInputClass}
+                placeholder="e.g. My match"
+              />
+            </label>
+
+            {videoSource === "local" ? (
+              <label className="flex flex-col gap-0.5">
+                <span className="text-text-soft text-sm">
+                  Video path{" "}
+                  <span className="text-text-soft/60">(required)</span>
+                </span>
+                <input
+                  type="text"
+                  value={values.videoPath}
+                  onChange={(e) => setField("videoPath", e.target.value)}
+                  required
+                  className={textInputClass}
+                  placeholder="e.g. my_video.mp4"
+                />
+              </label>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-text-soft text-sm">
+                  Google Drive video{" "}
+                  <span className="text-text-soft/60">(required)</span>
+                </span>
+                {selectedGDriveFileName && !showGDrivePicker ? (
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1 truncate rounded-md bg-ui-elevated px-2.5 py-1.5 text-sm font-medium text-text-main">
+                      {values.title || selectedGDriveFileName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowGDrivePicker(true)}
+                      className="shrink-0 rounded-md bg-ui-elevated-more px-2 py-1.5 text-xs text-text-soft hover:text-text-main"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowGDrivePicker(true)}
+                    className="rounded-md border border-dashed border-ui-elevated-more bg-ui-elevated px-2.5 py-1.5 text-sm text-text-soft hover:border-text-soft hover:text-text-main transition-colors"
+                  >
+                    Browse Google Drive…
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {showGDrivePicker && videoSource === "gdrive" && (
+            <GDrivePicker
+              onSelect={handleGDriveSelect}
+              onCancel={() => setShowGDrivePicker(false)}
+            />
+          )}
+        </>
+      )}
+
+      {/* ── Row 1 (edit): Title ─────────────────────────────────────── */}
+      {mode === "edit" && (
         <label className="flex flex-col gap-0.5">
-          <span className="text-text-soft text-sm">
-            Title <span className="text-text-soft/60">(required)</span>
-          </span>
+          <span className="text-text-soft text-sm">Title</span>
           <input
             type="text"
             value={values.title}
@@ -284,172 +375,11 @@ export function MatchForm({
             placeholder="e.g. My match"
           />
         </label>
-
-        {mode === "edit" ? (
-          <div className="flex flex-col gap-0.5">
-            <span className="text-text-soft text-sm">Video</span>
-            <span className="truncate rounded-md bg-ui-elevated px-2.5 py-1.5 text-sm font-medium text-text-main">
-              {videoSource === "gdrive" ? "Google Drive" : ""}{" "}
-              {values.videoPath || "—"}
-            </span>
-          </div>
-        ) : videoSource === "local" ? (
-          <label className="flex flex-col gap-0.5">
-            <span className="text-text-soft text-sm">
-              Video path <span className="text-text-soft/60">(required)</span>
-            </span>
-            <input
-              type="text"
-              value={values.videoPath}
-              onChange={(e) => setField("videoPath", e.target.value)}
-              required
-              className={textInputClass}
-              placeholder="e.g. my_video.mp4"
-            />
-          </label>
-        ) : (
-          <div className="flex flex-col gap-0.5">
-            <span className="text-text-soft text-sm">
-              Google Drive video{" "}
-              <span className="text-text-soft/60">(required)</span>
-            </span>
-            {selectedGDriveFileName && !showGDrivePicker ? (
-              <div className="flex items-center gap-2">
-                <span className="flex-1 truncate rounded-md bg-ui-elevated px-2.5 py-1.5 text-sm font-medium text-text-main">
-                  {values.title || selectedGDriveFileName}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowGDrivePicker(true)}
-                  className="shrink-0 rounded-md bg-ui-elevated-more px-2 py-1.5 text-xs text-text-soft hover:text-text-main"
-                >
-                  Change
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowGDrivePicker(true)}
-                className="rounded-md border border-dashed border-ui-elevated-more bg-ui-elevated px-2.5 py-1.5 text-sm text-text-soft hover:border-text-soft hover:text-text-main transition-colors"
-              >
-                Browse Google Drive…
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {mode === "create" && showGDrivePicker && videoSource === "gdrive" && (
-        <GDrivePicker
-          onSelect={handleGDriveSelect}
-          onCancel={() => setShowGDrivePicker(false)}
-        />
       )}
 
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="flex flex-col gap-0.5">
-          <span className="text-text-soft text-sm">Duration (s)</span>
-          <input
-            type="number"
-            min={0}
-            value={values.durationSeconds}
-            onChange={(e) =>
-              setField(
-                "durationSeconds",
-                e.target.value ? e.target.valueAsNumber : "",
-              )
-            }
-            className={textInputClass}
-          />
-        </label>
+      {/* ── Row 2: Category + Players ───────────────────────────────── */}
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-4">
         <div className="flex flex-col gap-0.5">
-          <span className="text-text-soft text-sm">Date</span>
-          <DatePicker
-            value={values.date}
-            onChange={(iso) => setField("date", iso)}
-          />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-text-soft text-sm">Opponent</span>
-          <PlayerPicker
-            value={values.opponent1Id}
-            onChange={(id) => setField("opponent1Id", id)}
-            exclude={allPickedPlayerIds.filter((id) => id !== values.opponent1Id)}
-            placeholder="Select opponent"
-            label="Opponent"
-            clearable
-          />
-        </div>
-        <label className="flex flex-col gap-0.5">
-          <span className="text-text-soft text-sm">Result</span>
-          <input
-            type="text"
-            value={values.result}
-            onChange={(e) => setField("result", e.target.value)}
-            placeholder="e.g. 21-19 21-17"
-            className={textInputClass}
-          />
-        </label>
-      </div>
-
-      {/* Opponent 2 + Partner (doubles/mixed only) */}
-      {showDoubles && (
-        <div className="grid gap-2 sm:grid-cols-2">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-text-soft text-sm">Opponent 2</span>
-            <PlayerPicker
-              value={values.opponent2Id}
-              onChange={(id) => setField("opponent2Id", id)}
-              exclude={allPickedPlayerIds.filter((id) => id !== values.opponent2Id)}
-              placeholder="Select opponent 2"
-              label="Opponent 2"
-              clearable
-            />
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="text-text-soft text-sm">Partner</span>
-            <div className="flex gap-1 rounded-lg bg-ui-elevated p-0.5">
-              {(["none", "unknown", "player"] as const).map((ps) => (
-                <button
-                  key={ps}
-                  type="button"
-                  onClick={() => setField("partnerStatus", ps)}
-                  className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-                    values.partnerStatus === ps
-                      ? "bg-ui-elevated-more text-text-main shadow-sm"
-                      : "text-text-soft hover:text-text-main"
-                  }`}
-                >
-                  {ps === "none" ? "None" : ps === "unknown" ? "Unknown" : "Player"}
-                </button>
-              ))}
-            </div>
-            {values.partnerStatus === "player" && (
-              <PlayerPicker
-                value={values.partnerId}
-                onChange={(id) => setField("partnerId", id)}
-                exclude={allPickedPlayerIds.filter((id) => id !== values.partnerId)}
-                placeholder="Select partner"
-                label="Partner"
-                clearable
-                className="mt-1"
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="grid gap-2 sm:grid-cols-2">
-        <label className="flex flex-col gap-0.5">
-          <span className="text-text-soft text-sm">Notes</span>
-          <input
-            type="text"
-            value={values.notes}
-            onChange={(e) => setField("notes", e.target.value)}
-            className={textInputClass}
-          />
-        </label>
-        <label className="flex flex-col gap-0.5">
           <span className="text-text-soft text-sm">Category</span>
           <div ref={categoryDropdownRef} className="relative w-full">
             <button
@@ -500,38 +430,136 @@ export function MatchForm({
               </div>
             )}
           </div>
-        </label>
+        </div>
+
+        {showDoubles ? (
+          <>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-text-soft text-sm">Partner</span>
+              <PlayerPicker
+                value={values.partnerValue}
+                onChange={(val) => setField("partnerValue", val)}
+                exclude={allPickedPlayerIds.filter(
+                  (id) => id !== partnerIdNum,
+                )}
+                specialOptions={PARTNER_SPECIAL_OPTIONS}
+                placeholder="Select partner"
+                label="Partner"
+                clearable
+              />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-text-soft text-sm">Opponent 1</span>
+              <PlayerPicker
+                value={values.opponent1Id}
+                onChange={(id) =>
+                  setField("opponent1Id", typeof id === "number" ? id : null)
+                }
+                exclude={allPickedPlayerIds.filter(
+                  (id) => id !== values.opponent1Id,
+                )}
+                placeholder="Select opponent"
+                label="Opponent 1"
+                clearable
+              />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-text-soft text-sm">Opponent 2</span>
+              <PlayerPicker
+                value={values.opponent2Id}
+                onChange={(id) =>
+                  setField("opponent2Id", typeof id === "number" ? id : null)
+                }
+                exclude={allPickedPlayerIds.filter(
+                  (id) => id !== values.opponent2Id,
+                )}
+                placeholder="Select opponent 2"
+                label="Opponent 2"
+                clearable
+              />
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col gap-0.5 sm:col-span-3">
+            <span className="text-text-soft text-sm">Opponent</span>
+            <PlayerPicker
+              value={values.opponent1Id}
+              onChange={(id) =>
+                setField("opponent1Id", typeof id === "number" ? id : null)
+              }
+              exclude={allPickedPlayerIds.filter(
+                (id) => id !== values.opponent1Id,
+              )}
+              placeholder="Select opponent"
+              label="Opponent"
+              clearable
+            />
+          </div>
+        )}
       </div>
 
-      {/* Won by me toggle */}
-      <div className="flex items-center gap-3">
-        <span className="text-text-soft text-sm">Won?</span>
-        <div className="flex gap-1 rounded-lg bg-ui-elevated p-0.5">
-          {([
-            { val: null, label: "—" },
-            { val: true, label: "Won" },
-            { val: false, label: "Lost" },
-          ] as const).map(({ val, label }) => (
-            <button
-              key={String(val)}
-              type="button"
-              onClick={() => setField("wonByMe", val)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                values.wonByMe === val
-                  ? "bg-ui-elevated-more text-text-main shadow-sm"
-                  : "text-text-soft hover:text-text-main"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+      {/* ── Row 3: Date, Result, Won? ───────────────────────────────── */}
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-4">
+        <div className="flex flex-col gap-0.5 sm:col-span-2">
+          <span className="text-text-soft text-sm">Date</span>
+          <DatePicker
+            value={values.date}
+            onChange={(iso) => setField("date", iso)}
+          />
+        </div>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">Result</span>
+          <input
+            type="text"
+            value={values.result}
+            onChange={(e) => setField("result", e.target.value)}
+            placeholder="e.g. 21-19 21-17"
+            className={textInputClass}
+          />
+        </label>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-text-soft text-sm">Won?</span>
+          <div className="flex gap-1 rounded-lg bg-ui-elevated p-0.5">
+            {([
+              { val: null, label: "—" },
+              { val: true, label: "Won" },
+              { val: false, label: "Lost" },
+            ] as const).map(({ val, label }) => (
+              <button
+                key={String(val)}
+                type="button"
+                onClick={() => setField("wonByMe", val)}
+                className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                  values.wonByMe === val
+                    ? "bg-ui-elevated-more text-text-main shadow-sm"
+                    : "text-text-soft hover:text-text-main"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* ── Row 4: Notes ────────────────────────────────────────────── */}
+      <label className="flex flex-col gap-0.5">
+        <span className="text-text-soft text-sm">Notes</span>
+        <textarea
+          value={values.notes}
+          onChange={(e) => setField("notes", e.target.value)}
+          rows={3}
+          className={`${textInputClass} resize-y`}
+          placeholder="Match notes…"
+        />
+      </label>
+
+      {/* ── Row 5: Player descriptions ──────────────────────────────── */}
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-0.5">
           <span className="text-text-soft text-sm">
-            My description <span className="text-text-soft/60">(optional)</span>
+            My description{" "}
+            <span className="text-text-soft/60">(optional)</span>
           </span>
           <input
             type="text"
@@ -556,6 +584,7 @@ export function MatchForm({
         </label>
       </div>
 
+      {/* ── Submit ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3">
         <button
           type="submit"
