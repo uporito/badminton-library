@@ -1,0 +1,30 @@
+# Badminton CV Analysis Service
+# Install: pip install -r requirements.txt
+
+# --- Core ---
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.0
+pydantic-settings>=2.0
+
+# --- Video / Image processing ---
+opencv-python>=4.10.0
+numpy>=1.26.0
+
+# --- Scene cut detection (Stage 1) ---
+scenedetect[opencv]>=0.6.4
+
+# --- Player detection + tracking (Stage 3) + Pose estimation (Stage 5) ---
+ultralytics>=8.3.0
+
+# --- Shuttle tracking (Stage 4) ---
+# TrackNetV3 requires cloning the official repo separately:
+#   cd cv_service/vendor
+#   git clone https://github.com/qaz812345/TrackNetV3.git
+# Then download pre-trained weights into cv_service/weights/
+# See config.py for path settings.
+torch>=2.0.0
+torchvision>=0.15.0
+
+# --- Utilities ---
+scipy>=1.12.0

@@ -6,6 +6,7 @@ import { InputShotsPanel } from "./input_shots_panel";
 import { RallyShotGrid } from "./rally_shot_grid";
 import { MatchStatsCharts } from "./match_stats_charts";
 import { AnalyzeButton } from "./analyze_button";
+import { CvAnalyzeButton } from "./cv_analyze_button";
 import { PlayerDescriptions } from "./player_descriptions";
 import { CollapsibleSection } from "./collapsible_section";
 import { VideoPlayerWithOverlay } from "./video_player_with_overlay";
@@ -146,8 +147,11 @@ export default async function MatchPage({ params }: MatchPageProps) {
             />
           </section>
 
-          <div className="flex justify-end">
+          <div className="flex flex-col items-end gap-2">
             <AnalyzeButton matchId={match.id} />
+            {!isYouTube && (
+              <CvAnalyzeButton matchId={match.id} videoUrl={videoUrl} />
+            )}
           </div>
         </div>
       </div>

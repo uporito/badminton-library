@@ -37,6 +37,15 @@ yarn-error.log*
 # cached thumbnails
 /data/thumbnails/
 
+# CV service artifacts
+/cv_service/weights/*.pt
+/cv_service/weights/*.pth
+/cv_service/vendor/*/
+/cv_service/jobs/
+/cv_service/__pycache__/
+/cv_service/stages/__pycache__/
+/cv_service/.venv/
+
 # vercel
 .vercel
 
