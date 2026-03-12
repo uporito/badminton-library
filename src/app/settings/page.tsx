@@ -13,7 +13,6 @@ import {
   YoutubeLogo,
   CheckCircle,
   XCircle,
-  Sparkle,
   HardDrive,
   CaretDown,
 } from "@phosphor-icons/react";
@@ -36,10 +35,6 @@ interface YouTubeStatus {
   configured: boolean;
 }
 
-interface GeminiStatus {
-  configured: boolean;
-}
-
 const SECTION_HEADING =
   "text-sm font-medium text-text-soft uppercase tracking-wide";
 const SUBSECTION_HEADING = "text-sm font-medium text-text-main";
@@ -51,7 +46,6 @@ export default function SettingsPage() {
   const [videoFolderPath, setVideoFolderPath] = useState("");
   const [gdriveStatus, setGdriveStatus] = useState<GDriveStatus | null>(null);
   const [youtubeStatus, setYoutubeStatus] = useState<YouTubeStatus | null>(null);
-  const [geminiStatus, setGeminiStatus] = useState<GeminiStatus | null>(null);
 
   useEffect(() => {
     if (!themeDropdownOpen) return;
@@ -80,10 +74,6 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((d) => setYoutubeStatus(d))
       .catch(() => setYoutubeStatus({ configured: false }));
-    fetch("/api/gemini/status")
-      .then((r) => r.json())
-      .then((d) => setGeminiStatus(d))
-      .catch(() => setGeminiStatus({ configured: false }));
   }, []);
 
   function handleThemeChange(value: ThemeValue) {
@@ -391,78 +381,6 @@ export default function SettingsPage() {
                   <li>Restart the dev server.</li>
                 </ol>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Analyze with AI */}
-      <section className="space-y-4">
-        <h2 className={SECTION_HEADING}>Analyze with AI</h2>
-
-        <div className="space-y-2">
-          <h3 className={`${SUBSECTION_HEADING} flex items-center gap-2`}>
-            <Sparkle size={18} className="text-text-soft" weight="fill" />
-            Gemini
-          </h3>
-          <div className="frame rounded-xl px-4 py-3">
-            <div className="mb-3 flex items-center gap-3">
-              <span className="text-sm font-medium text-text-main">
-                Gemini API (video analysis)
-              </span>
-              {geminiStatus && (
-                <span className="ml-auto flex items-center gap-1 text-xs">
-                  {geminiStatus.configured ? (
-                    <>
-                      <CheckCircle
-                        size={14}
-                        className="text-ui-success"
-                        weight="fill"
-                      />
-                      <span className="text-ui-success">Configured</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle
-                        size={14}
-                        className="text-text-soft"
-                        weight="fill"
-                      />
-                      <span className="text-text-soft">Not configured</span>
-                    </>
-                  )}
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-2 text-xs text-text-soft">
-              <p className="text-sm font-medium">Setup instructions</p>
-              <ol className="list-inside list-decimal space-y-1.5 pl-1">
-                <li>
-                  Get a free API key from{" "}
-                  <a
-                    href="https://aistudio.google.com/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-text-main"
-                  >
-                    Google AI Studio
-                  </a>
-                  .
-                </li>
-                <li>
-                  Add{" "}
-                  <code className="rounded bg-ui-elevated px-1 py-0.5">
-                    GEMINI_API_KEY=your_key
-                  </code>{" "}
-                  to your{" "}
-                  <code className="rounded bg-ui-elevated px-1 py-0.5">
-                    .env
-                  </code>{" "}
-                  file.
-                </li>
-                <li>Restart the dev server.</li>
-              </ol>
             </div>
           </div>
         </div>

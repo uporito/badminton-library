@@ -2,11 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  CpuIcon,
-  CircleNotchIcon,
-  CrosshairIcon,
-} from "@phosphor-icons/react";
+import { CpuIcon, CircleNotchIcon } from "@phosphor-icons/react";
 import {
   CourtCalibration,
   type CalibrationData,
@@ -17,7 +13,7 @@ interface CvAnalyzeButtonProps {
   videoUrl: string;
 }
 
-type Status = "idle" | "calibrating" | "loading" | "success" | "error";
+type Status = "idle" | "loading" | "success" | "error";
 
 const POLL_INTERVAL_MS = 3_000;
 
@@ -28,13 +24,14 @@ export function CvAnalyzeButton({ matchId, videoUrl }: CvAnalyzeButtonProps) {
   const [progressPct, setProgressPct] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [calibration, setCalibration] = useState<CalibrationData | null>(null);
-  const [showCalibration, setShowCalibration] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const handleCalibrationChange = useCallback((cal: CalibrationData | null) => {
-    setCalibration(cal);
-    setShowCalibration(false);
-  }, []);
+  const handleCalibrationChange = useCallback(
+    (cal: CalibrationData | null) => {
+      setCalibration(cal);
+    },
+    []
+  );
 
   async function handleAnalyze() {
     setStatus("loading");
@@ -111,30 +108,14 @@ export function CvAnalyzeButton({ matchId, videoUrl }: CvAnalyzeButtonProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {showCalibration && (
-        <div className="frame rounded-xl p-4">
+      <div className="flex flex-col items-end gap-2">
+        <div className="flex items-center gap-2">
           <CourtCalibration
             videoUrl={videoUrl}
             matchId={matchId}
             initialCalibration={calibration}
             onCalibrationChange={handleCalibrationChange}
           />
-        </div>
-      )}
-
-      <div className="flex flex-col items-end gap-2">
-        <div className="flex items-center gap-2">
-          {!showCalibration && (
-            <button
-              type="button"
-              onClick={() => setShowCalibration(true)}
-              disabled={status === "loading"}
-              className="inline-flex items-center gap-2 rounded-lg bg-ui-elevated px-3 py-2 text-sm font-medium text-text-main transition-colors hover:bg-ui-elevated/80 disabled:opacity-60"
-            >
-              <CrosshairIcon size={16} weight="bold" />
-              {calibration ? "Court calibrated" : "Calibrate court"}
-            </button>
-          )}
 
           <button
             type="button"

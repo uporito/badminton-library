@@ -75,14 +75,15 @@ class Homography:
         else:
             side = Side.me if side_raw == "far" else Side.opponent
 
-        # Along-court zones (from net = 0 to baseline = half)
+        # Along-court zones: local_y runs 0 = baseline, half = net (for both sides).
+        # So small local_y = back, large local_y = front
         zone_y_thirds = half / 3.0
         if local_y < zone_y_thirds:
-            depth = "front"
+            depth = "back"
         elif local_y < 2 * zone_y_thirds:
             depth = "mid"
         else:
-            depth = "back"
+            depth = "front"
 
         # Across-court zones
         zone_x_thirds = w / 3.0

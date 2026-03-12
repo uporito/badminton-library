@@ -1,6 +1,6 @@
 # CV Video Analysis Pipeline
 
-This document describes the computer-vision (CV) video analysis system added in Phase 5 of the Badminton Library project. The system automatically processes local badminton match videos and extracts structured rally and shot data.
+This document describes the computer-vision (CV) video analysis system (Phase 4) of the Badminton Library project. The system automatically processes local badminton match videos and extracts structured rally and shot data.
 
 ---
 
@@ -38,7 +38,6 @@ The overall project is a **Next.js web application** backed by a **SQLite databa
 │  API Routes:                                                     │
 │  ├─ /api/matches/             CRUD for matches                   │
 │  ├─ /api/matches/[id]/stats   Stats endpoints                    │
-│  ├─ /api/matches/[id]/analyze LLM analysis (Gemini, Phase 4)     │
 │  ├─ /api/matches/[id]/cv-analyze                                 │
 │  │     POST → start CV job (proxy to Python service)             │
 │  │     GET  → poll job status, write results to DB on completion  │
@@ -553,7 +552,9 @@ Then download the pre-trained TrackNetV3 weights and place them at:
 cv_service/weights/tracknetv3.pt
 ```
 
-The weights file can be found in the [TrackNetV3 repository releases](https://github.com/qaz812345/TrackNetV3) or trained from scratch following their instructions.
+**Where to get the weights:** Pre-trained weights (90.53% accuracy on the small-sample dataset) are hosted on **Google Drive**, linked from the TrackNetV3 repo README: [TrackNetV3 training weights](https://drive.google.com/file/d/1NDe_Wsl6n9l8qLBywjzCnBHcWAQ_Bqq5/view?usp=sharing). Download the file; if it has a different name (e.g. from the Drive zip), rename or copy it to `tracknetv3.pt`. You can also clone [TrackNetV3](https://github.com/alenzenx/TrackNetV3) (or [qaz812345/TrackNetV3](https://github.com/qaz812345/TrackNetV3)) and use the same Drive link from its README, or train from scratch using the repo’s instructions.
+
+**Format:** PyTorch **`.pt`** checkpoint. The pipeline accepts either a full checkpoint dict containing `model_state_dict` or a raw state dict (as produced by the official repo’s training/evaluation scripts).
 
 ### Step 4: Start the services
 

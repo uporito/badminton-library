@@ -1469,6 +1469,8 @@ python -m pytest tests/test_api.py -v
 
 **Steps:**
 
+**Bash / Git Bash / WSL (Unix-style `curl`):**
+
 ```bash
 # 1. Verify Python service is reachable from Next.js
 curl http://127.0.0.1:8100/health
@@ -1552,7 +1554,7 @@ npm run test
 
 **What it tests:** The full analysis pipeline from video to structured output. This is the final integration test.
 
-**Requires:** Both services running, a match with a local video, Python CV service started.
+**Requires:** Next.js and Python CV service running, a match with a local video.
 
 ### 12.1 Via the UI (manual)
 
