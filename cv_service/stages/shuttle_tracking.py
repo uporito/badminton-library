@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 _tracknet_model = None
 _tracknet_available: bool | None = None
+_tracknet_load_failed: bool = False
 
 INPUT_HEIGHT = 288
 INPUT_WIDTH = 512
@@ -60,9 +61,11 @@ def _check_tracknet_available() -> bool:
 
 def _get_model():
     """Load the TrackNetV3 model. Returns None if unavailable."""
-    global _tracknet_model
+    global _tracknet_model, _tracknet_load_failed
     if _tracknet_model is not None:
         return _tracknet_model
+    if _tracknet_load_failed:
+        return None
 
     if not _check_tracknet_available():
         return None
@@ -74,10 +77,30 @@ def _get_model():
         if str(vendor_path) not in sys.path:
             sys.path.insert(0, str(vendor_path))
 
-        from TrackNet import TrackNet
+        # The cloned repo may expose the model class under different names
+        # depending on the fork. Try common variants.
+        model_cls = None
+        for module_name, class_name in [
+            ("TrackNet", "TrackNet"),
+            ("model", "TrackNetV2"),
+            ("model", "TrackNet"),
+        ]:
+            try:
+                mod = __import__(module_name, fromlist=[class_name])
+                model_cls = getattr(mod, class_name)
+                logger.info("Found model class %s.%s", module_name, class_name)
+                break
+            except (ImportError, AttributeError):
+                continue
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = TrackNet(
+        if model_cls is None:
+            raise ImportError(
+                f"Cannot find TrackNet model class in {vendor_path}. "
+                f"Expected TrackNet.TrackNet or model.TrackNetV2"
+            )
+
+        device = torch.device(settings.device)
+        model = model_cls(
             in_dim=N_INPUT_FRAMES * 3,
             out_dim=N_INPUT_FRAMES,
         )
@@ -96,6 +119,7 @@ def _get_model():
         return _tracknet_model
     except Exception as e:
         logger.error("Failed to load TrackNetV3: %s", e)
+        _tracknet_load_failed = True
         return None
 
 
@@ -172,5 +196,9 @@ def detect_shuttle(
 
 
 def is_available() -> bool:
-    """Check if shuttle tracking is available."""
-    return _check_tracknet_available()
+    """Check if shuttle tracking is available (files exist AND model can load)."""
+    if not _check_tracknet_available():
+        return False
+    if _tracknet_load_failed:
+        return False
+    return _get_model() is not None

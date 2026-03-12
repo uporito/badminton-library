@@ -31,7 +31,8 @@ def _get_model():
     if _model is None:
         from ultralytics import YOLO
         _model = YOLO(settings.yolo_pose_model)
-        logger.info("Loaded YOLO pose model: %s", settings.yolo_pose_model)
+        _model.to(settings.device)
+        logger.info("Loaded YOLO pose model: %s on %s", settings.yolo_pose_model, settings.device)
     return _model
 
 

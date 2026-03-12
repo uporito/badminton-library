@@ -1,14 +1,27 @@
 from pathlib import Path
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
 _SERVICE_ROOT = Path(__file__).resolve().parent
 
 
+def _default_device() -> str:
+    try:
+        import torch
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    except ImportError:
+        return "cpu"
+
+
 class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8100
+
+    # Compute device for all ML models: "cuda", "cpu", or "cuda:0" etc.
+    # Defaults to "cuda" when a CUDA-capable GPU is detected, otherwise "cpu".
+    # Override with CV_DEVICE=cpu in .env if you want to force CPU.
+    device: str = Field(default_factory=_default_device)
 
     weights_dir: Path = Field(default=_SERVICE_ROOT / "weights")
     vendor_dir: Path = Field(default=_SERVICE_ROOT / "vendor")

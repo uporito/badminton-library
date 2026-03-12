@@ -55,11 +55,17 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
     .map((r) => ({ rally: r, shot: getLastDecidingShot(r) }))
     .filter(({ shot }) => shot != null) as { rally: RallyWithShots; shot: ShotRow }[];
 
+  const myPoints = rallies.filter((r) => r.wonByMe === true).length;
+  const opponentPoints = rallies.filter((r) => r.wonByMe === false).length;
+
   if (completedRallies.length === 0) {
     return (
       <section className="frame rounded-xl p-4">
         <h2 className="mb-3 text-sm font-semibold text-text-main">
           Rally score
+          <span className="ml-2 text-xs font-medium text-text-soft">
+            Me {myPoints} – {opponentPoints} Opponent
+          </span>
         </h2>
         <p className="text-sm text-text-soft">
           No completed rallies yet. Add shots with Winner or Error to see the grid.
@@ -88,6 +94,9 @@ export function RallyShotGrid({ rallies }: RallyShotGridProps) {
     <section className="frame rounded-xl p-4">
       <h2 className="mb-3 text-sm font-semibold text-text-main">
         Rally score
+        <span className="ml-2 text-xs font-medium text-text-soft">
+          Me {myPoints} – {opponentPoints} Opponent
+        </span>
       </h2>
       <div
         className="min-w-0 overflow-x-auto p-1"

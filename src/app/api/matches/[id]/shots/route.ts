@@ -182,3 +182,28 @@ export async function PATCH(
     );
   return NextResponse.json({ ok: true }, { status: 200 });
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const numId = Number(id);
+  if (Number.isNaN(numId) || numId < 1) {
+    return Response.json({ error: "Invalid id" }, { status: 400 });
+  }
+  const result = getMatchById(numId);
+  if (!result.ok) {
+    return Response.json({ error: result.error }, { status: 404 });
+  }
+  const db = getDb();
+  await db
+    .delete(matchShots)
+    .where(
+      and(
+        eq(matchShots.matchId, numId),
+        eq(matchShots.source, "ai_suggested")
+      )
+    );
+  return NextResponse.json({ ok: true }, { status: 200 });
+}

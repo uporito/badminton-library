@@ -157,6 +157,10 @@ def run_pipeline(
     if use_shuttle:
         hits = detect_hits_from_trajectory(all_frame_data)
         progress(f"Trajectory-based hit detection: {len(hits)} hits", 0.85)
+        if not hits:
+            progress("Trajectory-based detection found 0 hits, falling back to pose-based...", 0.83)
+            hits = detect_hits_from_poses(all_frame_data)
+            progress(f"Pose-based fallback hit detection: {len(hits)} hits", 0.85)
     else:
         hits = detect_hits_from_poses(all_frame_data)
         progress(f"Pose-based hit detection: {len(hits)} hits", 0.85)

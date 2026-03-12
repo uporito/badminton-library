@@ -297,14 +297,26 @@ export function CourtCalibration({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="inline-flex items-center gap-2 rounded-lg bg-ui-elevated px-3 py-2 text-sm font-medium text-text-main transition-colors hover:bg-ui-elevated/80"
-      >
-        <CrosshairIcon size={16} weight="bold" />
-        {allSet ? "Recalibrate court" : "Calibrate court"}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="inline-flex items-center gap-2 rounded-lg bg-ui-elevated px-3 py-2 text-sm font-medium text-text-main transition-colors hover:bg-ui-elevated/80"
+        >
+          <CrosshairIcon size={16} weight="bold" />
+          {allSet ? "Recalibrate court" : "Calibrate court"}
+        </button>
+
+        {allSet && (
+          <button
+            type="button"
+            onClick={handleOpen}
+            className="inline-flex items-center gap-2 rounded-lg bg-ui-elevated px-3 py-2 text-sm font-medium text-text-main transition-colors hover:bg-ui-elevated/80"
+          >
+            Show court calibration
+          </button>
+        )}
+      </div>
 
       {isOpen &&
         createPortal(

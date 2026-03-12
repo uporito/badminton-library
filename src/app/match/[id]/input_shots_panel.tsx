@@ -171,47 +171,13 @@ export function InputShotsPanel({
     (r) => r.wonByMe === false
   ).length;
 
-  const aiSuggestedCount = initialRallies.reduce(
-    (sum, r) => sum + r.shots.filter((s) => s.source === "ai_suggested").length,
-    0
-  );
-
-  async function handleConfirmAll() {
-    setError(null);
-    const res = await fetch(`/api/matches/${matchId}/shots`, {
-      method: "PATCH",
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Failed to confirm shots");
-      return;
-    }
-    startTransition(() => router.refresh());
-  }
-
   return (
-    <section className="frame rounded-xl p-4">
+    <section>
       <h2 className="mb-4 text-sm font-semibold text-text-main">
         Input Shots
       </h2>
 
       <div className="space-y-4">
-        {aiSuggestedCount > 0 && (
-          <div className="flex items-center justify-between rounded-lg bg-accent/10 px-3 py-2">
-            <p className="text-xs text-accent">
-              <span className="font-semibold">{aiSuggestedCount}</span> AI-suggested shot{aiSuggestedCount !== 1 ? "s" : ""} pending review
-            </p>
-            <button
-              type="button"
-              onClick={handleConfirmAll}
-              disabled={isPending}
-              className="rounded bg-accent px-2.5 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
-            >
-              Confirm all
-            </button>
-          </div>
-        )}
-
         <div>
           <p className="mb-2 text-xs font-medium text-text-soft">
             Current rally

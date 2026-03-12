@@ -22,7 +22,8 @@ def _get_model():
     if _model is None:
         from ultralytics import YOLO
         _model = YOLO(settings.yolo_detect_model)
-        logger.info("Loaded YOLO detection model: %s", settings.yolo_detect_model)
+        _model.to(settings.device)
+        logger.info("Loaded YOLO detection model: %s on %s", settings.yolo_detect_model, settings.device)
     return _model
 
 

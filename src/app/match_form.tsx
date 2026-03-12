@@ -33,8 +33,6 @@ interface FormValues {
   date: string;
   result: string;
   notes: string;
-  myDescription: string;
-  opponentDescription: string;
   category: string;
   opponent1Id: number | null;
   opponent2Id: number | null;
@@ -52,8 +50,6 @@ function emptyValues(): FormValues {
     date: "",
     result: "",
     notes: "",
-    myDescription: "",
-    opponentDescription: "",
     category: "Uncategorized",
     opponent1Id: null,
     opponent2Id: null,
@@ -75,8 +71,6 @@ function matchToValues(m: MatchRow): FormValues {
     date: m.date ?? "",
     result: m.result ?? "",
     notes: m.notes ?? "",
-    myDescription: m.myDescription ?? "",
-    opponentDescription: m.opponentDescription ?? "",
     category: m.category ?? "Uncategorized",
     opponent1Id: m.opponents[0]?.id ?? null,
     opponent2Id: m.opponents[1]?.id ?? null,
@@ -187,8 +181,6 @@ export function MatchForm({
       wonByMe: values.wonByMe,
       result: values.result.trim() || undefined,
       notes: values.notes.trim() || undefined,
-      myDescription: values.myDescription.trim() || undefined,
-      opponentDescription: values.opponentDescription.trim() || undefined,
       category: values.category,
     };
 
@@ -553,36 +545,6 @@ export function MatchForm({
           placeholder="Match notes…"
         />
       </label>
-
-      {/* ── Row 5: Player descriptions ──────────────────────────────── */}
-      <div className="grid gap-2 sm:grid-cols-2">
-        <label className="flex flex-col gap-0.5">
-          <span className="text-text-soft text-sm">
-            My description{" "}
-            <span className="text-text-soft/60">(optional)</span>
-          </span>
-          <input
-            type="text"
-            value={values.myDescription}
-            onChange={(e) => setField("myDescription", e.target.value)}
-            placeholder="e.g. wearing red shirt, left-handed"
-            className={textInputClass}
-          />
-        </label>
-        <label className="flex flex-col gap-0.5">
-          <span className="text-text-soft text-sm">
-            Opponent description{" "}
-            <span className="text-text-soft/60">(optional)</span>
-          </span>
-          <input
-            type="text"
-            value={values.opponentDescription}
-            onChange={(e) => setField("opponentDescription", e.target.value)}
-            placeholder="e.g. taller, wearing blue shirt"
-            className={textInputClass}
-          />
-        </label>
-      </div>
 
       {/* ── Submit ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3">

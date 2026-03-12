@@ -6,7 +6,7 @@ import { InputShotsPanel } from "./input_shots_panel";
 import { RallyShotGrid } from "./rally_shot_grid";
 import { MatchStatsCharts } from "./match_stats_charts";
 import { CvAnalyzeButton } from "./cv_analyze_button";
-import { PlayerDescriptions } from "./player_descriptions";
+import { AcceptAiShotsButton } from "./accept_ai_shots_button";
 import { CollapsibleSection } from "./collapsible_section";
 import { VideoPlayerWithOverlay } from "./video_player_with_overlay";
 import { PencilSimple } from "@phosphor-icons/react/ssr";
@@ -30,6 +30,10 @@ export default async function MatchPage({ params }: MatchPageProps) {
   const match = result.data;
   const ralliesResult = getRalliesByMatchId(numId);
   const rallies = ralliesResult.ok ? ralliesResult.data : [];
+  const aiSuggestedCount = rallies.reduce(
+    (sum, r) => sum + r.shots.filter((s) => s.source === "ai_suggested").length,
+    0
+  );
   const isYouTube = match.videoSource === "youtube";
   const videoUrl = isYouTube
     ? `https://www.youtube.com/embed/${encodeURIComponent(match.videoPath)}`
@@ -74,6 +78,10 @@ export default async function MatchPage({ params }: MatchPageProps) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3">
+          <CollapsibleSection title="Manual shot input" overlay>
+            <InputShotsPanel matchId={match.id} initialRallies={rallies} />
+          </CollapsibleSection>
+
           <section className="frame relative rounded-xl p-4">
             <Link
               href={`/match/${match.id}/edit`}
@@ -134,23 +142,17 @@ export default async function MatchPage({ params }: MatchPageProps) {
             </dl>
           </section>
 
-          <CollapsibleSection title="Manual shot input">
-            <InputShotsPanel matchId={match.id} initialRallies={rallies} />
-          </CollapsibleSection>
-
-          <section className="frame rounded-xl p-4">
-            <PlayerDescriptions
-              matchId={match.id}
-              initialMyDescription={match.myDescription ?? ""}
-              initialOpponentDescription={match.opponentDescription ?? ""}
-            />
-          </section>
-
-          <div className="flex flex-col items-end gap-2">
-            {!isYouTube && (
+          {!isYouTube && (
+            <div className="flex flex-col items-end gap-2">
               <CvAnalyzeButton matchId={match.id} videoUrl={videoUrl} />
-            )}
-          </div>
+              <div className="flex w-full flex-wrap items-center gap-2">
+                <AcceptAiShotsButton
+                  matchId={match.id}
+                  aiSuggestedCount={aiSuggestedCount}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

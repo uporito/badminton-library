@@ -107,30 +107,32 @@ export function CvAnalyzeButton({ matchId, videoUrl }: CvAnalyzeButtonProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col items-end gap-2">
-        <div className="flex items-center gap-2">
-          <CourtCalibration
-            videoUrl={videoUrl}
-            matchId={matchId}
-            initialCalibration={calibration}
-            onCalibrationChange={handleCalibrationChange}
-          />
+    <div className="flex flex-col items-end gap-2">
+      {/* Row 1: calibrate + show calibration */}
+      <div className="flex items-center gap-2">
+        <CourtCalibration
+          videoUrl={videoUrl}
+          matchId={matchId}
+          initialCalibration={calibration}
+          onCalibrationChange={handleCalibrationChange}
+        />
+      </div>
 
-          <button
-            type="button"
-            onClick={handleAnalyze}
-            disabled={status === "loading"}
-            className="inline-flex w-48 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {status === "loading" ? (
-              <CircleNotchIcon size={16} className="animate-spin" />
-            ) : (
-              <CpuIcon size={16} weight="fill" />
-            )}
-            {status === "loading" ? "Analyzing..." : "CV Analysis"}
-          </button>
-        </div>
+      {/* Row 2: CV analysis and status */}
+      <div className="flex flex-col items-end gap-2">
+        <button
+          type="button"
+          onClick={handleAnalyze}
+          disabled={status === "loading"}
+          className="inline-flex w-48 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+        >
+          {status === "loading" ? (
+            <CircleNotchIcon size={16} className="animate-spin" />
+          ) : (
+            <CpuIcon size={16} weight="fill" />
+          )}
+          {status === "loading" ? "Analyzing..." : "CV Analysis"}
+        </button>
 
         {status === "loading" && progress && (
           <div className="flex flex-col items-end gap-1">
