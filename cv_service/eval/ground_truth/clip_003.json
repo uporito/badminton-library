@@ -1,0 +1,616 @@
+{
+    "video_path": "C:/Users/bowen/OneDrive/Desktop/Badminton videos/clip_002.mp4",
+    "calibration": {
+      "top_left": {"x": 647, "y": 330},
+      "top_right": {"x": 889, "y": 336},
+      "bottom_right": {"x": 948, "y": 718},
+      "bottom_left": {"x": 0, "y": 539},
+      "near_side": "opponent"
+    },
+    "rallies": [
+      {
+        "start_sec": 29.1,
+        "end_sec": 32.2,
+        "won_by_me": true,
+        "shots": [
+          {
+            "timestamp": 29.1,
+            "shot_type": "serve",
+            "player": "me",
+            "zone_from": "center_middle",
+            "zone_to": "center_middle",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 29.9,
+            "shot_type": "net",
+            "player": "opponent",
+            "zone_from": "center_middle",
+            "zone_to": "right_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 31.0,
+            "shot_type": "net",
+            "player": "me",
+            "zone_from": "right_front",
+            "zone_to": "left_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 32.2,
+            "shot_type": "net",
+            "player": "opponent",
+            "zone_from": "left_front",
+            "zone_to": "right_front",
+            "outcome": "error"
+          }
+        ]
+      },
+      {
+        "start_sec": 41.3,
+        "end_sec": 49.4,
+        "won_by_me": true,
+        "shots": [
+          {
+            "timestamp": 41.3,
+            "shot_type": "serve",
+            "player": "me",
+            "zone_from": "center_middle",
+            "zone_to": "left_middle",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 42.2,
+            "shot_type": "net",
+            "player": "opponent",
+            "zone_from": "left_middle",
+            "zone_to": "left_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 43.2,
+            "shot_type": "net",
+            "player": "me",
+            "zone_from": "left_front",
+            "zone_to": "center_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 44.3,
+            "shot_type": "lift",
+            "player": "opponent",
+            "zone_from": "center_front",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 45.6,
+            "shot_type": "clear",
+            "player": "me",
+            "zone_from": "left_back",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 47.3,
+            "shot_type": "clear",
+            "player": "opponent",
+            "zone_from": "right_back",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 48.4,
+            "shot_type": "drop",
+            "player": "me",
+            "zone_from": "left_back",
+            "zone_to": "right_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 49.4,
+            "shot_type": "net",
+            "player": "opponent",
+            "zone_from": "right_front",
+            "zone_to": "left_front",
+            "outcome": "error"
+          }
+        ]
+      },
+      {
+        "start_sec": 61.6,
+        "end_sec": 61.6,
+        "won_by_me": false,
+        "shots": [
+          {
+            "timestamp": 61.6,
+            "shot_type": "serve",
+            "player": "me",
+            "zone_from": "center_middle",
+            "zone_to": "center_middle",
+            "outcome": "error"
+          }
+        ]
+      },
+      {
+        "start_sec": 69.4,
+        "end_sec": 73.0,
+        "won_by_me": true,
+        "shots": [
+          {
+            "timestamp": 69.4,
+            "shot_type": "serve",
+            "player": "opponent",
+            "zone_from": "center_middle",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 70.5,
+            "shot_type": "clear",
+            "player": "me",
+            "zone_from": "left_back",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 71.8,
+            "shot_type": "clear",
+            "player": "opponent",
+            "zone_from": "right_back",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 73.0,
+            "shot_type": "clear",
+            "player": "me",
+            "zone_from": "left_back",
+            "zone_to": "right_back",
+            "outcome": "winner"
+          }
+        ]
+      },
+      {
+        "start_sec": 85.0,
+        "end_sec": 99.6,
+        "won_by_me": true,
+        "shots": [
+          {
+            "timestamp": 85.0,
+            "shot_type": "serve",
+            "player": "me",
+            "zone_from": "center_middle",
+            "zone_to": "center_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 85.8,
+            "shot_type": "lift",
+            "player": "opponent",
+            "zone_from": "center_front",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 87.1,
+            "shot_type": "drop",
+            "player": "me",
+            "zone_from": "right_back",
+            "zone_to": "right_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 88.2,
+            "shot_type": "net",
+            "player": "opponent",
+            "zone_from": "right_front",
+            "zone_to": "left_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 89.1,
+            "shot_type": "lift",
+            "player": "me",
+            "zone_from": "left_front",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 90.8,
+            "shot_type": "clear",
+            "player": "opponent",
+            "zone_from": "right_back",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 91.9,
+            "shot_type": "drop",
+            "player": "me",
+            "zone_from": "left_back",
+            "zone_to": "left_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 92.7,
+            "shot_type": "lift",
+            "player": "opponent",
+            "zone_from": "left_front",
+            "zone_to": "right_middle",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 93.5,
+            "shot_type": "smash",
+            "player": "me",
+            "zone_from": "right_middle",
+            "zone_to": "left_middle",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 93.8,
+            "shot_type": "block",
+            "player": "opponent",
+            "zone_from": "left_middle",
+            "zone_to": "center_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 94.8,
+            "shot_type": "lift",
+            "player": "me",
+            "zone_from": "center_front",
+            "zone_to": "center_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 96.1,
+            "shot_type": "clear",
+            "player": "opponent",
+            "zone_from": "center_back",
+            "zone_to": "center_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 97.3,
+            "shot_type": "clear",
+            "player": "me",
+            "zone_from": "center_back",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 98.6,
+            "shot_type": "drop",
+            "player": "opponent",
+            "zone_from": "right_back",
+            "zone_to": "left_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 99.6,
+            "shot_type": "smash",
+            "player": "me",
+            "zone_from": "left_front",
+            "zone_to": "right_back",
+            "outcome": "winner"
+          }
+        ]
+      },
+      {
+        "start_sec": 113.6,
+        "end_sec": 117.5,
+        "won_by_me": true,
+        "shots": [
+          {
+            "timestamp": 113.6,
+            "shot_type": "serve",
+            "player": "me",
+            "zone_from": "center_middle",
+            "zone_to": "center_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 114.5,
+            "shot_type": "lift",
+            "player": "opponent",
+            "zone_from": "center_front",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 115.5,
+            "shot_type": "drop",
+            "player": "me",
+            "zone_from": "right_back",
+            "zone_to": "left_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 116.6,
+            "shot_type": "net",
+            "player": "opponent",
+            "zone_from": "left_front",
+            "zone_to": "right_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 117.5,
+            "shot_type": "net",
+            "player": "me",
+            "zone_from": "right_front",
+            "zone_to": "right_front",
+            "outcome": "winner"
+          }
+        ]
+      },
+      {
+        "start_sec": 129.3,
+        "end_sec": 130.0,
+        "won_by_me": false,
+        "shots": [
+          {
+            "timestamp": 129.3,
+            "shot_type": "serve",
+            "player": "me",
+            "zone_from": "center_middle",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 130.0,
+            "shot_type": "drop",
+            "player": "opponent",
+            "zone_from": "left_back",
+            "zone_to": "right_front",
+            "outcome": "winner"
+          }
+        ]
+      },
+      {
+        "start_sec": 138.8,
+        "end_sec": 141.5,
+        "won_by_me": false,
+        "shots": [
+          {
+            "timestamp": 138.8,
+            "shot_type": "serve",
+            "player": "opponent",
+            "zone_from": "center_middle",
+            "zone_to": "center_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 140.0,
+            "shot_type": "smash",
+            "player": "me",
+            "zone_from": "center_back",
+            "zone_to": "center_middle",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 140.4,
+            "shot_type": "block",
+            "player": "opponent",
+            "zone_from": "center_middle",
+            "zone_to": "center_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 141.5,
+            "shot_type": "net",
+            "player": "me",
+            "zone_from": "center_front",
+            "zone_to": "center_front",
+            "outcome": "error"
+          }
+        ]
+      },
+      {
+        "start_sec": 148.3,
+        "end_sec": 153.9,
+        "won_by_me": false,
+        "shots": [
+          {
+            "timestamp": 148.3,
+            "shot_type": "serve",
+            "player": "opponent",
+            "zone_from": "center_middle",
+            "zone_to": "left_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 149.2,
+            "shot_type": "lift",
+            "player": "me",
+            "zone_from": "left_front",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 150.2,
+            "shot_type": "smash",
+            "player": "opponent",
+            "zone_from": "left_back",
+            "zone_to": "right_middle",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 150.6,
+            "shot_type": "block",
+            "player": "me",
+            "zone_from": "right_middle",
+            "zone_to": "right_middle",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 151.4,
+            "shot_type": "drive",
+            "player": "opponent",
+            "zone_from": "right_middle",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 151.9,
+            "shot_type": "clear",
+            "player": "me",
+            "zone_from": "left_back",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 152.7,
+            "shot_type": "drop",
+            "player": "opponent",
+            "zone_from": "right_middle",
+            "zone_to": "left_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 153.9,
+            "shot_type": "net",
+            "player": "me",
+            "zone_from": "left_front",
+            "zone_to": "right_front",
+            "outcome": "error"
+          }
+        ]
+      },
+      {
+        "start_sec": 163.1,
+        "end_sec": 170.2,
+        "won_by_me": true,
+        "shots": [
+          {
+            "timestamp": 163.1,
+            "shot_type": "serve",
+            "player": "opponent",
+            "zone_from": "center_middle",
+            "zone_to": "right_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 164.1,
+            "shot_type": "lift",
+            "player": "me",
+            "zone_from": "right_front",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 165.1,
+            "shot_type": "clear",
+            "player": "opponent",
+            "zone_from": "left_back",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 166.6,
+            "shot_type": "smash",
+            "player": "me",
+            "zone_from": "right_back",
+            "zone_to": "left_middle",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 167.1,
+            "shot_type": "block",
+            "player": "opponent",
+            "zone_from": "left_middle",
+            "zone_to": "right_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 168.0,
+            "shot_type": "net",
+            "player": "me",
+            "zone_from": "right_front",
+            "zone_to": "right_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 168.9,
+            "shot_type": "lift",
+            "player": "opponent",
+            "zone_from": "right_front",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 170.2,
+            "shot_type": "smash",
+            "player": "me",
+            "zone_from": "left_middle",
+            "zone_to": "right_back",
+            "outcome": "winner"
+          }
+        ]
+      },
+      {
+        "start_sec": 185.3,
+        "end_sec": 187.3,
+        "won_by_me": false,
+        "shots": [
+          {
+            "timestamp": 185.3,
+            "shot_type": "serve",
+            "player": "me",
+            "zone_from": "center_middle",
+            "zone_to": "right_front",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 186.0,
+            "shot_type": "lift",
+            "player": "opponent",
+            "zone_from": "right_front",
+            "zone_to": "right_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 187.3,
+            "shot_type": "drop",
+            "player": "me",
+            "zone_from": "right_back",
+            "zone_to": "left_front",
+            "outcome": "error"
+          }
+        ]
+      },
+      {
+        "start_sec": 194.9,
+        "end_sec": 197.1,
+        "won_by_me": true,
+        "shots": [
+          {
+            "timestamp": 194.9,
+            "shot_type": "serve",
+            "player": "opponent",
+            "zone_from": "center_middle",
+            "zone_to": "center_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 196.1,
+            "shot_type": "clear",
+            "player": "me",
+            "zone_from": "center_back",
+            "zone_to": "left_back",
+            "outcome": "neither"
+          },
+          {
+            "timestamp": 197.1,
+            "shot_type": "drop",
+            "player": "opponent",
+            "zone_from": "left_back",
+            "zone_to": "right_front",
+            "outcome": "error"
+          }
+        ]
+      }
+    ]
+  }

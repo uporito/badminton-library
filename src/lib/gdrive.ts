@@ -174,7 +174,7 @@ export async function getGDriveFileMetadata(
   }
 }
 
-async function getAccessToken(): Promise<string | null> {
+export async function getAccessToken(): Promise<string | null> {
   const creds = getServiceAccountCredentials();
   if (!creds) return null;
   const auth = new google.auth.GoogleAuth({

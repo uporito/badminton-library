@@ -4,6 +4,7 @@ import { getDb } from "@/db/client";
 import { matchRally, matchShots } from "@/db/schema";
 import { getMatchById } from "@/lib/get_match_by_id";
 import { resolveVideoPath } from "@/lib/video_path";
+import { getAccessToken, isGDriveConfigured } from "@/lib/gdrive";
 
 const CV_SERVICE_URL = process.env.CV_SERVICE_URL ?? "http://127.0.0.1:8100";
 
@@ -48,18 +49,10 @@ export async function POST(
   }
 
   const match = matchResult.data;
-  if (match.videoSource !== "local") {
+  if (match.videoSource !== "local" && match.videoSource !== "gdrive") {
     return NextResponse.json(
-      { error: "CV analysis only supports local videos" },
+      { error: "CV analysis only supports local and Google Drive videos" },
       { status: 400 }
-    );
-  }
-
-  const videoResult = resolveVideoPath(match.videoPath);
-  if (!videoResult.ok) {
-    return NextResponse.json(
-      { error: "Video file not found" },
-      { status: 404 }
     );
   }
 
@@ -71,15 +64,50 @@ export async function POST(
     // ok to proceed without calibration
   }
 
+  let cvPayload: Record<string, unknown>;
+
+  if (match.videoSource === "gdrive") {
+    if (!isGDriveConfigured()) {
+      return NextResponse.json(
+        { error: "Google Drive is not configured on this server" },
+        { status: 503 }
+      );
+    }
+    const token = await getAccessToken();
+    if (!token) {
+      return NextResponse.json(
+        { error: "Could not obtain Google Drive access token" },
+        { status: 503 }
+      );
+    }
+    const fileId = match.videoPath;
+    const videoUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`;
+    cvPayload = {
+      video_url: videoUrl,
+      auth_header: `Bearer ${token}`,
+      match_id: matchId,
+      calibration: body.calibration ?? null,
+    };
+  } else {
+    const videoResult = resolveVideoPath(match.videoPath);
+    if (!videoResult.ok) {
+      return NextResponse.json(
+        { error: "Video file not found" },
+        { status: 404 }
+      );
+    }
+    cvPayload = {
+      video_path: videoResult.fullPath,
+      match_id: matchId,
+      calibration: body.calibration ?? null,
+    };
+  }
+
   try {
     const cvRes = await fetch(`${CV_SERVICE_URL}/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        video_path: videoResult.fullPath,
-        match_id: matchId,
-        calibration: body.calibration ?? null,
-      }),
+      body: JSON.stringify(cvPayload),
     });
 
     if (!cvRes.ok) {

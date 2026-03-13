@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ── Enums (mirror the Next.js schema) ────────────────────────────────────────
@@ -78,10 +78,20 @@ class CourtCalibration(BaseModel):
 
 
 class AnalyzeRequest(BaseModel):
-    video_path: str
+    video_path: Optional[str] = None
+    video_url: Optional[str] = None
+    auth_header: Optional[str] = None
     match_id: int
     calibration: Optional[CourtCalibration] = None
     fps_override: Optional[float] = None
+
+    @model_validator(mode="after")
+    def check_video_source(self) -> "AnalyzeRequest":
+        has_path = bool(self.video_path)
+        has_url = bool(self.video_url)
+        if has_path == has_url:
+            raise ValueError("Exactly one of video_path or video_url must be provided")
+        return self
 
 
 class ShotResult(BaseModel):

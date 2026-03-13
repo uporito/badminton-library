@@ -360,7 +360,9 @@ export function CourtCalibration({
                     <span
                       className={`inline-block h-2.5 w-2.5 rounded-full ${DOT_CLASSES[i]}`}
                     />
-                    {corners[i] ? `${i + 1} set` : `${i + 1}`}
+                    {corners[i]
+                      ? `${i + 1} set (${Math.round(corners[i]!.x)}, ${Math.round(corners[i]!.y)})`
+                      : `${i + 1}`}
                   </button>
                 ))}
 

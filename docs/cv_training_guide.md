@@ -190,7 +190,26 @@ python eval/evaluate.py --ground-truth eval/ground_truth/ \
   --output eval/results/run_001.json
 ```
 
-### 3.3 Minimum viable dataset
+### 3.3 Labeling conventions (important)
+
+Consistent timestamps are critical — if the yardstick is fuzzy, your metrics become meaningless. The pipeline detects hits as **trajectory direction changes** (the instant of racket-shuttle contact) and derives rally boundaries from the first and last hit timestamps. Your labels must follow the same convention.
+
+**Always timestamp the moment of contact**, not what happens after. The evaluation script matches shots with a ±0.5 s tolerance window, so even small systematic offsets (e.g. labeling when the shuttle lands instead of when it's struck) can cause correct detections to appear as misses.
+
+| Event | Timestamp at… | NOT at… |
+|-------|---------------|---------|
+| Any shot | Racket-shuttle contact | Shuttle landing or peak height |
+| Serve | Contact on the serve swing | Shuttle toss or backswing |
+| Last shot (winner) | Contact of the winning hit | Shuttle hitting the floor |
+| Last shot (error) | Contact of the errant hit | Shuttle going out / hitting net |
+| Rally start | First shot (serve) contact | Player walking to service position |
+| Rally end | Last shot contact | Shuttle landing, players reacting |
+
+The time between rallies (picking up the shuttle, walking to position) belongs to **neither** rally. The pipeline uses `rally_gap_seconds` to split rallies by the gap between consecutive contacts, so including non-play time in rally boundaries would inflate your ground-truth durations and distort overlap-based matching.
+
+**Why this matters for tuning:** The grid search finds thresholds that minimize the gap between predictions and ground truth. If your labels systematically add 1–2 s to rally end times, the tuner compensates by inflating `rally_gap_seconds` — optimizing for the wrong thing. Likewise, an eventual ML shot classifier trains directly on your labels, so inconsistency there becomes noise in the training data.
+
+### 3.4 Minimum viable dataset
 
 To get started with meaningful evaluations, label at minimum:
 
