@@ -7,7 +7,7 @@ export default function AnalysisPage() {
   const allTags = getAllUniqueTags(matches);
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="-mx-4 -mt-8 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] relative font-sans overflow-hidden min-h-screen">
       <AnalysisDashboard matches={matches} allTags={allTags} />
     </div>
   );

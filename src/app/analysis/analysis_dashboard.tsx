@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   CircleNotchIcon,
-  CalendarBlankIcon,
   CaretDownIcon,
   CheckIcon,
   MagnifyingGlassIcon,
@@ -50,56 +49,6 @@ interface AnalysisDashboardProps {
   allTags: string[];
 }
 
-const WEEKS_IN_YEAR = 52;
-const DAYS_PER_WEEK = 7;
-const TOTAL_DAYS = WEEKS_IN_YEAR * DAYS_PER_WEEK;
-
-const GRID_COLOR_EMPTY = "#f4f4f5";
-const GRID_COLOR_FULL = "#15803d";
-
-function interpolateHex(hexFrom: string, hexTo: string, t: number): string {
-  const parse = (hex: string) => {
-    const n = parseInt(hex.slice(1), 16);
-    return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff] as const;
-  };
-  const [r1, g1, b1] = parse(hexFrom);
-  const [r2, g2, b2] = parse(hexTo);
-  const r = Math.round(r1 + (r2 - r1) * t);
-  const g = Math.round(g1 + (g2 - g1) * t);
-  const b = Math.round(b1 + (b2 - b1) * t);
-  return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
-}
-
-function toDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function addDays(d: Date, n: number): Date {
-  const out = new Date(d);
-  out.setDate(out.getDate() + n);
-  return out;
-}
-
-function ordinal(n: number): string {
-  const s = n % 100;
-  if (s >= 11 && s <= 13) return `${n}th`;
-  switch (n % 10) {
-    case 1: return `${n}st`;
-    case 2: return `${n}nd`;
-    case 3: return `${n}rd`;
-    default: return `${n}th`;
-  }
-}
-
-function formatLongDate(date: Date): string {
-  const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
-  const month = date.toLocaleDateString("en-US", { month: "long" });
-  return `${weekday}, ${month} ${ordinal(date.getDate())}, ${date.getFullYear()}`;
-}
-
 type AnalysisTab = "global" | "shot-patterns" | "shot-analysis";
 
 const TABS: { id: AnalysisTab; label: string }[] = [
@@ -107,192 +56,6 @@ const TABS: { id: AnalysisTab; label: string }[] = [
   { id: "shot-patterns", label: "Shot Patterns" },
   { id: "shot-analysis", label: "Shot Analysis" },
 ];
-
-interface MatchTimelineGridProps {
-  matches: MatchRow[];
-}
-
-type GridTooltipState = { dateKey: string; x: number; y: number } | null;
-
-function MatchTimelineGrid({ matches }: MatchTimelineGridProps) {
-  const countByDate = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const m of matches) {
-      if (!m.date) continue;
-      const key = m.date.slice(0, 10);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
-        map[key] = (map[key] ?? 0) + 1;
-      }
-    }
-    return map;
-  }, [matches]);
-
-  const matchesByDate = useMemo(() => {
-    const map: Record<string, MatchRow[]> = {};
-    for (const m of matches) {
-      if (!m.date) continue;
-      const key = m.date.slice(0, 10);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
-        if (!map[key]) map[key] = [];
-        map[key].push(m);
-      }
-    }
-    return map;
-  }, [matches]);
-
-  const [hoveredCell, setHoveredCell] = useState<GridTooltipState>(null);
-  const maxCount = Math.max(1, ...Object.values(countByDate));
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const startDate = (() => {
-    const first = addDays(today, -TOTAL_DAYS + 1);
-    const d = first.getDay();
-    return addDays(first, -(d === 0 ? 6 : d - 1));
-  })();
-
-  const monthLabels = Array.from({ length: WEEKS_IN_YEAR }, (_, c) => {
-    const date = addDays(startDate, c * DAYS_PER_WEEK);
-    const month = date.getMonth();
-    const prevDate = c > 0 ? addDays(startDate, (c - 1) * DAYS_PER_WEEK) : null;
-    const isFirstOfMonth = prevDate === null || prevDate.getMonth() !== month;
-    return isFirstOfMonth
-      ? date.toLocaleString("en-US", { month: "short" }).toUpperCase()
-      : null;
-  });
-
-  const dayLabelSlots = [null, "Mon", null, "Wed", null, "Fri", null, "Sun"] as const;
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-[auto_1fr] gap-2 items-stretch">
-        <div className="flex flex-col justify-between text-xs text-text-soft">
-          {dayLabelSlots.map((label, i) => (
-            <span key={i} className="leading-none" aria-hidden>
-              {label ?? "\u00A0"}
-            </span>
-          ))}
-        </div>
-        <div
-          className="min-w-0 overflow-x-auto p-0.5"
-          onMouseLeave={() => setHoveredCell(null)}
-        >
-          {hoveredCell != null &&
-            typeof document !== "undefined" &&
-            createPortal(
-              (() => {
-                const dayMatches = matchesByDate[hoveredCell!.dateKey] ?? [];
-                const date = new Date(hoveredCell!.dateKey);
-                return (
-                  <div
-                    className="frame-glass pointer-events-none fixed z-[100] max-w-sm rounded-xl px-4 py-3 text-xs shadow-lg"
-                    style={{
-                      left: hoveredCell!.x + 12,
-                      top: hoveredCell!.y + 12,
-                    }}
-                  >
-                    <p className="font-medium text-text-main">
-                      {formatLongDate(date)}
-                    </p>
-                    <ul className="mt-2 space-y-1 border-t border-zinc-600 pt-2">
-                      {dayMatches.length === 0 ? (
-                        <li className="text-text-main">No matches played</li>
-                      ) : (
-                        dayMatches.map((m) => (
-                          <li key={m.id} className="text-text-main">
-                            <a
-                              href={`/match/${m.id}`}
-                              className="hover:underline"
-                            >
-                              {m.title}
-                              {m.opponents.length > 0 ? ` vs ${m.opponents.map((o) => o.name).join(", ")}` : ""}
-                              {m.result ? ` ${m.result}` : ""}
-                            </a>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                );
-              })(),
-              document.body
-            )}
-          <div
-            className="grid w-full min-w-[320px] gap-x-1 text-xs text-text-soft"
-            style={{
-              gridTemplateColumns: `repeat(${WEEKS_IN_YEAR}, minmax(0, 1fr))`,
-            }}
-          >
-            {monthLabels.map((label, c) => (
-              <div key={c} className="pb-0.5 leading-none">
-                {label}
-              </div>
-            ))}
-          </div>
-          <div
-            className="grid w-full min-w-[320px] gap-0.5 rounded-[1px] mt-0.5"
-            style={{
-              gridTemplateColumns: `repeat(${WEEKS_IN_YEAR}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${DAYS_PER_WEEK}, minmax(0, 1fr))`,
-              aspectRatio: `${WEEKS_IN_YEAR} / ${DAYS_PER_WEEK}`,
-            }}
-          >
-            {Array.from({ length: DAYS_PER_WEEK * WEEKS_IN_YEAR }, (_, i) => {
-              const row = Math.floor(i / WEEKS_IN_YEAR);
-              const col = i % WEEKS_IN_YEAR;
-              const dayIndex = col * DAYS_PER_WEEK + row;
-              const date = addDays(startDate, dayIndex);
-              const dateKey = toDateString(date);
-              const count = countByDate[dateKey] ?? 0;
-              const t = maxCount > 0 ? Math.min(1, count / maxCount) : 0;
-              const bg =
-                count === 0
-                  ? undefined
-                  : interpolateHex(GRID_COLOR_EMPTY, GRID_COLOR_FULL, t);
-              const isHovered = hoveredCell?.dateKey === dateKey;
-              return (
-                <div
-                  key={`${col}-${row}`}
-                  className={`min-h-0 min-w-0 rounded-[1px] ${count === 0 ? "bg-ui-elevated" : ""} ${isHovered ? "ring-2 ring-accent" : ""}`}
-                  style={bg != null ? { backgroundColor: bg } : undefined}
-                  onMouseEnter={(e) =>
-                    setHoveredCell({
-                      dateKey,
-                      x: e.clientX,
-                      y: e.clientY,
-                    })
-                  }
-                />
-              );
-            })}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center gap-2 text-xs text-text-soft">
-        <span>Less</span>
-        <div className="flex gap-0.5">
-          {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-            <div
-              key={t}
-              className={`h-[8px] w-[8px] rounded-[1px] ${t === 0 ? "bg-ui-elevated" : ""}`}
-              style={
-                t > 0
-                  ? {
-                      backgroundColor: interpolateHex(
-                        GRID_COLOR_EMPTY,
-                        GRID_COLOR_FULL,
-                        t
-                      ),
-                    }
-                  : undefined
-              }
-            />
-          ))}
-        </div>
-        <span>More</span>
-      </div>
-    </div>
-  );
-}
 
 const COURT_ROW_LABELS: Record<CourtRow, string> = {
   front: "Front Court",
@@ -536,6 +299,17 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
   const [loading, setLoading] = useState(true);
   const [selectedCourtRow, setSelectedCourtRow] = useState<CourtRow | null>(null);
   const [selectedZone, setSelectedZone] = useState<SelectedZone>(null);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const check = () =>
+      setIsDark(document.documentElement.classList.contains("dark"));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   // Filter state
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -694,125 +468,149 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
   }
 
   return (
-    <div className="w-full flex flex-col">
-      <nav
-        className="flex items-center justify-between gap-4 border-b border-ui-elevated pb-3 mb-5 flex-wrap"
-        aria-label="Analysis sections"
-      >
-        {/* Tabs */}
-        <div className="flex gap-6">
-          {TABS.map(({ id, label }) => (
-            <div key={id} className="relative pb-3 -mb-[11px]">
-              <button
-                type="button"
-                onClick={() => setActiveTab(id)}
-                className={`text-sm font-medium transition-colors ${
-                  activeTab === id
-                    ? "text-accent"
-                    : "text-text-soft hover:text-text-main"
-                }`}
-              >
-                {label}
-              </button>
-              {activeTab === id && (
-                <span
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full"
-                  aria-hidden
-                />
-              )}
-            </div>
-          ))}
-        </div>
+    <div className="relative w-full min-h-[100vh]">
+      {/* ── 3-D court background — fills the entire page ── */}
+      <Court3D
+        selectedZone={selectedZone}
+        highlightedCourtRow={selectedZone == null ? selectedCourtRow : null}
+        shots={playerFilteredShots}
+        onZoneClick={handleZoneClick}
+        showHeatmap={showHeatmap}
+        groundColor={isDark ? "#14141e" : "#f6f7fa"}
+      />
 
-        {/* Filters */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <FilterDropdown
-            dropdownId="matches"
-            label="Matches"
-            options={matchOptions}
-            selected={
-              new Set([...selectedMatchIds].map(String)) as Set<string>
-            }
-            onToggle={(val) =>
-              setSelectedMatchIds(
-                toggleSet(selectedMatchIds, Number(val)) as Set<number>
-              )
-            }
-            searchable
-            isOpen={openDropdown === "matches"}
-            onToggleOpen={() => toggleDropdown("matches")}
-          />
-          <FilterDropdown
-            dropdownId="opponent"
-            label="Opponent"
-            options={opponentOptions}
-            selected={selectedOpponents}
-            onToggle={(val) =>
-              setSelectedOpponents(
-                toggleSet(selectedOpponents, val) as Set<string>
-              )
-            }
-            isOpen={openDropdown === "opponent"}
-            onToggleOpen={() => toggleDropdown("opponent")}
-          />
-          <FilterDropdown
-            dropdownId="category"
-            label="Type"
-            options={CATEGORY_OPTIONS}
-            selected={selectedCategories}
-            onToggle={(val) =>
-              setSelectedCategories(
-                toggleSet(selectedCategories, val) as Set<string>
-              )
-            }
-            isOpen={openDropdown === "category"}
-            onToggleOpen={() => toggleDropdown("category")}
-          />
-          {tagOptions.length > 0 && (
+      {/* ── Dashboard content — overlays the 3-D scene.
+           No z-index on this wrapper so .frame backdrop-filter can blur the canvas below. ── */}
+      <div className="relative flex flex-col pointer-events-none">
+        {/* Nav bar with frosted glass */}
+        <nav
+          className="pointer-events-auto flex items-center justify-between gap-4 px-5 py-3 mb-4 flex-wrap backdrop-blur-xl bg-ui-bg/60"
+          aria-label="Analysis sections"
+        >
+          <div className="flex gap-6">
+            {TABS.map(({ id, label }) => (
+              <div key={id} className="relative pb-3 -mb-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(id)}
+                  className={`text-sm font-medium transition-colors ${
+                    activeTab === id
+                      ? "text-accent"
+                      : "text-text-soft hover:text-text-main"
+                  }`}
+                >
+                  {label}
+                </button>
+                {activeTab === id && (
+                  <span
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full"
+                    aria-hidden
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
             <FilterDropdown
-              dropdownId="tags"
-              label="Tags"
-              options={tagOptions}
-              selected={selectedTags}
+              dropdownId="matches"
+              label="Matches"
+              options={matchOptions}
+              selected={
+                new Set([...selectedMatchIds].map(String)) as Set<string>
+              }
               onToggle={(val) =>
-                setSelectedTags(
-                  toggleSet(selectedTags, val) as Set<string>
+                setSelectedMatchIds(
+                  toggleSet(selectedMatchIds, Number(val)) as Set<number>
                 )
               }
-              searchable={tagOptions.length > 6}
-              isOpen={openDropdown === "tags"}
-              onToggleOpen={() => toggleDropdown("tags")}
+              searchable
+              isOpen={openDropdown === "matches"}
+              onToggleOpen={() => toggleDropdown("matches")}
             />
-          )}
-          <FilterDropdown
-            dropdownId="player"
-            label="Shots by"
-            options={PLAYER_OPTIONS}
-            selected={selectedPlayers}
-            onToggle={(val) =>
-              setSelectedPlayers((prev) => {
-                const next = new Set(prev);
-                if (next.has(val)) {
-                  if (next.size > 1) next.delete(val);
-                } else {
-                  next.add(val);
+            <FilterDropdown
+              dropdownId="opponent"
+              label="Opponent"
+              options={opponentOptions}
+              selected={selectedOpponents}
+              onToggle={(val) =>
+                setSelectedOpponents(
+                  toggleSet(selectedOpponents, val) as Set<string>
+                )
+              }
+              isOpen={openDropdown === "opponent"}
+              onToggleOpen={() => toggleDropdown("opponent")}
+            />
+            <FilterDropdown
+              dropdownId="category"
+              label="Type"
+              options={CATEGORY_OPTIONS}
+              selected={selectedCategories}
+              onToggle={(val) =>
+                setSelectedCategories(
+                  toggleSet(selectedCategories, val) as Set<string>
+                )
+              }
+              isOpen={openDropdown === "category"}
+              onToggleOpen={() => toggleDropdown("category")}
+            />
+            {tagOptions.length > 0 && (
+              <FilterDropdown
+                dropdownId="tags"
+                label="Tags"
+                options={tagOptions}
+                selected={selectedTags}
+                onToggle={(val) =>
+                  setSelectedTags(
+                    toggleSet(selectedTags, val) as Set<string>
+                  )
                 }
-                return next;
-              })
-            }
-            minWidthText="Shots by Opponent"
-            isOpen={openDropdown === "player"}
-            onToggleOpen={() => toggleDropdown("player")}
-          />
-        </div>
-      </nav>
+                searchable={tagOptions.length > 6}
+                isOpen={openDropdown === "tags"}
+                onToggleOpen={() => toggleDropdown("tags")}
+              />
+            )}
+            <FilterDropdown
+              dropdownId="player"
+              label="Shots by"
+              options={PLAYER_OPTIONS}
+              selected={selectedPlayers}
+              onToggle={(val) =>
+                setSelectedPlayers((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(val)) {
+                    if (next.size > 1) next.delete(val);
+                  } else {
+                    next.add(val);
+                  }
+                  return next;
+                })
+              }
+              minWidthText="Shots by Opponent"
+              isOpen={openDropdown === "player"}
+              onToggleOpen={() => toggleDropdown("player")}
+            />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-0">
-        {/* Left: visuals with frame, overlapping court slightly */}
-        <div className="flex flex-col gap-6 lg:mr-[-2rem]">
-          {/* Top row: 2 cols — left: donut + legend (wider), right: 3 cards */}
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-5">
-            <div className="frame relative z-10 rounded-xl p-5 min-h-0 flex flex-col h-[260px]">
+            {/* Heatmap toggle — inline with filters */}
+            <button
+              type="button"
+              onClick={() => setShowHeatmap((v) => !v)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                showHeatmap
+                  ? "bg-accent text-ui-bg"
+                  : "bg-ui-frame text-text-soft hover:bg-ui-elevated hover:text-text-main"
+              }`}
+            >
+              Heatmap
+            </button>
+          </div>
+        </nav>
+
+        {/* Panels — left-aligned on lg so the court peeks through on the right */}
+        <div className="px-5 pb-8 lg:max-w-[58%] flex flex-col gap-6">
+          {/* Top row: donut + most-played cards */}
+          <div className="pointer-events-auto grid grid-cols-1 md:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-5">
+            <div className="frame relative rounded-xl p-5 min-h-0 flex flex-col h-[260px]">
               <h2 className="mb-3 text-xs font-semibold text-text-main shrink-0">
                 Shot Selection
               </h2>
@@ -833,7 +631,7 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
                 )}
               </div>
             </div>
-            <div className="relative z-10 flex flex-col gap-3 min-h-0 h-[260px]">
+            <div className="flex flex-col gap-3 min-h-0 h-[260px]">
               <p className="text-xs font-semibold text-text-main shrink-0">
                 Most Played Shots
               </p>
@@ -884,8 +682,8 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
             </div>
           </div>
 
-          {/* Middle row: outcomes per shot type bar chart */}
-          <div className="frame relative z-10 rounded-xl p-5 h-[280px] flex flex-col">
+          {/* Outcomes chart */}
+          <div className="pointer-events-auto frame relative rounded-xl p-5 h-[280px] flex flex-col">
             <h2 className="mb-3 text-xs font-semibold text-text-main shrink-0">
               Outcomes per Shot Type
             </h2>
@@ -904,56 +702,6 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
             </div>
           </div>
 
-          {/* Bottom row: match timeline grid */}
-          <div className="frame relative z-10 rounded-xl p-5">
-            <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold text-text-main">
-              <CalendarBlankIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              Match Timeline
-            </h2>
-            <MatchTimelineGrid matches={matches} />
-          </div>
-        </div>
-
-        {/* Right (lg+): court visual, ~half space, no frame, drop shadow */}
-        <div
-          className="hidden lg:flex items-center justify-center py-6 pl-6"
-          style={{ perspective: "800px" }}
-        >
-          <div
-            className="w-full max-w-md flex justify-center"
-            style={{
-              filter: "drop-shadow(0 20px 25px rgba(0,0,0,0.25))",
-            }}
-            aria-hidden
-          >
-            <Court3D
-              selectedZone={selectedZone}
-              highlightedCourtRow={selectedZone == null ? selectedCourtRow : null}
-              shots={playerFilteredShots}
-              onZoneClick={handleZoneClick}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile: court below content, no overlap */}
-      <div
-        className="lg:hidden flex justify-center py-8"
-        style={{ perspective: "800px" }}
-      >
-        <div
-          className="flex justify-center"
-          style={{
-            filter: "drop-shadow(0 20px 25px rgba(0,0,0,0.25))",
-          }}
-          aria-hidden
-        >
-          <Court3D
-            selectedZone={selectedZone}
-            highlightedCourtRow={selectedZone == null ? selectedCourtRow : null}
-            shots={playerFilteredShots}
-            onZoneClick={handleZoneClick}
-          />
         </div>
       </div>
     </div>
