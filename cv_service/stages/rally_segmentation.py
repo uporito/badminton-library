@@ -15,6 +15,7 @@ from models import (
     RallyResult,
     ShotResult,
     Side,
+    AnalysisFeatures,
 )
 from stages.court_detection import Homography
 from stages.shot_classification import build_shot_result
@@ -60,8 +61,12 @@ def build_rally_results(
     rally_groups: list[list[HitEvent]],
     frame_data_map: dict[int, FrameData],
     homography: Homography | None,
+    features: AnalysisFeatures | None = None,
 ) -> list[RallyResult]:
     """Convert rally hit groups into structured RallyResult objects."""
+    if features is None:
+        features = AnalysisFeatures()
+
     results: list[RallyResult] = []
 
     for rally_idx, rally_hits in enumerate(rally_groups):
@@ -84,10 +89,11 @@ def build_rally_results(
                 is_first_in_rally=is_first,
                 is_last_in_rally=is_last,
                 rally_idx=rally_idx,
+                features=features,
             )
             shots.append(shot)
 
-        won_by_me = _determine_rally_winner(shots)
+        won_by_me = _determine_rally_winner(shots, features)
 
         results.append(RallyResult(
             won_by_me=won_by_me,
@@ -97,8 +103,14 @@ def build_rally_results(
     return results
 
 
-def _determine_rally_winner(shots: list[ShotResult]) -> bool:
-    """Determine rally winner from the last shot's outcome and player."""
+def _determine_rally_winner(shots: list[ShotResult], features: AnalysisFeatures | None = None) -> bool | None:
+    """Determine rally winner from the last shot's outcome and player.
+
+    Returns None when outcome detection is disabled.
+    """
+    if features is not None and not features.outcome:
+        return None
+
     if not shots:
         return False
 

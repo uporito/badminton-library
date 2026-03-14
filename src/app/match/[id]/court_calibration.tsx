@@ -274,6 +274,7 @@ export function CourtCalibration({
   const handleReset = () => {
     setCorners([null, null, null, null]);
     setActiveCorner(0);
+    onCalibrationChange?.(null);
   };
 
   const handleConfirm = () => {

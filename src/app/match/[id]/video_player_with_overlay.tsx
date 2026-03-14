@@ -384,6 +384,10 @@ export function VideoPlayerWithOverlay({
             <button
               type="button"
               onClick={() => setSpeedIdx((prev) => (prev + 1) % SPEEDS.length)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setSpeedIdx((prev) => (prev - 1 + SPEEDS.length) % SPEEDS.length);
+              }}
               className="rounded px-1 py-0.5 text-[10px] font-medium text-white/70 transition-colors hover:bg-white/20 hover:text-white"
               title={`Speed: ${SPEEDS[speedIdx]}x (click to cycle)`}
             >
@@ -393,6 +397,12 @@ export function VideoPlayerWithOverlay({
             <button
               type="button"
               onClick={() => setScrubIdx((prev) => (prev + 1) % SCRUB_OPTIONS.length)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setScrubIdx(
+                  (prev) => (prev - 1 + SCRUB_OPTIONS.length) % SCRUB_OPTIONS.length
+                );
+              }}
               className="rounded px-1 py-0.5 text-[10px] font-medium text-white/70 transition-colors hover:bg-white/20 hover:text-white"
               title={`Scrub: ${SCRUB_OPTIONS[scrubIdx].label} (click to cycle)`}
             >

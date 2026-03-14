@@ -20,6 +20,7 @@ from models import (
     FrameData,
     ShuttlePosition,
     Point2D,
+    AnalysisFeatures,
 )
 from stages.court_detection import Homography
 
@@ -169,15 +170,30 @@ def build_shot_result(
     is_first_in_rally: bool,
     is_last_in_rally: bool,
     rally_idx: int,
+    features: AnalysisFeatures | None = None,
 ) -> ShotResult:
     """Build a complete ShotResult from a hit event."""
-    shot_type = classify_shot_heuristic(
-        hit, prev_hit, frame_data_at_hit, homography, is_first_in_rally, rally_idx,
-    )
+    if features is None:
+        features = AnalysisFeatures()
 
-    from_side, from_zone, to_side, to_zone = determine_zones(hit, prev_hit, homography)
+    if features.shot_type:
+        shot_type = classify_shot_heuristic(
+            hit, prev_hit, frame_data_at_hit, homography, is_first_in_rally, rally_idx,
+        )
+    else:
+        shot_type = ShotType.clear
 
-    outcome = determine_outcome_heuristic(hit, next_hit, is_last_in_rally, homography)
+    if features.placement:
+        from_side, from_zone, to_side, to_zone = determine_zones(hit, prev_hit, homography)
+    else:
+        from_side, from_zone, to_side, to_zone = (
+            Side.me, Zone.center_mid, Side.me, Zone.center_mid
+        )
+
+    if features.outcome:
+        outcome = determine_outcome_heuristic(hit, next_hit, is_last_in_rally, homography)
+    else:
+        outcome = Outcome.neither
 
     player = hit_to_player(hit)
 

@@ -77,6 +77,13 @@ class CourtCalibration(BaseModel):
     )
 
 
+class AnalysisFeatures(BaseModel):
+    """Which classification stages to run. All default to True."""
+    shot_type: bool = True
+    placement: bool = True
+    outcome: bool = True
+
+
 class AnalyzeRequest(BaseModel):
     video_path: Optional[str] = None
     video_url: Optional[str] = None
@@ -84,6 +91,7 @@ class AnalyzeRequest(BaseModel):
     match_id: int
     calibration: Optional[CourtCalibration] = None
     fps_override: Optional[float] = None
+    features: AnalysisFeatures = Field(default_factory=AnalysisFeatures)
 
     @model_validator(mode="after")
     def check_video_source(self) -> "AnalyzeRequest":
@@ -106,7 +114,7 @@ class ShotResult(BaseModel):
 
 
 class RallyResult(BaseModel):
-    won_by_me: bool
+    won_by_me: Optional[bool]
     shots: list[ShotResult]
 
 
@@ -114,6 +122,7 @@ class AnalysisOutput(BaseModel):
     rallies: list[RallyResult]
     rally_count: int = 0
     shot_count: int = 0
+    features: AnalysisFeatures = Field(default_factory=AnalysisFeatures)
 
 
 class JobInfo(BaseModel):

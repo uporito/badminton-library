@@ -222,12 +222,12 @@ def _run_pipeline_on_file(
 
     if not hits:
         progress("No hits detected. Returning empty result.", 1.0)
-        return AnalysisOutput(rallies=[], rally_count=0, shot_count=0)
+        return AnalysisOutput(rallies=[], rally_count=0, shot_count=0, features=request.features)
 
     # ── Rally segmentation + shot classification ─────────────────────────
     progress("Segmenting rallies and classifying shots...", _p(0.87))
     rally_groups = segment_rallies(hits, frame_data_map, homography)
-    rally_results = build_rally_results(rally_groups, frame_data_map, homography)
+    rally_results = build_rally_results(rally_groups, frame_data_map, homography, request.features)
 
     total_shots = sum(len(r.shots) for r in rally_results)
     progress(
@@ -239,4 +239,5 @@ def _run_pipeline_on_file(
         rallies=rally_results,
         rally_count=len(rally_results),
         shot_count=total_shots,
+        features=request.features,
     )

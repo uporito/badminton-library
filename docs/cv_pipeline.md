@@ -75,8 +75,8 @@ The overall project is a **Next.js web application** backed by a **SQLite databa
 
 ### Communication flow
 
-1. User clicks **Calibrate Court** on a match page, marks the 4 court corners on a video frame, then clicks **CV Analysis**.
-2. The React frontend sends `POST /api/matches/[id]/cv-analyze` with calibration data.
+1. User clicks **Calibrate Court** on a match page, marks the 4 court corners on a video frame, then optionally toggles which analysis features to run (shot type, placement, outcome). Click **CV Analysis**.
+2. The React frontend sends `POST /api/matches/[id]/cv-analyze` with calibration and feature flags.
 3. The Next.js API route resolves the local video path and forwards the request to `POST http://CV_SERVICE_URL/analyze`.
 4. The Python service creates a background job, returns a `job_id` immediately.
 5. The frontend polls `GET /api/matches/[id]/cv-analyze?jobId=...` every 2 seconds.
@@ -182,6 +182,18 @@ The Python pipeline (`cv_service/pipeline.py`) processes a video through **5 seq
               AnalysisOutput
               {rallies[], rally_count, shot_count}
 ```
+
+### Tier-based processing
+
+The pipeline supports **modular analysis features**. The user can enable or disable each classification stage independently via `features` in the request:
+
+| Feature | Controls | Requires calibration |
+|---------|----------|------------------------|
+| **Shot type** | serve, smash, clear, drop, etc. | Yes |
+| **Placement** | zone_from, zone_to | Yes |
+| **Outcome** | winner/error on last shot, won_by_me | Yes |
+
+Rally and shot timestamp detection always runs. When a feature is disabled, defaults are used: `shot_type=clear`, zones=`center_mid`, outcome=`neither`, `won_by_me=null`. Without court calibration, all three features default to disabled (detection-only mode).
 
 ---
 
@@ -421,12 +433,13 @@ Each half of the court is divided into a 3x3 grid (depth: front/mid/back, latera
 
 | Model | Purpose |
 |-------|---------|
-| `AnalyzeRequest` | Input: `video_path`, `match_id`, optional `calibration` and `fps_override` |
+| `AnalyzeRequest` | Input: `video_path`, `match_id`, optional `calibration`, `fps_override`, `features` |
+| `AnalysisFeatures` | Optional flags: `shot_type`, `placement`, `outcome` (all default true) |
 | `CourtCalibration` | 4 corner points in pixels + `near_side` enum |
 | `Point2D` | Simple `{x, y}` coordinate |
 | `ShotResult` | One shot: type, player, zones (from/to), outcome, timestamp |
-| `RallyResult` | One rally: `won_by_me` boolean + list of `ShotResult` |
-| `AnalysisOutput` | Final output: list of `RallyResult` + counts |
+| `RallyResult` | One rally: `won_by_me` (bool or null when outcome disabled) + list of `ShotResult` |
+| `AnalysisOutput` | Final output: list of `RallyResult` + counts + `features` |
 | `JobInfo` | Job status: `job_id`, `status`, `progress`, `progress_pct`, `result`, `error` |
 
 **Internal models** (used between pipeline stages):
@@ -589,9 +602,10 @@ npm run dev
 4. Click the **4 corners** of the court in order: far-left, far-right, near-right, near-left (as seen in the video). The UI draws guidelines as you click.
 5. Optionally toggle which player is on the near side (default: "me").
 6. Click **Confirm Calibration**.
-7. Click the **CV Analysis** button that appears.
-8. Wait for the pipeline to process. Progress is displayed in real-time (stage name + percentage bar).
-9. When complete, the page reloads and shows the detected rallies and shots, which you can review and edit.
+7. Optionally enable or disable shot type, placement, and outcome (requires calibration).
+8. Click **CV Analysis**.
+9. Wait for the pipeline to process. Progress is displayed in real-time (stage name + percentage bar).
+10. When complete, the page reloads and shows the detected rallies and shots, which you can review and edit.
 
 ### Troubleshooting
 

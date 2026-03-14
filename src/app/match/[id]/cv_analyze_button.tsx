@@ -15,6 +15,30 @@ interface CvAnalyzeButtonProps {
 
 type Status = "idle" | "loading" | "success" | "error";
 
+interface AnalysisFeatures {
+  shot_type: boolean;
+  placement: boolean;
+  outcome: boolean;
+}
+
+const ALL_FEATURES_ENABLED: AnalysisFeatures = {
+  shot_type: true,
+  placement: true,
+  outcome: true,
+};
+
+const ALL_FEATURES_DISABLED: AnalysisFeatures = {
+  shot_type: false,
+  placement: false,
+  outcome: false,
+};
+
+const FEATURE_LABELS: Record<keyof AnalysisFeatures, string> = {
+  shot_type: "Shot type classification",
+  placement: "Shot placement (zones)",
+  outcome: "Shot outcome",
+};
+
 const POLL_INTERVAL_MS = 3_000;
 
 export function CvAnalyzeButton({ matchId, videoUrl }: CvAnalyzeButtonProps) {
@@ -24,14 +48,20 @@ export function CvAnalyzeButton({ matchId, videoUrl }: CvAnalyzeButtonProps) {
   const [progressPct, setProgressPct] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [calibration, setCalibration] = useState<CalibrationData | null>(null);
+  const [features, setFeatures] = useState<AnalysisFeatures>(ALL_FEATURES_DISABLED);
   const abortRef = useRef<AbortController | null>(null);
 
   const handleCalibrationChange = useCallback(
     (cal: CalibrationData | null) => {
       setCalibration(cal);
+      setFeatures(cal ? ALL_FEATURES_ENABLED : ALL_FEATURES_DISABLED);
     },
     []
   );
+
+  function toggleFeature(key: keyof AnalysisFeatures) {
+    setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
 
   async function handleAnalyze() {
     setStatus("loading");
@@ -46,7 +76,7 @@ export function CvAnalyzeButton({ matchId, videoUrl }: CvAnalyzeButtonProps) {
       const res = await fetch(`/api/matches/${matchId}/cv-analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ calibration }),
+        body: JSON.stringify({ calibration, features }),
         signal: controller.signal,
       });
 
@@ -106,9 +136,11 @@ export function CvAnalyzeButton({ matchId, videoUrl }: CvAnalyzeButtonProps) {
     }
   }
 
+  const featuresDisabled = !calibration;
+
   return (
-    <div className="flex flex-col items-end gap-2">
-      {/* Row 1: calibrate + show calibration */}
+    <div className="flex flex-col items-end gap-3">
+      {/* Row 1: Court calibration */}
       <div className="flex items-center gap-2">
         <CourtCalibration
           videoUrl={videoUrl}
@@ -118,7 +150,33 @@ export function CvAnalyzeButton({ matchId, videoUrl }: CvAnalyzeButtonProps) {
         />
       </div>
 
-      {/* Row 2: CV analysis and status */}
+      {/* Row 2: Analysis feature toggles */}
+      <div className="flex flex-col items-end gap-1.5">
+        {(Object.keys(FEATURE_LABELS) as (keyof AnalysisFeatures)[]).map((key) => (
+          <label
+            key={key}
+            className={`flex cursor-pointer items-center gap-2 text-xs ${
+              featuresDisabled ? "cursor-not-allowed opacity-40" : ""
+            }`}
+          >
+            <span className="text-text-soft">{FEATURE_LABELS[key]}</span>
+            <input
+              type="checkbox"
+              checked={features[key]}
+              disabled={featuresDisabled}
+              onChange={() => toggleFeature(key)}
+              className="accent-accent h-3.5 w-3.5 cursor-pointer disabled:cursor-not-allowed"
+            />
+          </label>
+        ))}
+        {featuresDisabled && (
+          <p className="text-right text-xs text-text-soft opacity-60">
+            Calibrate court to enable
+          </p>
+        )}
+      </div>
+
+      {/* Row 3: CV analysis button and status */}
       <div className="flex flex-col items-end gap-2">
         <button
           type="button"

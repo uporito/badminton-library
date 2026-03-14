@@ -19,8 +19,17 @@ const CalibrationSchema = z
   .nullable()
   .optional();
 
+const FeaturesSchema = z
+  .object({
+    shot_type: z.boolean().default(true),
+    placement: z.boolean().default(true),
+    outcome: z.boolean().default(true),
+  })
+  .optional();
+
 const BodySchema = z.object({
   calibration: CalibrationSchema,
+  features: FeaturesSchema,
 });
 
 function computeWonByMe(
@@ -56,12 +65,12 @@ export async function POST(
     );
   }
 
-  let body: z.infer<typeof BodySchema> = { calibration: null };
+  let body: z.infer<typeof BodySchema> = { calibration: null, features: undefined };
   try {
     const raw = await request.json();
     body = BodySchema.parse(raw);
   } catch {
-    // ok to proceed without calibration
+    // ok to proceed without calibration or features
   }
 
   let cvPayload: Record<string, unknown>;
@@ -87,6 +96,7 @@ export async function POST(
       auth_header: `Bearer ${token}`,
       match_id: matchId,
       calibration: body.calibration ?? null,
+      features: body.features ?? null,
     };
   } else {
     const videoResult = resolveVideoPath(match.videoPath);
@@ -100,6 +110,7 @@ export async function POST(
       video_path: videoResult.fullPath,
       match_id: matchId,
       calibration: body.calibration ?? null,
+      features: body.features ?? null,
     };
   }
 
@@ -181,7 +192,7 @@ async function writeResultsToDb(
   matchId: number,
   result: {
     rallies: Array<{
-      won_by_me: boolean;
+      won_by_me: boolean | null;
       shots: Array<{
         shot_type: string;
         player: string;
