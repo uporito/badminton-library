@@ -354,7 +354,7 @@ function CourtScene({
       {/* Key light — strong from upper-right, casts hard shadows */}
       <directionalLight
         position={[10, 20, 8]}
-        intensity={3.5}
+        intensity={4}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -434,7 +434,7 @@ function CourtScene({
         enableRotate={false}
         enableZoom={false}
         enablePan={false}
-        target={[-7, -2, 0]}
+        target={[-8.4, -2.4, 0]}
         autoRotate={autoRotate}
         autoRotateSpeed={0.4}
       />

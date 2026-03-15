@@ -35,9 +35,7 @@ export default function RootLayout({
       >
         <div className="flex min-h-screen">
           <NavBar />
-          <main className="min-w-0 flex-1 px-4 py-8 sm:px-6">
-            <div className="mx-auto max-w-7xl">{children}</div>
-          </main>
+          <main className="min-w-0 flex-1">{children}</main>
         </div>
       </body>
     </html>

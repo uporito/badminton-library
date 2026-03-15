@@ -6,9 +6,5 @@ export default function AnalysisPage() {
   const matches = listMatches();
   const allTags = getAllUniqueTags(matches);
 
-  return (
-    <div className="-mx-4 -mt-8 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] relative font-sans overflow-hidden min-h-screen">
-      <AnalysisDashboard matches={matches} allTags={allTags} />
-    </div>
-  );
+  return <AnalysisDashboard matches={matches} allTags={allTags} />;
 }

@@ -468,7 +468,7 @@ export function AnalysisDashboard({ matches, allTags }: AnalysisDashboardProps) 
   }
 
   return (
-    <div className="relative w-full min-h-[100vh]">
+    <div className="relative w-full min-h-screen font-sans overflow-hidden">
       {/* ── 3-D court background — fills the entire page ── */}
       <Court3D
         selectedZone={selectedZone}
